@@ -19,7 +19,8 @@
     "require_open_school": "Decided Oct 9, 2026: false. Closed/inactive schools may still report on past years; cleaning decides later.",
     "require_regular_school": "Decided Oct 9, 2026: false.",
     "require_in_nces_panel": "Decided Oct 9, 2026: false. Dropdown rows missing from the panel stay eligible with level unknown.",
-    "fresh_start_levels": "Levels whose coverage restarts at 0 this cycle because the survey is new (decided Oct 9, 2026: elementary). Other levels carry 2025-26 reports forward into the count."
+    "fresh_start_levels": "Levels whose coverage restarts at 0 this cycle because the survey is new (decided Oct 9, 2026: elementary). Other levels carry 2025-26 reports forward into the count.",
+    "test_mode": "true = pre-launch testing: responses before cycle_start count, tktk rows are kept, and the page shows a test-data banner. Set false at launch (after Qualtrics is wiped)."
   },
   "target_date": "2027-06-30",
   "require_open_school": false,
@@ -33,5 +34,6 @@
     "fall2025_spring2026": "Fall 2025\u2013Spring 2026",
     "summer_2026": "Summer 2026",
     "current": "Fall 2026\u2013Spring 2027"
-  }
+  },
+  "test_mode": true
 }

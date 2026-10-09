@@ -277,6 +277,9 @@ def main():
     if a.today and len(a.today) == 10:
         now = now.replace(hour=23, minute=59, second=59)
     cycle_start = parse_dt(cfg["cycle_start"])
+    test_mode = bool(cfg.get("test_mode"))
+    if test_mode:
+        cycle_start = parse_dt("2000-01-01T00:00:00Z")   # pre-launch: everything in Qualtrics is test data; show it all
     synthetic = bool(cfg.get("_synthetic"))
     alerts = []
 
@@ -379,7 +382,7 @@ def main():
             reason = "before_cycle"
         elif not r["finished"]:
             reason = "unfinished"
-        elif r["response_id"] in test_ids or r.get("test_marker"):
+        elif r["response_id"] in test_ids or (r.get("test_marker") and not test_mode):
             reason = "test"
         elif (r["survey"] == "educator" and r["role_type"] not in (1, None)) or (r["survey"] == "student" and not r["consent"]):
             reason = "ineligible_role"
@@ -768,7 +771,7 @@ def main():
     write_csv(os.path.join(a.out, "schools.csv"), schools, base_cols)
 
     data = {
-        "generated_at": iso(datetime.now(timezone.utc)), "as_of": iso(now), "synthetic": synthetic,
+        "generated_at": iso(datetime.now(timezone.utc)), "as_of": iso(now), "synthetic": synthetic, "test_mode": test_mode,
         "pending_launch": pending_launch,
         "cycle": {"name": cfg["cycle_name"], "start": iso(cycle_start)}, "fresh_start_levels": sorted(fresh_levels),
         "ccd_loaded": any(s["level"] != "unknown" for s in schools), "historical_loaded": any(s.get("hist_represented") == "true" for s in schools),
