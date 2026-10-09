@@ -24,14 +24,14 @@ jobs:
           QUALTRICS_DATACENTER: ${{ secrets.QUALTRICS_DATACENTER }}
         run: |
           if [ -n "$QUALTRICS_TOKEN" ]; then
-            python3 coverage_export.py --from-qualtrics --include-in-progress --allow-empty --out out --publish-dir publish
+            python3 coverage_export.py --from-qualtrics --include-in-progress --allow-empty --out out --publish-dir docs
           else
             echo "No QUALTRICS_TOKEN yet: publishing the earlier waves only"
-            python3 coverage_export.py --allow-empty --out out --publish-dir publish
+            python3 coverage_export.py --allow-empty --out out --publish-dir docs
           fi
       - name: Commit the published dashboard (page, aggregates, school rosters; never the response file)
         run: |
           git config user.name "coverage-bot"
           git config user.email "coverage-bot@users.noreply.github.com"
-          git add publish
+          git add docs
           git diff --cached --quiet || git commit -m "Refresh coverage dashboard" && git push
