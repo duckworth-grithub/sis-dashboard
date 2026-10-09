@@ -151,7 +151,7 @@
   </div>
 
   <div class="page" id="page-gaps">
-    <h2 class="ph">Coverage gaps</h2><p class="pd">Schools with no report yet, by state. Middle and high schools by default, matching the headline; use the filter for elementary or all levels. "Lagging" = more than <span id="gapPts"></span> points below the national rate.</p>
+    <h2 class="ph">Coverage gaps</h2><p class="pd">Schools with no report yet, by state. MS/HS by default, the same schools the headline counts (NCES level middle, high or secondary); Elementary is the new survey only; All is every school in the NCES list. "Lagging" = more than <span id="gapPts"></span> points below the national rate.</p>
     <div class="grid2eq" style="align-items:stretch;margin-top:12px"><div class="card" id="gapsMapBig"></div><div class="card" id="gapsBoard"></div></div>
     <div class="filters"><select id="levelFilter"></select><input id="stateSearch" placeholder="Find state" size="12"><span class="sec-note" id="listLinks"></span></div>
     <div class="card tablewrap"><table id="states"><thead></thead><tbody></tbody></table></div>
@@ -306,14 +306,14 @@
     if (!paths) return `<div class="sec-note" style="padding:40px 0;text-align:center">Map needs assets/us-states-paths.json next to this page.</div>`;
     return `<svg class="map" viewBox="0 0 1180 660" style="width:100%;display:block" role="img" aria-label="Middle and high school coverage by state">${Object.keys(paths).map((k) => { const x = mhByCode[k]; return `<path d="${paths[k]}" fill="${ramp(x ? x.pct : null)}" data-go="gaps?state=${k}" data-tip="<b>${esc(x ? x.state : k)}</b>${rankOf[k] ? ` · #${rankOf[k]} of ${ranked.length}` : ""}<br>${x ? `${fmt(x.covered)} of ${fmt(x.eligible)} middle/high schools · ${pct(x.pct)}` : "no data"}"></path>`; }).join("")}</svg>`;
   }
-  $("#gapsCard").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">State leaderboard</div><div class="sec-note">% of middle and high schools with at least one report ${rampLegend}</div></div>
-    <div class="mapgrid">${mapSvgMH()}<div class="ranked"><div class="kicker" style="color:var(--slate);font-size:12px;letter-spacing:0.12em">Top 5</div>
+  $("#gapsCard").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">State leaderboard</div><div class="sec-note">% of middle and high schools with at least one report</div></div>
+    <div class="mapgrid"><div>${mapSvgMH()}<div style="margin-top:8px">${rampLegend}</div></div><div class="ranked"><div class="kicker" style="color:var(--slate);font-size:12px;letter-spacing:0.12em">Top 5</div>
       ${ranked.slice(0, 5).map((x, i) => `<div class="row" data-go="gaps?state=${x.st}"><span class="n">${i + 1}. ${esc(x.state)}</span><span class="v"><b>${pct(x.pct)}</b></span></div>`).join("")}
       <div style="margin-top:12px"><span class="pill" data-go="gaps">All states →</span></div></div></div>`;
   function renderGapsMap() {
     const lvl = lf.value;
     const src = lvl === "mshs" ? mhByCode : lvl ? Object.fromEntries(d.states.map((x) => { const b = x.by_level[lvl] || { eligible: 0, covered: 0 }; return [x.st, { ...x, eligible: b.eligible, covered: b.covered, pct: b.eligible ? +(100 * b.covered / b.eligible).toFixed(1) : null }]; })) : byCode;
-    const label = lvl === "mshs" ? "middle and high schools" : lvl ? LEVEL[lvl].toLowerCase() + " schools" : "all schools";
+    const label = lvl === "mshs" ? "middle and high schools" : lvl ? LEVEL[lvl].toLowerCase() + " schools" : "all schools (every school in the NCES list)";
     const svg = paths ? `<svg class="map big" viewBox="0 0 1180 660" style="width:100%;display:block" role="img" aria-label="Coverage by state"><use href="#x"/>${Object.keys(paths).map((k) => { const x = src[k]; return `<path d="${paths[k]}" fill="${ramp(x ? x.pct : null)}" data-go="gaps?state=${k}" data-tip="<b>${esc(x ? x.state : k)}</b><br>${x && x.eligible ? `${fmt(x.covered)} of ${fmt(x.eligible)} ${label} · ${pct(x.pct)}` : "no data"}"></path>`; }).join("")}</svg>` : `<div class="sec-note" style="padding:40px 0;text-align:center">Map needs assets/us-states-paths.json next to this page.</div>`;
     $("#gapsMapBig").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Coverage by state · ${label}</div><div class="sec-note">${rampLegend}</div></div><div style="margin:8px auto 0">${svg}</div><div class="sec-note" style="margin-top:6px">click a state to filter the table</div>`;
     const rowsB = Object.values(src).filter((x) => x && x.pct != null && x.eligible >= 50 && !TERR.has(x.st)).sort((a, b) => b.pct - a.pct || b.covered - a.covered);
@@ -339,7 +339,7 @@
   $("#gapPts").textContent = d.config.lagging_state_gap_points;
   const lf = $("#levelFilter");
   const levelsPresent = d.levels.filter((l) => c.by_level[l].eligible > 0);
-  lf.innerHTML = `<option value="mshs">Middle + high</option><option value="">All levels</option>` + levelsPresent.map((l) => `<option value="${l}">${LEVEL[l]}</option>`).join("");
+  lf.innerHTML = `<option value="mshs">MS/HS</option><option value="elementary">Elementary</option><option value="">All</option>`;
   let sortKey = "pct", sortDir = 1;
   const TERR = new Set(["PR", "GU", "VI", "AS", "MP", "DA", "BI"]);
   const stateCols = [["state", "State", false], ["eligible", "Schools", true], ["covered", "With a report", true], ["pct", "Coverage", true], ["remaining", "Remaining", true], ["one", "1 report", true], ["two_plus", "2+", true]].concat(P ? [] : [["new_this_week", "New this wk", true], ["new_last_week", "New last wk", true]]);

@@ -650,18 +650,30 @@ def main():
                          "title": "valid reports per day, last 7 days.",
                          "body": (f"{'Up' if delta >= 0 else 'Down'} {abs(delta):.0f}% on the 7 days before." if delta is not None else "First week of responses.") + f" {sum(last7):,} this week.",
                          "action": "Data quality", "target": "quality"})
-    # (b) spike: a day with more than 2x the trailing 14-day average and at least 20 responses
-    recent14 = [(str((now - timedelta(days=i)).date()), valid_by_day.get(str((now - timedelta(days=i)).date()), 0)) for i in range(0, 14)]
-    base = sum(n for _, n in recent14) / 14.0
-    spikes = [(d_, n) for d_, n in recent14 if base and n >= 20 and n >= 2 * base]
+    # (b) spike by place: a state whose valid reports in the last 7 days are at least 3x the 7 days before (min 20)
+    def in_window(r, lo, hi):
+        return r["recorded_at"] and lo <= r["recorded_at"].date() <= hi
+    d7, d14 = (now - timedelta(days=6)).date(), (now - timedelta(days=13)).date()
+    by_state_now = collections.Counter(r["state_name"] for r in responses if r["valid"] and in_window(r, d7, now.date()))
+    by_state_prev = collections.Counter(r["state_name"] for r in responses if r["valid"] and in_window(r, d14, d7 - timedelta(days=1)))
+    spikes = []
+    for st_name, n in by_state_now.items():
+        prev = by_state_prev.get(st_name, 0)
+        if n >= 20 and n >= 3 * max(prev, 1):
+            spikes.append((n / max(prev, 1), st_name, n, prev))
     if spikes:
-        d_, n = max(spikes, key=lambda x: x[1])
+        ratio, st_name, n, prev = max(spikes)
+        rs_st = [r for r in responses if r["valid"] and r["state_name"] == st_name and in_window(r, d7, now.date())]
+        top_d = collections.Counter(by_id[r["ncessch"]].get("district") or "" for r in rs_st if r["ncessch"]).most_common(1)
+        top_c = collections.Counter(by_id[r["ncessch"]].get("city") or "" for r in rs_st if r["ncessch"]).most_common(1)
+        where = ", ".join(x for x in [top_d[0][0] if top_d and top_d[0][0] else "", top_c[0][0] if top_c and top_c[0][0] else ""] if x)
         callouts.append({"rule": "response_spike", "at_stake": 0, "stat": f"{n:,}",
-                         "title": f"responses on {d_}, {n / base:.1f}x the daily average.",
-                         "body": "Worth matching to that day's outreach so the source gets credit.", "action": "Data quality", "target": "quality"})
-    elif sum(n for _, n in recent14):
-        callouts.append({"rule": "response_spike", "at_stake": 0, "stat": "—", "title": "No response spike in the last 14 days.",
-                         "body": f"Daily average {base:,.0f}; a spike is a day at 2x that with at least 20 responses.", "action": "Data quality", "target": "quality"})
+                         "title": f"reports from {st_name} in the last 7 days, {ratio:.0f}x the week before.",
+                         "body": (f"Most from {where}. " if where else "") + "Worth matching to that week's outreach so the source gets credit.",
+                         "action": f"Gaps: {st_name}", "target": f"gaps?state={by_id[rs_st[0]['ncessch']]['st'] if rs_st and rs_st[0]['ncessch'] else ''}"})
+    elif sum(by_state_now.values()) or sum(by_state_prev.values()):
+        callouts.append({"rule": "response_spike", "at_stake": 0, "stat": "—", "title": "No state spiked this week.",
+                         "body": "A spike is a state with at least 20 valid reports in 7 days and 3x the week before.", "action": "Gaps", "target": "gaps"})
     # (c) new schools this week vs the pace the target needs
     if pace.get("needed_per_week") and (new_this or new_last or rolling):
         callouts.append({"rule": "pace_vs_needed", "at_stake": 0, "stat": f"+{new_this:,}",

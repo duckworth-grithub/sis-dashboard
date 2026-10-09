@@ -27,7 +27,7 @@ import re
 from common import HERE, STATES_50_DC, DEFAULT_STATE_CODES, load_config, norm_state, read_csv, write_csv, to_int
 
 BASE_COLUMNS = [
-    "ncessch", "st", "state_name", "school_name", "name_ambiguous", "leaid", "district", "level", "grade_lo",
+    "ncessch", "st", "state_name", "school_name", "name_ambiguous", "leaid", "district", "city", "level", "grade_lo",
     "grade_hi", "urbanicity", "enrollment", "charter", "in_ccd", "ccd_status", "ccd_type", "eligible",
     "ineligible_reason", "hist_reports_2025", "hist_represented", "hist_waves",
 ]
@@ -187,7 +187,7 @@ def main():
         c = ccd.get(r["ncessch"], {})
         row = dict(r)
         row["name_ambiguous"] = "true" if key_count[(r["state_name"], r["school_name"])] > 1 else ""
-        for k in ("leaid", "district", "grade_lo", "grade_hi", "urbanicity", "enrollment", "charter", "ccd_status", "ccd_type"):
+        for k in ("leaid", "district", "city", "grade_lo", "grade_hi", "urbanicity", "enrollment", "charter", "ccd_status", "ccd_type"):
             row[k] = c.get(k, "")
         row["level"] = c.get("level", "unknown")
         row["in_ccd"] = "true" if c else ""
