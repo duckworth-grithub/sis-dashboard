@@ -657,7 +657,7 @@ def main():
         delta = pct(avg7 - avgp, avgp) if avgp else None
         callouts.append({"rule": "avg_daily_responses", "at_stake": 0, "stat": f"{avg7:,.0f}",
                          "title": "valid reports per day, last 7 days.",
-                         "body": (f"{'Up' if delta >= 0 else 'Down'} {abs(delta):.0f}% on the 7 days before." if delta is not None else "First week of responses.") + f" {sum(last7):,} this week.",
+                         "body": f"{sum(last7):,} valid reports in the last 7 days" + (f", {'up' if delta >= 0 else 'down'} {abs(delta):.0f}% on the 7 days before." if delta is not None else " (first week of responses)."),
                          "action": "Data quality", "target": "quality"})
     # (b) spike by place: a state whose valid reports in the last 7 days are at least 3x the 7 days before (min 20)
     def in_window(r, lo, hi):

@@ -112,6 +112,7 @@
   .ranked .row { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; padding: 9px 0; border-bottom: 1px solid var(--rule-in); gap: 10px; }
   .ranked .row .n { font-weight: 700; }
   .ranked .row .v small { color: var(--muted); font-size: 12px; }
+  .ranked .row.collapsed { gap: 12px; align-items: center; padding: 10px 0; cursor: default; }
   .ramp { display: inline-flex; align-items: center; gap: 4px; background: var(--ground); border-radius: 999px; padding: 4px 10px; font-size: 11px; color: var(--slate); }
   .ramp i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; }
 
@@ -341,8 +342,7 @@
     const rowB = (x, i) => `<div class="row" data-go="gaps?state=${x.st}" style="gap:10px;align-items:center"><span style="width:20px;color:var(--muted);font-size:12px">${i}</span><span class="n" style="width:130px">${esc(x.state)}</span><span style="flex:1;height:8px;background:var(--track);border-radius:999px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(2, Math.round(100 * x.pct / maxB))}%;background:${ramp(x.pct)};border-radius:999px"></i></span><span class="v" style="width:118px;text-align:right"><b>${pct(x.pct)}</b> <small>· ${fmt(x.covered)}/${fmt(x.eligible)}</small></span></div>`;
     const top5 = rowsB.slice(0, 5), bottom5 = rowsB.slice(-5);
     $("#gapsBoard").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">State leaderboard · ${label}</div><div class="sec-note">${rowsB.some((x) => x.st === "DC") ? `${rowsB.length - 1} states + DC` : `${rowsB.length} states`}</div></div>
-      <div class="kicker" style="color:var(--slate);font-size:12px;letter-spacing:0.12em;margin-top:10px">Top 5</div><div class="ranked">${top5.map((x, i) => rowB(x, i + 1)).join("")}</div>
-      <div class="kicker" style="color:var(--slate);font-size:12px;letter-spacing:0.12em;margin-top:16px">Bottom 5</div><div class="ranked">${bottom5.map((x, i) => rowB(x, rowsB.length - 4 + i)).join("")}</div>`;
+      <div class="ranked" style="margin-top:10px">${top5.map((x, i) => rowB(x, i + 1)).join("")}${rowsB.length > 10 ? `<div class="row collapsed"><span style="width:20px;color:var(--muted);font-size:12px">⋮</span><span style="flex:1;border-top:2px dotted var(--axis)"></span><span class="sec-note">${rowsB.length - 10} in between</span><span style="flex:1;border-top:2px dotted var(--axis)"></span></div>` : ""}${bottom5.map((x, i) => rowB(x, rowsB.length - 4 + i)).join("")}</div>`;
   }
 
   // ---- strip: funnel (4 weeks) + total responses; needs review sits at the bottom of the overview
