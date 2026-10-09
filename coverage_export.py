@@ -663,7 +663,7 @@ def main():
         callouts.append({"rule": "response_spike", "at_stake": 0, "stat": "—", "title": "No response spike in the last 14 days.",
                          "body": f"Daily average {base:,.0f}; a spike is a day at 2x that with at least 20 responses.", "action": "Data quality", "target": "quality"})
     # (c) new schools this week vs the pace the target needs
-    if pace.get("needed_per_week"):
+    if pace.get("needed_per_week") and (new_this or new_last or rolling):
         callouts.append({"rule": "pace_vs_needed", "at_stake": 0, "stat": f"+{new_this:,}",
                          "title": "new schools this week so far." if new_this else "new schools this week so far.",
                          "body": f"Last week {new_last:,}. The target date needs about {pace['needed_per_week']:,} per week; 4-week average is {rolling:,.0f}.",
