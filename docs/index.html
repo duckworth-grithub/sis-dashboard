@@ -54,7 +54,12 @@
   .grid2eq { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: center; }
   @media (max-width: 1180px) { .grid3 { grid-template-columns: 1fr; } .grid2, .grid2eq { grid-template-columns: 1fr; } }
 
-  .band { background: var(--chalk); color: #FFFFFF; margin-top: 24px; border-radius: 28px; padding: 36px 40px 34px; display: grid; grid-template-columns: 1fr; gap: 24px; align-items: center; }
+  .band { background: var(--chalk); color: #FFFFFF; margin-top: 24px; border-radius: 28px; padding: 36px 40px 34px; display: grid; grid-template-columns: 1fr 220px; gap: 32px; align-items: center; }
+  .stan { text-align: center; }
+  .stan img { width: 150px; height: auto; display: block; margin: 0 auto 10px; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.25)); }
+  .stan .say { font-size: 15px; font-weight: 700; color: #FFFFFF; line-height: 1.3; }
+  .stan .who { font-size: 12px; color: var(--light); margin-top: 4px; }
+  @media (max-width: 760px) { .band { grid-template-columns: 1fr; } }
   @media (max-width: 1180px) { .band { grid-template-columns: 1fr; padding: 28px 24px; } }
   .band .kicker { color: var(--seed); }
   .hero { font-weight: 700; font-size: 112px; line-height: 0.9; letter-spacing: -0.045em; }
@@ -144,7 +149,7 @@
   <div class="page on" id="page-overview">
     <div class="band" id="band"></div>
     <div class="card strip grid2eq" id="strip"></div>
-    <section class="block"><div class="kicker">What to do next</div><div class="grid3" id="callouts"></div></section>
+    <section class="block"><div class="kicker">This week</div><div class="grid3" id="callouts"></div></section>
     <div class="grid2">
       <div class="card" style="display:flex;flex-direction:column" id="pace"></div>
       <div class="card" id="gapsCard"></div>
@@ -257,6 +262,7 @@
   const mshsRemainingRate = (v.rolling_avg_weekly_new || 0) * ((((cur.by_level.middle || 0) + (cur.by_level.high || 0)) || 1) / Math.max(1, cur.by_level.elementary + cur.by_level.middle + cur.by_level.high + (cur.by_level.other || 0) + (cur.by_level.unknown || 0)));
   const wkNewH = (c.mshs && c.mshs.eligible) ? ((cur.by_level.middle || 0) + (cur.by_level.high || 0)) : v.this_week.new;
   const weeksLeftH = (c.mshs && c.mshs.eligible) ? (mshsRemainingRate > 0 ? Math.round(H.remaining / mshsRemainingRate) : null) : (v.weeks_to_full && v.weeks_to_full.overall != null ? Math.round(v.weeks_to_full.overall) : null);
+  const stanSays = P ? "Ready when you are. Launch day is coming!" : (H.pct || 0) >= 75 ? "Three quarters of the way. Keep going!" : (H.pct || 0) >= 50 ? "Past halfway. Every report counts!" : (wkNewH > 0 ? `${fmt(wkNewH)} new schools this week. Nice work!` : "Every report puts a school on the map.");
   $("#band").innerHTML = `
     <div>
       <div class="kicker">${hLabel}</div>
@@ -269,12 +275,12 @@
         <span><span class="dot" style="background:rgba(255,255,255,0.16)"></span><b>${fmt(H.depth["0"])}</b> with none</span></span>
         <span>${P ? PEND : `<b>+${fmt(wkNewH)}</b> this week${weeksLeftH == null ? "" : ` · 100% in about <b>${fmt(weeksLeftH)} wks</b>`}`}</span></div>
     </div>
-`;
+    <div class="stan"><img src="assets/stan.png" alt="Stan, the Screens in Schools mascot"><div class="say">${stanSays}</div><div class="who">Stan</div></div>`;
 
   // ---- callouts
+  const CALL_LABEL = { avg_daily_responses: "valid reports per day, last 7 days", response_spike: "biggest state jump this week", pace_vs_needed: "new schools this week" };
   $("#callouts").innerHTML = (d.callouts || []).map((x) => `<div class="card action callout" data-go="${esc(x.target || "")}">
-    <div class="stat40">${esc(x.stat)}</div><div class="t pretty">${esc(x.title)}</div><div class="b pretty">${esc(x.body)}</div>
-    <div class="a"><span class="pill">${esc(x.action)} →</span></div></div>`).join("") || `<div class="card sec-note">${PEND}: callouts appear once there is a week of data.</div>`;
+    <div class="sec-note">${esc(CALL_LABEL[x.rule] || x.title)}</div><div class="stat40" style="margin-top:4px">${esc(x.stat)}</div><div class="b pretty" style="margin-top:4px">${esc(x.rule === "response_spike" && x.stat !== "—" ? x.title.replace(/^reports from /, "") : x.body)}</div></div>`).join("") || `<div class="card sec-note">${PEND}: this fills in once there is a week of data.</div>`;
   document.addEventListener("click", (e) => { const t = e.target.closest("[data-go]"); if (t) go(t.dataset.go); });
 
   // ---- pace
