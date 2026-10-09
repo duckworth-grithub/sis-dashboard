@@ -283,7 +283,7 @@ def main():
     if test_mode:
         cycle_start = parse_dt("2000-01-01T00:00:00Z")   # pre-launch: everything in Qualtrics is test data; show it all
     synthetic = bool(cfg.get("_synthetic"))
-    alerts = []
+    alerts = []   # only for things that are broken or make the data inaccurate (pipeline errors, survey edits, stale inputs, test data)
 
     # ---- reference data
     schools = read_csv(os.path.join(a.data, "schools.csv"))
@@ -631,8 +631,6 @@ def main():
                              "cost_per_valid": round(cost / f["valid"], 2) if cost and f["valid"] else None,
                              "cost_per_new_school": round(cost / f["new_schools"], 2) if cost and f["new_schools"] else None,
                              "hours_per_new_school": round(hours / f["new_schools"], 2) if hours and f["new_schools"] else None})
-        if stage == "activated" and p.get("activated_on") and (now.date() - datetime.fromisoformat(p["activated_on"]).date()).days >= 21 and f["new_schools"] == 0:
-            alerts.append(f"partner {slug} activated {p['activated_on']} has produced 0 new schools")
     partner_rows.sort(key=lambda x: (-x["new_schools"], x["partner"]))
 
     for role in ("student", "educator", "librarian"):
@@ -734,19 +732,10 @@ def main():
           "respondent_level_mismatch": sum(1 for r in valid if "respondent_level_mismatch" in r["flags"]),
           "codebook_misses": sum(codebook_misses.values()), "manual_matches_applied": sum(1 for r in responses if r["match_method"] == "manual"),
           "needs_review": sum(1 for r in completes if r["invalid_reason"] in ("unmatched", "ambiguous", "speeder"))}
-    if dq["queue"]["oldest_days"] and dq["queue"]["oldest_days"] > 7:
-        alerts.append(f"manual match queue has items older than 7 days ({dq['queue']['size']} waiting)")
-    if dq["unknown_channel_share"] and dq["unknown_channel_share"] > 20 and dq["valid"] >= 50:
-        alerts.append(f"{dq['unknown_channel_share']}% of valid reports have no identifiable channel (target < 20%)")
-    if dq["match_rate"] is not None and dq["match_rate"] < 85 and dq["completes"] >= 50:
-        alerts.append(f"school match rate {dq['match_rate']}% (below 85%)")
     if all(s["level"] == "unknown" for s in schools):
         alerts.append("NCES CCD not loaded: school levels unknown, level tiles are empty (see COVERAGE-DESIGN.md §10.6)")
     if not any(s.get("hist_represented") == "true" for s in schools):
         alerts.append("no historical (2025-26) layer loaded: STALE_NEEDS_REFRESH cannot be computed")
-    for ch in channels:
-        if ch["channel"] not in ("unknown", "redirect_from_educator") and ch["valid"] >= 20 and ch["new_last_week"] == 0 and ch["new_this_week"] == 0 and len(complete_weeks) >= 2:
-            alerts.append(f"channel {ch['channel']} produced 0 new schools in the last two weeks")
 
     # ---- lists
     out_lists = os.path.join(a.out, "lists")
