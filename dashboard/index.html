@@ -386,13 +386,13 @@
     };
     let rows = d.states.map(pick).filter((s) => s.eligible > 0);
     if (q) rows = rows.filter((s) => s.state.toLowerCase().includes(q) || s.st.toLowerCase() === q);
-    rows.sort((a, b) => { const ta = TERR.has(a.st) ? 1 : 0, tb = TERR.has(b.st) ? 1 : 0; if (ta !== tb) return ta - tb; const x = a[sortKey], y = b[sortKey]; if (x == null) return 1; if (y == null) return -1; return (x < y ? -1 : x > y ? 1 : 0) * sortDir * (sortKey === "state" ? -1 : 1); });
+    rows.sort((a, b) => { const x = a[sortKey], y = b[sortKey]; if (x == null) return 1; if (y == null) return -1; return (x < y ? -1 : x > y ? 1 : 0) * sortDir * (sortKey === "state" ? -1 : 1); });
     return rows;
   }
   function renderStates() {
     const rows = stateRows(), maxPct = Math.max(1, ...rows.map((r) => r.pct || 0));
     $("#states thead").innerHTML = `<tr>${stateCols.map(([k, l, num]) => `<th class="${num ? "num" : ""}" data-k="${k}">${l}${sortKey === k ? (sortDir === 1 ? " ▲" : " ▼") : ""}</th>`).join("")}</tr>`;
-    $("#states tbody").innerHTML = rows.map((s) => `<tr><td>${esc(s.state)} <span style="color:var(--muted)">${s.st}</span>${s.lagging && !TERR.has(s.st) ? ' <span class="tag warn">lagging</span>' : ""}${TERR.has(s.st) ? ' <span class="tag">outside the 50 states</span>' : ""}</td><td class="num">${fmt(s.eligible)}</td><td class="num">${fmt(s.covered)}</td>
+    $("#states tbody").innerHTML = rows.map((s) => `<tr><td>${esc(s.state)} <span style="color:var(--muted)">${s.st}</span>${s.lagging ? ' <span class="tag warn">lagging</span>' : ""}</td><td class="num">${fmt(s.eligible)}</td><td class="num">${fmt(s.covered)}</td>
       <td class="num barcell"><span class="track"><i style="width:${Math.max(2, 100 * (s.pct || 0) / maxPct)}%"></i></span>${pct(s.pct)}</td><td class="num">${fmt(s.remaining)}</td><td class="num">${fmt(s.one)}</td><td class="num">${fmt(s.two_plus)}</td>${P ? "" : `<td class="num">${fmt(s.new_this_week)}</td><td class="num">${fmt(s.new_last_week)}</td>`}</tr>`).join("");
   }
   $("#states thead").addEventListener("click", (e) => { const th = e.target.closest("th"); if (!th || th.dataset.k === "dl") return; const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = k === "state" ? 1 : -1; } renderStates(); });
