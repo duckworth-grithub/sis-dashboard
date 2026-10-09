@@ -30,10 +30,12 @@
   @media (max-width: 760px) {
     header.app .in { flex-direction: column; align-items: stretch; gap: 8px; padding-top: 18px; }
     header.app, header.app .in, .brand { overflow: visible; }
-    header.app .in > * { min-width: 0; max-width: 100%; }
-    .hdr-right { display: block; width: 100%; }
-    nav.tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; min-width: 0; width: 100%; box-sizing: border-box; margin: 0; padding: 0 0 4px; scrollbar-width: none; }
-    nav.tabs::-webkit-scrollbar { display: none; }
+    header.app .in { flex-direction: row; align-items: center; justify-content: space-between; padding-top: 14px; padding-bottom: 12px; position: relative; }
+    header.app .in > * { min-width: 0; }
+    .brand { font-size: 20px; }
+    header.app nav.tabs { display: none; }
+    header.app .secpick { display: inline-flex; }
+    header.app .secmenu:not([hidden]) { display: grid; }
     .stat40 { font-size: 30px; }
     .hero { font-size: 64px; }
     .band { padding: 24px 20px; }
@@ -46,6 +48,12 @@
   .pill.primary { background: var(--chalk); color: #FFFFFF; padding: 9px 18px; }
   .pill.primary:hover { background: #1C5E3D; }
   .hdr-right { display: flex; gap: 8px; align-items: center; }
+  .secpick { display: none; align-items: center; gap: 8px; border: 0; background: var(--ground); color: var(--ink); font: inherit; font-size: 14px; font-weight: 700; padding: 8px 12px 8px 14px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+  .secmenu { display: none; position: absolute; left: 16px; right: 16px; top: calc(100% - 4px); z-index: 40; background: var(--card); border-radius: 16px; box-shadow: 0 10px 30px rgba(28,28,26,0.18); padding: 6px; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .secmenu[hidden] { display: none; }
+  .secmenu button { border: 0; background: transparent; text-align: left; font: inherit; font-size: 14px; font-weight: 700; color: var(--slate); padding: 10px 12px; border-radius: 10px; cursor: pointer; }
+  .secmenu button[aria-selected="true"] { background: var(--ground); color: var(--ink); }
+  .secmenu button:last-child:nth-child(odd) { grid-column: 1 / -1; }
 
   .notice { margin: 16px 0 0; padding: 10px 16px; border-radius: 12px; background: var(--card); box-shadow: var(--shadow); font-size: 13px; color: var(--slate); display: flex; gap: 8px 20px; flex-wrap: wrap; }
   .notice b { color: var(--ink); }
@@ -96,16 +104,25 @@
   .cbar .f1 { background: var(--seed); } .cbar .f2 { background: #FFFFFF; }
   .legend { display: flex; justify-content: space-between; font-size: 13px; color: var(--light); margin-top: 10px; gap: 16px; flex-wrap: wrap; }
   .legend .l { display: flex; gap: 18px; flex-wrap: wrap; }
-  .band .legend .li .k::after { content: " · "; }
+  .band .legend .li .k::after, .band .legend .li .c::after { content: " · "; }
+  .band-top { display: none; }
   @media (max-width: 760px) {
-    .band .hero { font-size: 58px; }
-    .band .ctx { font-size: 15px; margin-top: 6px; }
+    .band { position: relative; padding: 20px 18px 18px; }
+    .band-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .band-kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--seed); }
+    .band .headrow { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+    .band .hero { font-size: 64px; }
+    .band .ctx { font-size: 14px; margin-top: 0 !important; }
+    .band .ctx .ctx-long { display: none; }
+    .cbar.with-stan { margin-top: 16px; height: 14px; }
     .band .legend { display: block; margin-top: 14px; }
-    .band .legend .l { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-    .band .legend .li { display: flex; flex-direction: column; gap: 2px; font-size: 12px; line-height: 1.3; min-width: 0; }
-    .band .legend .li .k::after { content: none; }
-    .band .legend .li .v { font-size: 13px; white-space: nowrap; }
-    .band .legend .wk { display: block; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.14); font-size: 13px; }
+    .band .legend .l { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .band .legend .li { display: flex; flex-direction: column; background: rgba(255,255,255,0.08); border-radius: 14px; padding: 10px 10px 9px; font-size: 11px; line-height: 1.3; min-width: 0; }
+    .band .legend .li .k::after, .band .legend .li .c::after { content: none; }
+    .band .legend .li .p { order: -1; font-weight: 700; font-size: 20px; letter-spacing: -0.02em; line-height: 1; color: #FFFFFF; margin-bottom: 5px; }
+    .band .legend .li .k { white-space: nowrap; }
+    .band .legend .li .dot { width: 8px; height: 8px; margin-right: 5px; }
+    .band .legend .wk { position: absolute; top: 18px; right: 18px; font-size: 12px; font-weight: 700; background: rgba(255,255,255,0.14); padding: 5px 10px; border-radius: 999px; white-space: nowrap; color: #FFFFFF; }
   }
   .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
   .lvl { background: rgba(255,255,255,0.08); border-radius: 20px; padding: 18px 22px; }
@@ -194,7 +211,8 @@
       <svg viewBox="0 0 96 46" width="26" height="12.6" aria-hidden="true"><path d="M48 4 L82 16 L48 28 L14 16 Z" fill="#1E4034"></path><circle cx="48" cy="13" r="2.5" fill="#1E4034"></circle><path d="M48 13 C60 13.5 73 15 79.5 17.5 C80.3 21 80.5 24 80.5 27" stroke="#1E4034" stroke-width="3" fill="none" stroke-linecap="round"></path><circle cx="80.5" cy="29.5" r="2.8" fill="#1E4034"></circle><path d="M78.5 33 C76.5 35.5 76 38 76.3 40 C76.3 42.5 84.7 42.5 84.7 40 C85 38 84.5 35.5 82.5 33 Z" fill="#1E4034"></path></svg></div>
     <nav class="tabs" id="tabs" role="tablist"></nav>
   </div>
-  <div class="hdr-right"></div>
+  <div class="hdr-right"><button class="secpick" id="secPick" aria-haspopup="true" aria-expanded="false"><span id="secPickLabel">Overview</span><svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="#1E4034" stroke-width="1.6"/></svg></button></div>
+  <div class="secmenu" id="secMenu" hidden></div>
 </div></header>
 
 <main class="wrap">
@@ -281,9 +299,16 @@
   // ---- header
   const TABS = [["overview", "Overview"], ["gaps", "Gaps"], ["bystate", "By state"], ["elementary", "Elementary"], ["student", "Students"], ["librarian", "Librarians"], ["quality", "Data quality"]];
   $("#tabs").innerHTML = TABS.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${k === "overview"}">${l}</button>`).join("");
+  $("#secMenu").innerHTML = TABS.map(([k, l]) => `<button role="menuitem" data-tab="${k}" aria-selected="${k === "overview"}">${l}</button>`).join("");
+  const secMenu = $("#secMenu"), secPick = $("#secPick");
+  const closeMenu = () => { secMenu.hidden = true; secPick.setAttribute("aria-expanded", "false"); };
+  secPick.addEventListener("click", (e) => { e.stopPropagation(); secMenu.hidden = !secMenu.hidden; secPick.setAttribute("aria-expanded", String(!secMenu.hidden)); });
+  secMenu.addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (!b) return; closeMenu(); go(b.dataset.tab); });
+  document.addEventListener("click", (e) => { if (!secMenu.hidden && !e.target.closest("#secMenu")) closeMenu(); });
   function show(tab, params = {}) {
     document.querySelectorAll(".page").forEach((p) => p.classList.toggle("on", p.id === "page-" + tab));
-    document.querySelectorAll("#tabs button").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === tab));
+    document.querySelectorAll("#tabs button, #secMenu button").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === tab));
+    const cur = TABS.find(([k]) => k === tab); if (cur) $("#secPickLabel").textContent = cur[1];
     if (tab === "gaps" && params.state) { $("#stateSearch").value = params.state; renderStates(); }
     if (tab === "bystate" && params.state) { $("#rosterState").value = params.state; loadRoster(params.state); }
     window.scrollTo({ top: 0 });
@@ -318,10 +343,10 @@
   const wkNewH = (c.mshs && c.mshs.eligible) ? ((cur.by_level.middle || 0) + (cur.by_level.high || 0)) : v.this_week.new;
   const weeksLeftH = (c.mshs && c.mshs.eligible) ? (mshsRemainingRate > 0 ? Math.round(H.remaining / mshsRemainingRate) : null) : (v.weeks_to_full && v.weeks_to_full.overall != null ? Math.round(v.weeks_to_full.overall) : null);
   // Stan's line: a fresh pick from the pool on every load; data-tied lines join the pool only when they are true
-  const STAN_PRE = ["Launch day is coming!", "Fall 2026, here we come.", "Getting ready for the first report.", "Counting down to launch.", "Almost launch time!", "The surveys open soon.", "Big fall ahead!", "Warming up for Fall 2026.", "Median 4.3 minutes. We say five.", "So many branches. Still no tree.", "Tested, retested, cross-reviewed.", "QSF and Google Doc: finally agree."];
-  const STAN_GENERAL = ["Every report counts!", "One school at a time.", "Keep them coming!", "Filling in the map.", "Another school on the board.", "More schools, more data.", "Small steps, big map.", "Steady as we go.", "Still growing, week by week.", "Every week adds to the map.", "Thanks for reporting!", "Every school has a story.", "Look at that map!", "Reports make the map.", "This is how it gets done.", "On our way!", "Growing every day.", "Still here, still counting.", "The map thanks you.", "Data day is every day.", "Good things take reports.", "Two per school is the dream."];
+  const STAN_PRE = ["Launch day is coming!", "Fall 2026, here we come.", "Getting ready for the first report.", "Counting down to launch.", "Almost launch time!", "The surveys open soon.", "Big fall ahead!", "Warming up for Fall 2026.", "Median 4.3 minutes. We say five.", "So many branches. Still no tree.", "Tested, retested, cross-reviewed.", "QSF and Google Doc: finally agree.", "Passion and perseverance... and branch testing."];
+  const STAN_GENERAL = ["Every report counts!", "One school at a time.", "Keep them coming!", "Filling in the map.", "Another school on the board.", "More schools, more data.", "Small steps, big map.", "Steady as we go.", "Still growing, week by week.", "Every week adds to the map.", "Thanks for reporting!", "Every school has a story.", "Look at that map!", "Reports make the map.", "This is how it gets done.", "On our way!", "Growing every day.", "Still here, still counting.", "The map thanks you.", "Data day is every day.", "Good things take reports.", "Two per school is the dream.", "Effort counts twice. So does a second report."];
   const DAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][new Date().getDay()];
-  const STAN_TEAM = ["Qualtrics and I are in talks.", "Spreadsheets, CSVs, and me.", "K/L/S met. I took notes.", "Stanford ran the numbers."];
+  const STAN_TEAM = ["Qualtrics and I are in talks.", "Spreadsheets, CSVs, and me.", "K/L/S met. I took notes.", "Stanford ran the numbers.", "Does this count as deliberate practice?", "Is that on the Penn PIF agenda?"];
   const STAN_DAY = [`Happy ${DAY}!`, "You got this!"].concat(STAN_TEAM).concat(DAY === "Wednesday" ? ["Happy hump day!"] : [], DAY === "Friday" ? ["TGIF!"] : [], DAY === "Monday" ? ["New week, new reports."] : []);
   const leadRows = d.states.map((x) => { const m = x.by_level.middle || {}, h = x.by_level.high || {}; const e = (m.eligible || 0) + (h.eligible || 0), cv = (m.covered || 0) + (h.covered || 0); return { st: x.st, state: x.state, e, cv, pct: e ? cv / e : null }; }).filter((x) => x.pct != null && x.e >= 50 && x.st !== "DC" && !["PR", "GU", "VI", "AS", "MP", "DA", "BI"].includes(x.st)).sort((a, b) => b.pct - a.pct || b.cv - a.cv);
   const STAN_LEAD = leadRows.length ? [`${leadRows[0].state} is in the lead!`] : [];
@@ -351,14 +376,15 @@
   const sf = $("#stanFloat"); sf.innerHTML = `<div class="bubble">${stanSays}</div><img src="assets/stan.png?v=${encodeURIComponent(d.generated_at)}" alt="Stan, the Screens in Schools mascot">`; sf.addEventListener("click", () => sf.classList.toggle("quiet"));
   $("#band").innerHTML = `
     <div>
-      <div class="hero">${pct(H.pct)}</div>
-      <div class="ctx" style="margin-top:10px;max-width:none"><b>${fmt(H.covered)}</b> of ${fmt(H.eligible)} MS/HS have at least one report.</div>
+      <div class="band-top"><span class="band-kicker">MS/HS with a report</span></div>
+      <div class="headrow"><div class="hero">${pct(H.pct)}</div>
+      <div class="ctx" style="margin-top:10px;max-width:none"><b>${fmt(H.covered)}</b> of ${fmt(H.eligible)} <span class="ctx-long">MS/HS have at least one report.</span></div></div>
       <div class="cbar with-stan" aria-label="Coverage: ${pct(H.pct)} with at least one report, ${pct(H.depth_pct["2plus"])} with two or more"><i class="f1" style="width:${Math.max(H.pct || 0, 0.4)}%"></i><i class="f2" style="width:${Math.max(H.depth_pct["2plus"] || 0, 0.25)}%"></i>
         <div class="stan"><div class="bubble">${stanSays}</div><img src="assets/stan.png?v=${encodeURIComponent(d.generated_at)}" alt="Stan, the Screens in Schools mascot"></div></div>
       <div class="legend"><span class="l">
-        <span class="li"><span class="k"><span class="dot" style="background:#FFFFFF"></span>2+ reports</span><span class="v"><b>${fmt(H.depth["2plus"])}</b> · ${pct(H.depth_pct["2plus"])}</span></span>
-        <span class="li"><span class="k"><span class="dot" style="background:#8FC49B"></span>1 report</span><span class="v"><b>${fmt(H.depth["1"])}</b> · ${pct(H.depth_pct["1"])}</span></span>
-        <span class="li"><span class="k"><span class="dot" style="background:rgba(255,255,255,0.16)"></span>none</span><span class="v"><b>${fmt(H.depth["0"])}</b> · ${pct(H.depth_pct["0"])}</span></span></span>
+        <span class="li"><span class="k"><span class="dot" style="background:#FFFFFF"></span>2+ reports</span><span class="c"><b>${fmt(H.depth["2plus"])}</b></span><span class="p">${pct(H.depth_pct["2plus"])}</span></span>
+        <span class="li"><span class="k"><span class="dot" style="background:#8FC49B"></span>1 report</span><span class="c"><b>${fmt(H.depth["1"])}</b></span><span class="p">${pct(H.depth_pct["1"])}</span></span>
+        <span class="li"><span class="k"><span class="dot" style="background:rgba(255,255,255,0.3)"></span>none</span><span class="c"><b>${fmt(H.depth["0"])}</b></span><span class="p">${pct(H.depth_pct["0"])}</span></span></span>
         <span class="wk">${P ? PEND : `<b>+${fmt(wkNewH)}</b> this week`}</span></div>
     </div>`;
 
