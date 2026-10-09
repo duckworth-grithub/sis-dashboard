@@ -97,10 +97,8 @@
   .cols .bars i:hover { opacity: 0.85; }
   .xlab { display: flex; justify-content: space-between; font-size: 11px; color: var(--slate); margin-top: 6px; white-space: nowrap; }
 
-  .mapgrid { display: grid; grid-template-columns: 1fr 200px; gap: 28px; align-items: stretch; margin-top: 12px; }
-  .mapgrid .ranked { display: flex; flex-direction: column; }
-  .mapgrid .ranked .row { flex: 1; align-items: center; }
-  .mapgrid .ranked .foot { margin-top: auto; padding-top: 14px; }
+  .mapgrid { display: grid; grid-template-columns: 1fr 270px; gap: 28px; align-items: start; margin-top: 12px; }
+  .mapgrid .ranked .foot { padding-top: 14px; }
   .roster4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   @media (max-width: 900px) { .roster4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 560px) { .roster4 { grid-template-columns: 1fr; } #rosterTiles.roster4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -113,7 +111,8 @@
   .ranked .row .n { font-weight: 700; }
   .ranked .row .v small { color: var(--muted); font-size: 12px; }
   .ranked .row.collapsed { gap: 12px; align-items: center; padding: 10px 0; cursor: default; }
-  .ramp { display: inline-flex; align-items: center; gap: 4px; background: var(--ground); border-radius: 999px; padding: 4px 10px; font-size: 11px; color: var(--slate); }
+  .ramp { display: inline-flex; align-items: center; flex-wrap: wrap; row-gap: 4px; gap: 4px; background: var(--ground); border-radius: 14px; padding: 4px 10px; font-size: 11px; color: var(--slate); }
+  .ramp > span { white-space: nowrap; }
   .ramp i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; }
 
   .strip { margin-top: 16px; padding: 18px 24px; }
@@ -138,6 +137,7 @@
   .tag.good { background: #E4EDE6; color: #1C5E3D; }
   .filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 16px 0 12px; }
   .filters select, .filters input { font: inherit; font-weight: 700; font-size: 13px; padding: 8px 14px; border: 0; border-radius: 999px; background: var(--card); color: var(--chalk); box-shadow: var(--shadow); }
+  .lvlsel { appearance: none; -webkit-appearance: none; font: inherit; font-weight: 700; color: var(--chalk); background: var(--ground); border: 0; border-radius: 999px; padding: 4px 28px 4px 12px; cursor: pointer; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%231E4034' stroke-width='1.6'/></svg>"); background-repeat: no-repeat; background-position: right 10px center; }
   .filters select { appearance: none; -webkit-appearance: none; padding-right: 30px; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%231E4034' stroke-width='1.6'/></svg>"); background-repeat: no-repeat; background-position: right 12px center; }
   .page { display: none; } .page.on { display: block; }
   .tip { position: fixed; pointer-events: none; display: none; background: var(--card); color: var(--ink); border-radius: 12px; padding: 8px 12px; font-size: 13px; box-shadow: 0 8px 24px rgba(28,28,26,0.18); z-index: 10; }
@@ -163,7 +163,7 @@
   <div class="page on" id="page-overview">
     <div class="band" id="band"></div>
     <div class="card strip grid2eq" id="strip"></div>
-    <section class="block"><div class="kicker">This week</div><div class="grid3" id="callouts"></div></section>
+    <section class="block"><div class="grid3" id="callouts" style="margin-top:16px"></div></section>
     <div class="grid2">
       <div class="card" style="display:flex;flex-direction:column" id="pace"></div>
       <div class="card" id="gapsCard"></div>
@@ -315,11 +315,12 @@
     if (!paths) return `<div class="sec-note" style="padding:40px 0;text-align:center">Map needs assets/us-states-paths.json next to this page.</div>`;
     return `<svg class="map ${cls}" viewBox="0 0 1180 660" style="width:100%;display:block" role="img" aria-label="Coverage by state">${Object.keys(paths).map((k) => { const s = byCode[k]; return `<path d="${paths[k]}" fill="${ramp(s ? s.pct : null)}" data-go="gaps?state=${k}" data-tip="<b>${esc(s ? s.state : k)}</b><br>${s ? `${fmt(s.covered)} of ${fmt(s.eligible)} covered · ${pct(s.pct)}` : "no data"}"></path>`; }).join("")}</svg>`;
   }
-  const rampLegend = `<span class="ramp" style="gap:10px;padding:6px 12px">${[["#C3E5CB", "<25%"], ["#8FC49B", "25–35"], ["#5C9F6F", "35–45"], ["#2C7A4B", "45–55"], ["#1C5E3D", "55–65"], ["#1E4034", "65%+"]].map(([h, l]) => `<span style="display:inline-flex;align-items:center;gap:4px"><i style="background:${h}"></i>${l}</span>`).join("")}</span>`;
+  const rampLegend = `<span class="ramp" style="gap:7px;padding:5px 10px">${[["#C3E5CB", "<25%"], ["#8FC49B", "25–35"], ["#5C9F6F", "35–45"], ["#2C7A4B", "45–55"], ["#1C5E3D", "55–65"], ["#1E4034", "65%+"]].map(([h, l]) => `<span style="display:inline-flex;align-items:center;gap:4px"><i style="background:${h}"></i>${l}</span>`).join("")}</span>`;
   // leaderboard and gaps on the same basis as the headline: middle + high schools
+  const TERR = new Set(["PR", "GU", "VI", "AS", "MP", "DA", "BI"]);
   const mh = d.states.map((x) => { const m = x.by_level.middle || { eligible: 0, covered: 0, two_plus: 0 }, h = x.by_level.high || { eligible: 0, covered: 0, two_plus: 0 }; const e = m.eligible + h.eligible, cv = m.covered + h.covered, tp = (m.two_plus || 0) + (h.two_plus || 0); return { ...x, eligible: e, covered: cv, remaining: e - cv, pct: e ? +(100 * cv / e).toFixed(1) : null, one: cv - tp, two_plus: tp }; });
   const topGaps = mh.filter((x) => x.eligible > 0).sort((a, b) => b.remaining - a.remaining).slice(0, 5);
-  const ranked = mh.filter((x) => x.pct != null && x.eligible >= 50).sort((a, b) => b.pct - a.pct || b.covered - a.covered);
+  const ranked = mh.filter((x) => x.pct != null && x.eligible >= 50 && x.st !== "DC" && !TERR.has(x.st)).sort((a, b) => b.pct - a.pct || b.covered - a.covered);
   const topPct = Math.max(1, ...ranked.map((x) => x.pct));
   const mhByCode = {}; mh.forEach((x) => (mhByCode[x.st] = x));
   const rankOf = {}; ranked.forEach((x, i) => (rankOf[x.st] = i + 1));
@@ -328,21 +329,23 @@
     return `<svg class="map" viewBox="0 0 1180 660" style="width:100%;display:block" role="img" aria-label="MS/HS coverage by state">${Object.keys(paths).map((k) => { const x = mhByCode[k]; return `<path d="${paths[k]}" fill="${ramp(x ? x.pct : null)}" data-go="gaps?state=${k}" data-tip="<b>${esc(x ? x.state : k)}</b>${rankOf[k] ? ` · #${rankOf[k]} of ${ranked.length}` : ""}<br>${x ? `${fmt(x.covered)} of ${fmt(x.eligible)} MS/HS · ${pct(x.pct)}` : "no data"}"></path>`; }).join("")}</svg>`;
   }
   $("#gapsCard").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">State leaderboard</div><div class="sec-note">% of MS/HS with at least one report</div></div>
-    <div class="mapgrid"><div>${mapSvgMH()}<div style="margin-top:8px">${rampLegend}</div></div><div class="ranked"><div class="kicker" style="color:var(--slate);font-size:12px;letter-spacing:0.12em">Top 5</div>
-      ${ranked.slice(0, 5).map((x, i) => `<div class="row" data-go="gaps?state=${x.st}"><span class="n">${i + 1}. ${esc(x.state)}</span><span class="v"><b>${pct(x.pct)}</b></span></div>`).join("")}
-      <div class="foot"><span class="pill" data-go="gaps">All states →</span></div></div></div>`;
+    <div class="mapgrid"><div>${mapSvgMH()}<div style="margin-top:8px">${rampLegend}</div></div><div class="ranked">
+      ${ranked.slice(0, 5).map((x, i) => `<div class="row" data-go="gaps?state=${x.st}" style="gap:10px;align-items:center"><span style="width:16px;color:var(--muted);font-size:12px">${i + 1}</span><span class="n" style="width:112px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(x.state)}</span><span style="flex:1;height:8px;background:var(--track);border-radius:999px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(2, Math.round(100 * x.pct / topPct))}%;background:${ramp(x.pct)};border-radius:999px"></i></span><span class="v"><b>${pct(x.pct)}</b></span></div>`).join("")}
+      <div class="row collapsed"><span style="width:16px;color:var(--muted);font-size:12px">⋮</span><span style="flex:1;border-top:2px dotted var(--axis)"></span></div>
+      <div class="foot"><span class="pill" data-go="gaps">All ${ranked.length} states →</span></div></div></div>`;
+  $("#gapsMapBig").addEventListener("change", (e) => { if (e.target.id !== "mapLevel") return; lf.value = e.target.value; lf.dispatchEvent(new Event("change")); });
   function renderGapsMap() {
     const lvl = lf.value;
     const src = lvl === "mshs" ? mhByCode : lvl ? Object.fromEntries(d.states.map((x) => { const b = x.by_level[lvl] || { eligible: 0, covered: 0 }; return [x.st, { ...x, eligible: b.eligible, covered: b.covered, pct: b.eligible ? +(100 * b.covered / b.eligible).toFixed(1) : null }]; })) : byCode;
     const label = lvl === "mshs" ? "MS/HS" : lvl ? LEVEL[lvl].toLowerCase() + " schools" : "all schools (every school in the NCES list)";
     const svg = paths ? `<svg class="map big" viewBox="0 0 1180 660" style="width:100%;height:100%;display:block" role="img" aria-label="Coverage by state"><use href="#x"/>${Object.keys(paths).map((k) => { const x = src[k]; return `<path d="${paths[k]}" fill="${ramp(x ? x.pct : null)}" data-go="gaps?state=${k}" data-tip="<b>${esc(x ? x.state : k)}</b><br>${x && x.eligible ? `${fmt(x.covered)} of ${fmt(x.eligible)} ${label} · ${pct(x.pct)}` : "no data"}"></path>`; }).join("")}</svg>` : `<div class="sec-note" style="padding:40px 0;text-align:center">Map needs assets/us-states-paths.json next to this page.</div>`;
-    $("#gapsMapBig").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Coverage by state · ${label}</div><div class="sec-note">${rampLegend}</div></div><div class="mapfill">${svg}</div><div class="sec-note" style="margin-top:8px;text-align:center">click a state to filter the table</div>`;
-    const rowsB = Object.values(src).filter((x) => x && x.pct != null && x.eligible >= 50 && !TERR.has(x.st)).sort((a, b) => b.pct - a.pct || b.covered - a.covered);
+    $("#gapsMapBig").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title" style="display:flex;align-items:center;gap:8px">Coverage by state · <select id="mapLevel" class="lvlsel" aria-label="School level">${[["mshs", "MS/HS"], ["elementary", "Elementary"], ["", "All"]].map(([v, l]) => `<option value="${v}"${v === lvl ? " selected" : ""}>${l}</option>`).join("")}</select></div><div class="sec-note">${rampLegend}</div></div><div class="mapfill">${svg}</div><div class="sec-note" style="margin-top:8px;text-align:center">click a state to filter the table</div>`;
+    const rowsB = Object.values(src).filter((x) => x && x.pct != null && x.eligible >= 50 && x.st !== "DC" && !TERR.has(x.st)).sort((a, b) => b.pct - a.pct || b.covered - a.covered);
     const maxB = Math.max(1, ...rowsB.map((x) => x.pct));
     const rowB = (x, i) => `<div class="row" data-go="gaps?state=${x.st}" style="gap:10px;align-items:center"><span style="width:20px;color:var(--muted);font-size:12px">${i}</span><span class="n" style="width:130px">${esc(x.state)}</span><span style="flex:1;height:8px;background:var(--track);border-radius:999px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(2, Math.round(100 * x.pct / maxB))}%;background:${ramp(x.pct)};border-radius:999px"></i></span><span class="v" style="width:118px;text-align:right"><b>${pct(x.pct)}</b> <small>· ${fmt(x.covered)}/${fmt(x.eligible)}</small></span></div>`;
     const top5 = rowsB.slice(0, 5), bottom5 = rowsB.slice(-5);
-    $("#gapsBoard").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">State leaderboard · ${label}</div><div class="sec-note">${rowsB.some((x) => x.st === "DC") ? `${rowsB.length - 1} states + DC` : `${rowsB.length} states`}</div></div>
-      <div class="ranked" style="margin-top:10px">${top5.map((x, i) => rowB(x, i + 1)).join("")}${rowsB.length > 10 ? `<div class="row collapsed"><span style="width:20px;color:var(--muted);font-size:12px">⋮</span><span style="flex:1;border-top:2px dotted var(--axis)"></span><span class="sec-note">${rowsB.length - 10} in between</span><span style="flex:1;border-top:2px dotted var(--axis)"></span></div>` : ""}${bottom5.map((x, i) => rowB(x, rowsB.length - 4 + i)).join("")}</div>`;
+    $("#gapsBoard").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">State leaderboard · ${label}</div><div class="sec-note">${rowsB.length} states</div></div>
+      <div class="ranked" style="margin-top:10px">${top5.map((x, i) => rowB(x, i + 1)).join("")}${rowsB.length > 10 ? `<div class="row collapsed"><span style="width:20px;color:var(--muted);font-size:12px">⋮</span><span style="flex:1;border-top:2px dotted var(--axis)"></span></div>` : ""}${bottom5.map((x, i) => rowB(x, rowsB.length - 4 + i)).join("")}</div>`;
   }
 
   // ---- strip: funnel (4 weeks) + total responses; needs review sits at the bottom of the overview
@@ -372,7 +375,6 @@
   const levelsPresent = d.levels.filter((l) => c.by_level[l].eligible > 0);
   lf.innerHTML = `<option value="mshs">MS/HS</option><option value="elementary">Elementary</option><option value="">All</option>`;
   let sortKey = "pct", sortDir = 1;
-  const TERR = new Set(["PR", "GU", "VI", "AS", "MP", "DA", "BI"]);
   const stateCols = [["state", "State", false], ["eligible", "Schools", true], ["covered", "With a report", true], ["pct", "Coverage", true], ["remaining", "Remaining", true], ["one", "1 report", true], ["two_plus", "2+", true]].concat(P ? [] : [["new_this_week", "New this wk", true], ["new_last_week", "New last wk", true]]);
   function stateRows() {
     const lvl = lf.value, q = ($("#stateSearch").value || "").trim().toLowerCase();
