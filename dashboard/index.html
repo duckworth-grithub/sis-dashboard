@@ -326,7 +326,8 @@
   const STAN_LEAD = leadRows.length ? [`${leadRows[0].state} is in the lead!`] : [];
   // date-based lines: season, month edges, countdown to the target date
   const today = new Date(), mo = today.getMonth() + 1, dom = today.getDate(), lastDom = new Date(today.getFullYear(), mo, 0).getDate();
-  const target = new Date(d.target_date + "T00:00:00"), cycStart = new Date(d.cycle.start), daysLeft = Math.round((target - today) / 864e5), weeksLeft = Math.round(daysLeft / 7);
+  const TARGET = (d.config && d.config.target_date) || (d.velocity && d.velocity.pace && d.velocity.pace.target_date) || "2027-07-01";
+  const target = new Date(TARGET + "T00:00:00"), cycStart = new Date(d.cycle.start), daysLeft = Math.round((target - today) / 864e5), weeksLeft = Math.round(daysLeft / 7);
   const cycFrac = cycStart.getFullYear() > 2020 ? (today - cycStart) / (target - cycStart) : null;
   const STAN_DATE = [].concat(
     (mo === 8 || mo === 9) ? ["Happy new school year!"] : [], (mo >= 9 && mo <= 11) ? ["Happy fall!"] : [], mo === 1 ? ["Happy new year!"] : [], (mo >= 3 && mo <= 5) ? ["Spring is here!"] : [], (mo === 6 || mo === 7) ? ["Summer break, map still open."] : [],
@@ -373,7 +374,7 @@
     <div class="pace-stats">
       <div><div class="stat28">${fmt(v.rolling_avg_weekly_new)}</div><div class="sub12">4-week average</div></div>
       <div><div class="stat28">+${pace.pts_per_week == null ? "—" : pace.pts_per_week} pts</div><div class="sub12">coverage per week</div></div>
-      <div><div class="stat28" style="color:var(--study)">${pace.projected_full_date && +pace.projected_full_date.slice(0, 4) <= +d.target_date.slice(0, 4) + 5 ? my(pace.projected_full_date) : "—"}</div><div class="sub12">${pace.projected_full_date && +pace.projected_full_date.slice(0, 4) > +d.target_date.slice(0, 4) + 5 ? "not at this pace" : "projected 100%"}</div></div>
+      <div><div class="stat28" style="color:var(--study)">${pace.projected_full_date && +pace.projected_full_date.slice(0, 4) <= +TARGET.slice(0, 4) + 5 ? my(pace.projected_full_date) : "—"}</div><div class="sub12">${pace.projected_full_date && +pace.projected_full_date.slice(0, 4) > +TARGET.slice(0, 4) + 5 ? "not at this pace" : "projected 100%"}</div></div>
       ${pace.needed_per_week ? `<div><div class="stat28">${fmt(pace.needed_per_week)}</div><div class="sub12">needed / wk for ${my(pace.target_date)}</div></div>` : ""}
     </div>
     <div class="cols"><div class="bars">${last12.map((w) => `<i class="${w.partial ? "cur" : ""}" style="height:${Math.max(2, Math.round(100 * w.new / mx))}%" data-tip="<b>Week of ${mdy(w.week_start)}${w.partial ? " (partial)" : ""}</b><br>${fmt(w.new)} new schools · ${fmt(w.second_reports)} second reports"></i>`).join("")}</div>
