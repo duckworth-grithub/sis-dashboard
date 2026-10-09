@@ -55,7 +55,7 @@
   @media (max-width: 1180px) { .grid3 { grid-template-columns: 1fr; } .grid2, .grid2eq { grid-template-columns: 1fr; } }
 
   .band { background: var(--chalk); color: #FFFFFF; margin-top: 24px; border-radius: 28px; padding: 36px 40px 34px; display: grid; grid-template-columns: 1fr; gap: 24px; align-items: center; }
-  .cbar.with-stan { margin-top: 124px; overflow: visible; }
+  .cbar.with-stan { margin-top: 24px; overflow: visible; }
   .stan { position: absolute; right: 0; bottom: 10px; display: flex; align-items: center; gap: 12px; pointer-events: none; }
   .stan img { width: 110px; height: auto; display: block; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.25)); }
   .stan .bubble { position: relative; background: #FFFFFF; color: var(--chalk); border-radius: 16px; padding: 10px 14px; font-size: 14px; font-weight: 700; line-height: 1.3; max-width: 150px; box-shadow: 0 1px 3px rgba(28,28,26,0.10); }
@@ -270,7 +270,7 @@
   const mshsRemainingRate = (v.rolling_avg_weekly_new || 0) * ((((cur.by_level.middle || 0) + (cur.by_level.high || 0)) || 1) / Math.max(1, cur.by_level.elementary + cur.by_level.middle + cur.by_level.high + (cur.by_level.other || 0) + (cur.by_level.unknown || 0)));
   const wkNewH = (c.mshs && c.mshs.eligible) ? ((cur.by_level.middle || 0) + (cur.by_level.high || 0)) : v.this_week.new;
   const weeksLeftH = (c.mshs && c.mshs.eligible) ? (mshsRemainingRate > 0 ? Math.round(H.remaining / mshsRemainingRate) : null) : (v.weeks_to_full && v.weeks_to_full.overall != null ? Math.round(v.weeks_to_full.overall) : null);
-  const stanSays = P ? "Launch day is coming!" : (H.pct || 0) >= 75 ? "Three quarters there!" : (H.pct || 0) >= 50 ? "Past halfway!" : (wkNewH > 0 ? `+${fmt(wkNewH)} this week. Nice work!` : "Every report counts!");
+  const stanSays = (P || d.test_mode) ? "Launch day is coming!" : (H.pct || 0) >= 75 ? "Three quarters there!" : (H.pct || 0) >= 50 ? "Past halfway!" : "Every report counts!";
   $("#band").innerHTML = `
     <div>
       <div class="hero">${pct(H.pct)}</div>
