@@ -242,6 +242,7 @@
   const P = !!d.pending_launch, PEND = "Pending Fall 2026 launch";
   const pendCard = (title) => `<div class="card"><div class="card-title">${title}</div><div class="sub12" style="margin-top:6px">${PEND}. This section fills in once ${esc(d.cycle.name)} responses arrive.</div></div>`;
   if (d.synthetic) n += `<div class="notice warn"><b>Synthetic data.</b> These numbers come from make_sample_data.py, not from survey responses.</div>`;
+  if (d.test_mode) n += `<div class="notice warn"><b>Pre-launch test data.</b> Current-cycle numbers come from test runs of the surveys. They disappear automatically once Qualtrics is wiped before launch.</div>`;
   if (P) n += `<div class="notice"><b>${PEND}.</b> Coverage below comes from the earlier waves (Spring/Summer 2025, Fall 2025–Spring 2026, Summer 2026). Weekly pace, sources, funnel and data quality fill in once ${esc(d.cycle.name)} responses arrive.</div>`;
   if (!d.ccd_loaded) n += `<div class="notice"><b>School levels unknown.</b> Load the NCES panel to split elementary / middle / high.</div>`;
   if (d.alerts && d.alerts.length) n += `<div class="notice warn"><b>Attention</b>${d.alerts.map((a) => `<span>${esc(a)}</span>`).join("")}</div>`;
