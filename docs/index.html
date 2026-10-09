@@ -353,8 +353,8 @@
   function renderStates() {
     const rows = stateRows(), maxPct = Math.max(1, ...rows.map((r) => r.pct || 0));
     $("#states thead").innerHTML = `<tr>${stateCols.map(([k, l, num]) => `<th class="${num ? "num" : ""}" data-k="${k}">${l}${sortKey === k ? (sortDir === 1 ? " ▲" : " ▼") : ""}</th>`).join("")}</tr>`;
-    $("#states tbody").innerHTML = rows.map((s) => `<tr><td>${esc(s.state)} <span style="color:var(--muted)">${s.st}</span>${s.lagging ? ' <span class="tag warn">lagging</span>' : ""}</td><td class="num">${fmt(s.eligible)}</td><td class="num">${fmt(s.covered)}</td>
-      <td class="num barcell"><i style="width:${Math.max(2, 80 * (s.pct || 0) / maxPct)}px"></i>${pct(s.pct)}</td><td class="num">${fmt(s.remaining)}</td><td class="num">${fmt(s.stale)}</td><td class="num">${fmt(s.one)}</td><td class="num">${fmt(s.two_plus)}</td><td class="num">${fmt(s.new_this_week)}</td><td class="num">${fmt(s.new_last_week)}</td></tr>`).join("");
+    $("#states tbody").innerHTML = rows.map((s) => `<tr><td>${esc(s.state)} <span style="color:var(--muted)">${s.st}</span>${s.lagging && !TERR.has(s.st) ? ' <span class="tag warn">lagging</span>' : ""}${TERR.has(s.st) ? ' <span class="tag">outside the 50 states</span>' : ""}</td><td class="num">${fmt(s.eligible)}</td><td class="num">${fmt(s.covered)}</td>
+      <td class="num barcell"><i style="width:${Math.max(2, 80 * (s.pct || 0) / maxPct)}px"></i>${pct(s.pct)}</td><td class="num">${fmt(s.remaining)}</td><td class="num">${fmt(s.one)}</td><td class="num">${fmt(s.two_plus)}</td>${P ? "" : `<td class="num">${fmt(s.new_this_week)}</td><td class="num">${fmt(s.new_last_week)}</td>`}</tr>`).join("");
   }
   $("#states thead").addEventListener("click", (e) => { const th = e.target.closest("th"); if (!th || th.dataset.k === "dl") return; const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = k === "state" ? 1 : -1; } renderStates(); });
   lf.addEventListener("change", () => { renderStates(); renderGapsMap(); }); $("#stateSearch").addEventListener("input", renderStates);

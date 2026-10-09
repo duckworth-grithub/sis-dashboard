@@ -578,7 +578,9 @@ def main():
                        "one": b["depth"]["1"], "two_plus": b["depth"]["2plus"],
                        "new_this_week": sum(1 for s in ss if s["newly_represented_at"] and week_start(parse_dt(s["newly_represented_at"])) == this_wk),
                        "new_last_week": sum(1 for s in ss if s["newly_represented_at"] and week_start(parse_dt(s["newly_represented_at"])) == last_wk),
-                       "by_level": {lv: {"eligible": sum(1 for s in ss if s["level"] == lv), "covered": sum(1 for s in ss if s["level"] == lv and int(s["total_reports"]) >= 1)} for lv in LEVELS}})
+                       "by_level": {lv: {"eligible": sum(1 for s in ss if s["level"] == lv), "covered": sum(1 for s in ss if s["level"] == lv and int(s["total_reports"]) >= 1),
+                                         "two_plus": sum(1 for s in ss if s["level"] == lv and int(s["total_reports"]) >= 2),
+                                         "stale": sum(1 for s in ss if s["level"] == lv and s["status"] == "STALE_NEEDS_REFRESH")} for lv in LEVELS}})
     nat = coverage["overall"]["pct"] or 0
     lagging = {x["state"] for x in states if x["pct"] is not None and x["pct"] < nat - cfg.get("lagging_state_gap_points", 10)}
     for x in states:
