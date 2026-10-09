@@ -318,7 +318,6 @@
     const svg = paths ? `<svg class="map big" viewBox="0 0 1180 660" style="width:100%;display:block" role="img" aria-label="Coverage by state"><use href="#x"/>${Object.keys(paths).map((k) => { const x = src[k]; return `<path d="${paths[k]}" fill="${ramp(x ? x.pct : null)}" data-go="gaps?state=${k}" data-tip="<b>${esc(x ? x.state : k)}</b><br>${x && x.eligible ? `${fmt(x.covered)} of ${fmt(x.eligible)} ${label} · ${pct(x.pct)}` : "no data"}"></path>`; }).join("")}</svg>` : `<div class="sec-note" style="padding:40px 0;text-align:center">Map needs assets/us-states-paths.json next to this page.</div>`;
     $("#gapsMapBig").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Coverage by state · ${label}</div><div class="sec-note">${rampLegend} · click a state to filter the table</div></div><div style="max-width:760px;margin:8px auto 0">${svg}</div>`;
   }
-  renderGapsMap();
 
   // ---- strip: funnel (4 weeks) + needs review
   const fn = (d.funnel && d.funnel.last_4w) || {};
@@ -354,12 +353,13 @@
   function renderStates() {
     const rows = stateRows(), maxPct = Math.max(1, ...rows.map((r) => r.pct || 0));
     $("#states thead").innerHTML = `<tr>${stateCols.map(([k, l, num]) => `<th class="${num ? "num" : ""}" data-k="${k}">${l}${sortKey === k ? (sortDir === 1 ? " ▲" : " ▼") : ""}</th>`).join("")}</tr>`;
-    $("#states tbody").innerHTML = rows.map((s) => `<tr><td>${esc(s.state)} <span style="color:var(--muted)">${s.st}</span>${s.lagging ? ' <span class="tag warn">lagging</span>' : ""}</td><td class="num">${fmt(s.eligible)}</td><td class="num">${fmt(s.covered)}</td>
-      <td class="num barcell"><i style="width:${Math.max(2, 80 * (s.pct || 0) / maxPct)}px"></i>${pct(s.pct)}</td><td class="num">${fmt(s.remaining)}</td><td class="num">${fmt(s.stale)}</td><td class="num">${fmt(s.one)}</td><td class="num">${fmt(s.two_plus)}</td><td class="num">${fmt(s.new_this_week)}</td><td class="num">${fmt(s.new_last_week)}</td></tr>`).join("");
+    $("#states tbody").innerHTML = rows.map((s) => `<tr><td>${esc(s.state)} <span style="color:var(--muted)">${s.st}</span>${s.lagging && !TERR.has(s.st) ? ' <span class="tag warn">lagging</span>' : ""}${TERR.has(s.st) ? ' <span class="tag">outside the 50 states</span>' : ""}</td><td class="num">${fmt(s.eligible)}</td><td class="num">${fmt(s.covered)}</td>
+      <td class="num barcell"><i style="width:${Math.max(2, 80 * (s.pct || 0) / maxPct)}px"></i>${pct(s.pct)}</td><td class="num">${fmt(s.remaining)}</td><td class="num">${fmt(s.one)}</td><td class="num">${fmt(s.two_plus)}</td>${P ? "" : `<td class="num">${fmt(s.new_this_week)}</td><td class="num">${fmt(s.new_last_week)}</td>`}</tr>`).join("");
   }
   $("#states thead").addEventListener("click", (e) => { const th = e.target.closest("th"); if (!th || th.dataset.k === "dl") return; const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = k === "state" ? 1 : -1; } renderStates(); });
   lf.addEventListener("change", () => { renderStates(); renderGapsMap(); }); $("#stateSearch").addEventListener("input", renderStates);
   renderStates();
+  renderGapsMap();
   $("#listLinks").innerHTML = `${fmt(d.lists["remaining_all.csv"])} schools remaining · ${fmt(d.lists["stale_elementary.csv"])} elementary reported in an earlier wave · ${fmt(d.lists["one_report.csv"])} with exactly one report`;
   let remainingCsv = null;
   $("#states tbody").addEventListener("click", async (e) => {

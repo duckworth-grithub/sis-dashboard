@@ -151,7 +151,7 @@
   </div>
 
   <div class="page" id="page-gaps">
-    <h2 class="ph">Coverage gaps</h2><p class="pd">Every eligible school that still has no report this cycle. "Stale" = reported in an earlier wave, nothing yet this cycle. "Lagging" = more than <span id="gapPts"></span> points below the national rate.</p>
+    <h2 class="ph">Coverage gaps</h2><p class="pd">Schools with no report yet, by state. Middle and high schools by default, matching the headline; use the filter for elementary or all levels. "Lagging" = more than <span id="gapPts"></span> points below the national rate.</p>
     <div class="card" id="gapsMapBig"></div>
     <div class="filters"><select id="levelFilter"></select><input id="stateSearch" placeholder="Find state" size="12"><span class="sec-note" id="listLinks"></span></div>
     <div class="card tablewrap"><table id="states"><thead></thead><tbody></tbody></table></div>
@@ -311,7 +311,13 @@
       ${topGaps.map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc(g.state)}</span><span class="v">${fmt(g.remaining)} <small>· ${pct(g.pct)}</small></span></div>`).join("")}
       <div class="sub12" style="margin-top:10px">middle/high schools without a report · state coverage</div>
       <div style="margin-top:12px"><span class="pill" data-go="gaps">All states →</span></div></div></div>`;
-  $("#gapsMapBig").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Coverage by state</div><div class="sec-note">${rampLegend} · click a state to filter the table</div></div><div style="max-width:760px;margin:8px auto 0">${mapSvg("big")}</div>`;
+  function renderGapsMap() {
+    const lvl = lf.value;
+    const src = lvl === "mshs" ? mhByCode : lvl ? Object.fromEntries(d.states.map((x) => { const b = x.by_level[lvl] || { eligible: 0, covered: 0 }; return [x.st, { ...x, eligible: b.eligible, covered: b.covered, pct: b.eligible ? +(100 * b.covered / b.eligible).toFixed(1) : null }]; })) : byCode;
+    const label = lvl === "mshs" ? "middle and high schools" : lvl ? LEVEL[lvl].toLowerCase() + " schools" : "all schools";
+    const svg = paths ? `<svg class="map big" viewBox="0 0 1180 660" style="width:100%;display:block" role="img" aria-label="Coverage by state"><use href="#x"/>${Object.keys(paths).map((k) => { const x = src[k]; return `<path d="${paths[k]}" fill="${ramp(x ? x.pct : null)}" data-go="gaps?state=${k}" data-tip="<b>${esc(x ? x.state : k)}</b><br>${x && x.eligible ? `${fmt(x.covered)} of ${fmt(x.eligible)} ${label} · ${pct(x.pct)}` : "no data"}"></path>`; }).join("")}</svg>` : `<div class="sec-note" style="padding:40px 0;text-align:center">Map needs assets/us-states-paths.json next to this page.</div>`;
+    $("#gapsMapBig").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Coverage by state · ${label}</div><div class="sec-note">${rampLegend} · click a state to filter the table</div></div><div style="max-width:760px;margin:8px auto 0">${svg}</div>`;
+  }
 
   // ---- strip: funnel (4 weeks) + needs review
   const fn = (d.funnel && d.funnel.last_4w) || {};
@@ -327,14 +333,21 @@
   $("#gapPts").textContent = d.config.lagging_state_gap_points;
   const lf = $("#levelFilter");
   const levelsPresent = d.levels.filter((l) => c.by_level[l].eligible > 0);
-  lf.innerHTML = `<option value="">All levels ▾</option>` + levelsPresent.map((l) => `<option value="${l}">${LEVEL[l]}</option>`).join("");
+  lf.innerHTML = `<option value="mshs">Middle + high ▾</option><option value="">All levels</option>` + levelsPresent.map((l) => `<option value="${l}">${LEVEL[l]}</option>`).join("");
   let sortKey = "pct", sortDir = 1;
-  const stateCols = [["state", "State", false], ["eligible", "Eligible", true], ["covered", "Covered", true], ["pct", "Coverage", true], ["remaining", "Remaining", true], ["stale", "Stale", true], ["one", "1 report", true], ["two_plus", "2+", true], ["new_this_week", "New this wk", true], ["new_last_week", "New last wk", true]];
+  const TERR = new Set(["PR", "GU", "VI", "AS", "MP", "DA", "BI"]);
+  const stateCols = [["state", "State", false], ["eligible", "Schools", true], ["covered", "With a report", true], ["pct", "Coverage", true], ["remaining", "Remaining", true], ["one", "1 report", true], ["two_plus", "2+", true]].concat(P ? [] : [["new_this_week", "New this wk", true], ["new_last_week", "New last wk", true]]);
   function stateRows() {
     const lvl = lf.value, q = ($("#stateSearch").value || "").trim().toLowerCase();
-    let rows = d.states.map((s) => { if (!lvl) return { ...s }; const b = s.by_level[lvl] || { eligible: 0, covered: 0 }; return { ...s, eligible: b.eligible, covered: b.covered, remaining: b.eligible - b.covered, pct: b.eligible ? +(100 * b.covered / b.eligible).toFixed(1) : null, stale: null, one: null, two_plus: null, new_this_week: null, new_last_week: null }; });
+    const pick = (s) => {
+      if (!lvl) return { ...s };
+      if (lvl === "mshs") { const m = mhByCode[s.st]; return m ? { ...s, eligible: m.eligible, covered: m.covered, remaining: m.remaining, pct: m.pct, one: null, two_plus: null } : { ...s }; }
+      const b = s.by_level[lvl] || { eligible: 0, covered: 0 };
+      return { ...s, eligible: b.eligible, covered: b.covered, remaining: b.eligible - b.covered, pct: b.eligible ? +(100 * b.covered / b.eligible).toFixed(1) : null, stale: null, one: null, two_plus: null, new_this_week: null, new_last_week: null };
+    };
+    let rows = d.states.map(pick).filter((s) => s.eligible > 0);
     if (q) rows = rows.filter((s) => s.state.toLowerCase().includes(q) || s.st.toLowerCase() === q);
-    rows.sort((a, b) => { const x = a[sortKey], y = b[sortKey]; if (x == null) return 1; if (y == null) return -1; return (x < y ? -1 : x > y ? 1 : 0) * sortDir * (sortKey === "state" ? -1 : 1); });
+    rows.sort((a, b) => { const ta = TERR.has(a.st) ? 1 : 0, tb = TERR.has(b.st) ? 1 : 0; if (ta !== tb) return ta - tb; const x = a[sortKey], y = b[sortKey]; if (x == null) return 1; if (y == null) return -1; return (x < y ? -1 : x > y ? 1 : 0) * sortDir * (sortKey === "state" ? -1 : 1); });
     return rows;
   }
   function renderStates() {
@@ -344,8 +357,9 @@
       <td class="num barcell"><i style="width:${Math.max(2, 80 * (s.pct || 0) / maxPct)}px"></i>${pct(s.pct)}</td><td class="num">${fmt(s.remaining)}</td><td class="num">${fmt(s.stale)}</td><td class="num">${fmt(s.one)}</td><td class="num">${fmt(s.two_plus)}</td><td class="num">${fmt(s.new_this_week)}</td><td class="num">${fmt(s.new_last_week)}</td></tr>`).join("");
   }
   $("#states thead").addEventListener("click", (e) => { const th = e.target.closest("th"); if (!th || th.dataset.k === "dl") return; const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = k === "state" ? 1 : -1; } renderStates(); });
-  lf.addEventListener("change", renderStates); $("#stateSearch").addEventListener("input", renderStates);
+  lf.addEventListener("change", () => { renderStates(); renderGapsMap(); }); $("#stateSearch").addEventListener("input", renderStates);
   renderStates();
+  renderGapsMap();
   $("#listLinks").innerHTML = `${fmt(d.lists["remaining_all.csv"])} schools remaining · ${fmt(d.lists["stale_elementary.csv"])} elementary reported in an earlier wave · ${fmt(d.lists["one_report.csv"])} with exactly one report`;
   let remainingCsv = null;
   $("#states tbody").addEventListener("click", async (e) => {
