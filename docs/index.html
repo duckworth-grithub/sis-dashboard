@@ -54,12 +54,12 @@
   .grid2eq { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: center; }
   @media (max-width: 1180px) { .grid3 { grid-template-columns: 1fr; } .grid2, .grid2eq { grid-template-columns: 1fr; } }
 
-  .band { background: var(--chalk); color: #FFFFFF; margin-top: 24px; border-radius: 28px; padding: 36px 40px 34px; display: grid; grid-template-columns: 1fr 340px; gap: 32px; align-items: center; }
-  .stan { display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
-  .stan img { width: 140px; height: auto; display: block; flex-shrink: 0; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.25)); }
-  .stan .bubble { position: relative; background: #FFFFFF; color: var(--chalk); border-radius: 16px; padding: 12px 14px; font-size: 14px; font-weight: 700; line-height: 1.3; max-width: 180px; }
-  .stan .bubble::after { content: ""; position: absolute; right: -9px; top: 50%; margin-top: -8px; border-width: 8px 0 8px 10px; border-style: solid; border-color: transparent transparent transparent #FFFFFF; }
-  @media (max-width: 760px) { .stan { justify-content: center; } }
+  .band { background: var(--chalk); color: #FFFFFF; margin-top: 24px; border-radius: 28px; padding: 36px 40px 34px; display: grid; grid-template-columns: 1fr; gap: 24px; align-items: center; }
+  .cbar.with-stan { margin-top: 118px; overflow: visible; }
+  .stan { position: absolute; bottom: 12px; width: 150px; margin-left: -75px; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
+  .stan img { width: 68px; height: auto; display: block; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.3)); }
+  .stan .bubble { position: relative; background: #FFFFFF; color: var(--chalk); border-radius: 12px; padding: 8px 11px; font-size: 12px; font-weight: 700; line-height: 1.25; text-align: center; max-width: 150px; }
+  .stan .bubble::after { content: ""; position: absolute; left: 50%; bottom: -7px; margin-left: -6px; border-width: 7px 6px 0 6px; border-style: solid; border-color: #FFFFFF transparent transparent transparent; }
   @media (max-width: 760px) { .band { grid-template-columns: 1fr; } }
   @media (max-width: 1180px) { .band { grid-template-columns: 1fr; padding: 28px 24px; } }
   .band .kicker { color: var(--seed); }
@@ -263,19 +263,19 @@
   const mshsRemainingRate = (v.rolling_avg_weekly_new || 0) * ((((cur.by_level.middle || 0) + (cur.by_level.high || 0)) || 1) / Math.max(1, cur.by_level.elementary + cur.by_level.middle + cur.by_level.high + (cur.by_level.other || 0) + (cur.by_level.unknown || 0)));
   const wkNewH = (c.mshs && c.mshs.eligible) ? ((cur.by_level.middle || 0) + (cur.by_level.high || 0)) : v.this_week.new;
   const weeksLeftH = (c.mshs && c.mshs.eligible) ? (mshsRemainingRate > 0 ? Math.round(H.remaining / mshsRemainingRate) : null) : (v.weeks_to_full && v.weeks_to_full.overall != null ? Math.round(v.weeks_to_full.overall) : null);
-  const stanSays = P ? "Ready when you are. Launch day is coming!" : (H.pct || 0) >= 75 ? "Three quarters of the way. Keep going!" : (H.pct || 0) >= 50 ? "Past halfway. Every report counts!" : (wkNewH > 0 ? `${fmt(wkNewH)} new schools this week. Nice work!` : "Every report puts a school on the map.");
+  const stanSays = P ? "Launch day is coming!" : (H.pct || 0) >= 75 ? "Three quarters there!" : (H.pct || 0) >= 50 ? "Past halfway!" : (wkNewH > 0 ? `+${fmt(wkNewH)} this week. Nice work!` : "Every report counts!");
   $("#band").innerHTML = `
     <div>
       <div class="hero">${pct(H.pct)}</div>
       <div class="ctx" style="margin-top:10px;max-width:none"><b>${fmt(H.covered)}</b> of ${fmt(H.eligible)} MS/HS have at least one report.</div>
-      <div class="cbar" aria-label="Coverage: ${pct(H.pct)} with at least one report, ${pct(H.depth_pct["2plus"])} with two or more"><i class="f1" style="width:${Math.max(H.pct || 0, 0.4)}%"></i><i class="f2" style="width:${Math.max(H.depth_pct["2plus"] || 0, 0.25)}%"></i></div>
+      <div class="cbar with-stan" aria-label="Coverage: ${pct(H.pct)} with at least one report, ${pct(H.depth_pct["2plus"])} with two or more"><i class="f1" style="width:${Math.max(H.pct || 0, 0.4)}%"></i><i class="f2" style="width:${Math.max(H.depth_pct["2plus"] || 0, 0.25)}%"></i>
+        <div class="stan" style="left:${Math.min(Math.max(H.pct || 0, 6), 94)}%"><div class="bubble">${stanSays}</div><img src="assets/stan.png?v=${encodeURIComponent(d.generated_at)}" alt="Stan, the Screens in Schools mascot"></div></div>
       <div class="legend"><span class="l">
         <span><span class="dot" style="background:#FFFFFF"></span>2+ reports · <b>${pct(H.depth_pct["2plus"])}</b></span>
         <span><span class="dot" style="background:#8FC49B"></span>1 report · <b>${pct(H.depth_pct["1"])}</b></span>
         <span><span class="dot" style="background:rgba(255,255,255,0.16)"></span>none · <b>${pct(H.depth_pct["0"])}</b></span></span>
         <span>${P ? PEND : `<b>+${fmt(wkNewH)}</b> this week`}</span></div>
-    </div>
-    <div class="stan"><div class="bubble">${stanSays}</div><img src="assets/stan.png?v=${encodeURIComponent(d.generated_at)}" alt="Stan, the Screens in Schools mascot"></div>`;
+    </div>`;
 
   // ---- callouts
   const CALL_LABEL = { avg_daily_responses: "valid reports per day, last 7 days", response_spike: "biggest state jump this week", pace_vs_needed: "new schools this week" };
