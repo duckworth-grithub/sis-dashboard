@@ -55,11 +55,11 @@
   @media (max-width: 1180px) { .grid3 { grid-template-columns: 1fr; } .grid2, .grid2eq { grid-template-columns: 1fr; } }
 
   .band { background: var(--chalk); color: #FFFFFF; margin-top: 24px; border-radius: 28px; padding: 36px 40px 34px; display: grid; grid-template-columns: 1fr; gap: 24px; align-items: center; }
-  .cbar.with-stan { margin-top: 118px; overflow: visible; }
-  .stan { position: absolute; bottom: 12px; width: 150px; margin-left: -75px; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
-  .stan img { width: 68px; height: auto; display: block; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.3)); }
-  .stan .bubble { position: relative; background: #FFFFFF; color: var(--chalk); border-radius: 12px; padding: 8px 11px; font-size: 12px; font-weight: 700; line-height: 1.25; text-align: center; max-width: 150px; }
-  .stan .bubble::after { content: ""; position: absolute; left: 50%; bottom: -7px; margin-left: -6px; border-width: 7px 6px 0 6px; border-style: solid; border-color: #FFFFFF transparent transparent transparent; }
+  .cbar.with-stan { margin-top: 124px; overflow: visible; }
+  .stan { position: absolute; right: 0; bottom: 10px; display: flex; align-items: center; gap: 12px; pointer-events: none; }
+  .stan img { width: 110px; height: auto; display: block; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.25)); }
+  .stan .bubble { position: relative; background: #FFFFFF; color: var(--chalk); border-radius: 16px; padding: 10px 14px; font-size: 14px; font-weight: 700; line-height: 1.3; max-width: 150px; box-shadow: 0 1px 3px rgba(28,28,26,0.10); }
+  .stan .bubble::after { content: ""; position: absolute; right: -9px; top: 50%; margin-top: -8px; border-width: 8px 0 8px 10px; border-style: solid; border-color: transparent transparent transparent #FFFFFF; }
   @media (max-width: 760px) { .band { grid-template-columns: 1fr; } }
   @media (max-width: 1180px) { .band { grid-template-columns: 1fr; padding: 28px 24px; } }
   .band .kicker { color: var(--seed); }
@@ -97,7 +97,10 @@
   .cols .bars i:hover { opacity: 0.85; }
   .xlab { display: flex; justify-content: space-between; font-size: 11px; color: var(--slate); margin-top: 6px; white-space: nowrap; }
 
-  .mapgrid { display: grid; grid-template-columns: 1fr 200px; gap: 24px; align-items: center; margin-top: 8px; }
+  .mapgrid { display: grid; grid-template-columns: 1fr 200px; gap: 24px; align-items: start; margin-top: 12px; }
+  .roster4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (max-width: 900px) { .roster4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .roster4 { grid-template-columns: 1fr; } #rosterTiles.roster4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 760px) { .mapgrid { grid-template-columns: 1fr; } }
   svg.map path { stroke: #FFFFFF; stroke-width: 1.5; cursor: pointer; transition: opacity 120ms; }
   svg.map path:hover { opacity: 0.8; }
@@ -119,7 +122,11 @@
   tbody td { padding: 9px 8px; border-bottom: 1px solid var(--rule-in); }
   tbody tr:hover td { background: #F7F7F5; }
   .tablewrap { overflow-x: auto; }
+  .barcell { white-space: nowrap; }
+  .barcell .track { display: inline-block; width: 80px; height: 8px; border-radius: 999px; background: var(--rule-in); vertical-align: middle; margin-right: 10px; overflow: hidden; }
+  .barcell .track i { display: block; height: 100%; border-radius: 999px; background: var(--study); }
   .barcell i { display: inline-block; height: 8px; border-radius: 999px; background: var(--study); vertical-align: middle; margin-right: 8px; }
+  #states td.num, #states th.num { padding-left: 14px; padding-right: 14px; }
   .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--ground); color: var(--slate); font-weight: 700; }
   .tag.warn { background: #FFF2EF; color: #B3261E; }
   .tag.good { background: #E4EDE6; color: #1C5E3D; }
@@ -170,8 +177,8 @@
   <div class="page" id="page-bystate">
     <h2 class="ph">By state</h2><p class="pd">One state at a time: which schools and districts are in the data, and which are not yet. "In the data" = at least one report (earlier waves carry forward for middle/high; elementary counts only with the new survey).</p>
     <div class="filters"><select id="rosterState"></select><span class="sec-note" id="rosterNote"></span></div>
-    <div class="grid3" id="rosterTiles" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
-    <div class="grid3" id="rosterCols" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
+    <div class="grid3 roster4" id="rosterTiles"></div>
+    <div class="grid3 roster4" id="rosterCols"></div>
   </div>
 
   <div class="page" id="page-elementary">
@@ -269,7 +276,7 @@
       <div class="hero">${pct(H.pct)}</div>
       <div class="ctx" style="margin-top:10px;max-width:none"><b>${fmt(H.covered)}</b> of ${fmt(H.eligible)} MS/HS have at least one report.</div>
       <div class="cbar with-stan" aria-label="Coverage: ${pct(H.pct)} with at least one report, ${pct(H.depth_pct["2plus"])} with two or more"><i class="f1" style="width:${Math.max(H.pct || 0, 0.4)}%"></i><i class="f2" style="width:${Math.max(H.depth_pct["2plus"] || 0, 0.25)}%"></i>
-        <div class="stan" style="left:${Math.min(Math.max(H.pct || 0, 6), 94)}%"><div class="bubble">${stanSays}</div><img src="assets/stan.png?v=${encodeURIComponent(d.generated_at)}" alt="Stan, the Screens in Schools mascot"></div></div>
+        <div class="stan"><div class="bubble">${stanSays}</div><img src="assets/stan.png?v=${encodeURIComponent(d.generated_at)}" alt="Stan, the Screens in Schools mascot"></div></div>
       <div class="legend"><span class="l">
         <span><span class="dot" style="background:#FFFFFF"></span>2+ reports · <b>${pct(H.depth_pct["2plus"])}</b></span>
         <span><span class="dot" style="background:#8FC49B"></span>1 report · <b>${pct(H.depth_pct["1"])}</b></span>
@@ -338,16 +345,19 @@
   const fc = (d.funnel && d.funnel.cycle) || {};
   const stages = [["Survey starts", fn.starts, "#8FC49B"], ["Completions", fn.completes, "#5C9F6F"], ["Valid reports", fn.valid, "#2C7A4B"], ["New schools", fn.new_schools, "#1E4034"]].filter((x) => x[1] != null);
   const fmax = Math.max(1, ...stages.map((x) => x[1]));
-  $("#strip").innerHTML = P ? `<div><span style="font-size:13px;font-weight:700">Funnel, last 4 weeks</span><div class="sub12">${PEND}.</div></div><div class="review"><div><div style="font-size:13px;font-weight:700">Total responses this cycle</div><div class="sub12">${PEND}.</div></div></div>`
-    : `<div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;font-weight:700">Funnel, last 4 weeks</span></div>
+  const bySv = dq.by_survey || {}, svOrder = [["student", "Students", "#C3E5CB"], ["educator", "Educators", "#5C9F6F"], ["librarian", "Librarians", "#1E4034"]].filter(([k]) => bySv[k]);
+  const svTotal = Math.max(1, svOrder.reduce((a, [k]) => a + (bySv[k].valid || 0), 0));
+  $("#strip").innerHTML = P ? `<div><span style="font-size:13px;font-weight:700">Last 30 days</span><div class="sub12">${PEND}.</div></div><div class="review"><div><div style="font-size:13px;font-weight:700">${esc(d.cycle.name)}</div><div class="sub12">${PEND}.</div></div></div>`
+    : `<div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;font-weight:700">Last 30 days</span></div>
       <div class="srcs" style="gap:6px">${stages.map(([l, n2, col]) => `<div style="align-items:center;gap:10px"><span style="color:var(--slate);width:110px;flex-shrink:0">${l}</span><span style="flex:1;height:8px;background:var(--track);border-radius:999px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(2, Math.round(100 * n2 / fmax))}%;background:${col};border-radius:999px"></i></span><b style="width:64px;text-align:right">${fmt(n2)}</b></div>`).join("")}</div></div>
-    <div class="review"><div style="width:100%"><div style="font-size:13px;font-weight:700">Total responses this cycle</div>
+    <div class="review"><div style="width:100%"><div style="font-size:13px;font-weight:700">${esc(d.cycle.name)}</div>
       <div style="display:flex;gap:28px;margin-top:10px;flex-wrap:wrap">
         <div><div class="stat28">${fmt(fc.starts)}</div><div class="sub12">started</div></div>
         <div><div class="stat28">${fmt(fc.completes)}</div><div class="sub12">completed</div></div>
         <div><div class="stat28">${fmt(fc.valid)}</div><div class="sub12">valid</div></div>
         <div><div class="stat28">${fmt(fc.new_schools)}</div><div class="sub12">new schools</div></div></div>
-      <div class="sub12" style="margin-top:8px">${Object.entries(dq.by_survey || {}).map(([sv, x]) => `${sv} ${fmt(x.valid)} valid`).join(" · ")}</div></div></div>`;
+      <div style="display:flex;height:10px;gap:2px;border-radius:999px;overflow:hidden;margin-top:12px;background:var(--track)">${svOrder.map(([k, l, col]) => `<i style="display:block;height:100%;width:${(100 * (bySv[k].valid || 0) / svTotal).toFixed(1)}%;background:${col}" data-tip="<b>${l}</b><br>${fmt(bySv[k].valid)} valid reports"></i>`).join("")}</div>
+      <div class="legend" style="color:var(--slate);margin-top:6px;font-size:12px"><span class="l">${svOrder.map(([k, l, col]) => `<span><span class="dot" style="background:${col}"></span>${l} <b style="color:var(--ink)">${fmt(bySv[k].valid)}</b></span>`).join("")}</span></div></div></div>`;
   $("#review").innerHTML = P ? `<div><div style="font-size:13px;font-weight:700">Needs review</div><div class="sub12">${PEND}.</div></div>`
     : `<div><div style="font-size:13px;font-weight:700">Needs review</div><div class="sub12 pretty"><b style="color:var(--ink)">${fmt(dq.needs_review)}</b> responses unmatched, ambiguous or too fast. Match rate ${pct(dq.match_rate)}. Queue ${fmt(dq.queue.size)}${dq.queue.oldest_days != null ? `, oldest ${dq.queue.oldest_days} d` : ""}.</div></div><span class="pill primary" data-go="quality">Review →</span>`;
 
@@ -376,7 +386,7 @@
     const rows = stateRows(), maxPct = Math.max(1, ...rows.map((r) => r.pct || 0));
     $("#states thead").innerHTML = `<tr>${stateCols.map(([k, l, num]) => `<th class="${num ? "num" : ""}" data-k="${k}">${l}${sortKey === k ? (sortDir === 1 ? " ▲" : " ▼") : ""}</th>`).join("")}</tr>`;
     $("#states tbody").innerHTML = rows.map((s) => `<tr><td>${esc(s.state)} <span style="color:var(--muted)">${s.st}</span>${s.lagging && !TERR.has(s.st) ? ' <span class="tag warn">lagging</span>' : ""}${TERR.has(s.st) ? ' <span class="tag">outside the 50 states</span>' : ""}</td><td class="num">${fmt(s.eligible)}</td><td class="num">${fmt(s.covered)}</td>
-      <td class="num barcell"><i style="width:${Math.max(2, 80 * (s.pct || 0) / maxPct)}px"></i>${pct(s.pct)}</td><td class="num">${fmt(s.remaining)}</td><td class="num">${fmt(s.one)}</td><td class="num">${fmt(s.two_plus)}</td>${P ? "" : `<td class="num">${fmt(s.new_this_week)}</td><td class="num">${fmt(s.new_last_week)}</td>`}</tr>`).join("");
+      <td class="num barcell"><span class="track"><i style="width:${Math.max(2, 100 * (s.pct || 0) / maxPct)}%"></i></span>${pct(s.pct)}</td><td class="num">${fmt(s.remaining)}</td><td class="num">${fmt(s.one)}</td><td class="num">${fmt(s.two_plus)}</td>${P ? "" : `<td class="num">${fmt(s.new_this_week)}</td><td class="num">${fmt(s.new_last_week)}</td>`}</tr>`).join("");
   }
   $("#states thead").addEventListener("click", (e) => { const th = e.target.closest("th"); if (!th || th.dataset.k === "dl") return; const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = k === "state" ? 1 : -1; } renderStates(); });
   lf.addEventListener("change", () => { renderStates(); renderGapsMap(); }); $("#stateSearch").addEventListener("input", renderStates);

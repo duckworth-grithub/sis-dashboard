@@ -639,7 +639,7 @@ def main():
     # ---- overview extras: pace detail, 4-week sources, callouts (rule engine, COVERAGE-DESIGN.md §7)
     pace["pts_per_week"] = round(100.0 * rolling / coverage["overall"]["eligible"], 2) if coverage["overall"]["eligible"] else None
     pace["projected_full_date"] = (now + timedelta(weeks=coverage["overall"]["remaining"] / rolling)).strftime("%Y-%m-%d") if rolling else None
-    four_wk_start = this_wk - timedelta(days=28)
+    four_wk_start = (now - timedelta(days=29)).date()   # "last 30 days" window for the strip and the source table
     recent = [r for r in in_cycle if r["recorded_at"] and r["recorded_at"].date() >= four_wk_start]
     channels_4w = []
     for ch in sorted({r["channel"] for r in recent}):
