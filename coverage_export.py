@@ -32,7 +32,9 @@ from datetime import datetime, timedelta, timezone
 from common import HERE, load_config, load_state_codes, norm_state, parse_dt, iso, read_csv, write_csv, to_int, truthy, glob_match
 
 LEVELS = ["elementary", "middle", "high", "other", "unknown"]
-EMBEDDED = ["utm_source", "utm_medium", "utm_campaign", "src", "Referer", "Q_URL"]
+EMBEDDED = ["utm_source", "utm_medium", "utm_campaign", "src", "Referer", "Q_URL"]            # names read from a row
+EMBEDDED_BY_SURVEY = {"student": ["src"], "educator": ["utm_source", "utm_medium", "utm_campaign", "Referer", "Q_URL"],
+                      "librarian": ["utm_source", "utm_medium", "utm_campaign", "Referer", "Q_URL"]}   # names each survey defines
 METADATA = ["startDate", "recordedDate", "finished", "progress", "duration", "distributionChannel"]   # never ipAddress
 
 # logical field -> (QID for the API json export, export tag for CSV exports)
@@ -189,7 +191,7 @@ def qualtrics_export(survey, survey_id, in_progress):
     token, dc = os.environ["QUALTRICS_TOKEN"], os.environ["QUALTRICS_DATACENTER"]
     base, hdr = f"https://{dc}.qualtrics.com/API/v3", {"X-API-TOKEN": token, "Content-Type": "application/json"}
     body = {"format": "json", "compress": True, "questionIds": [q for q, t in FIELDS[survey].values()],
-            "embeddedDataIds": EMBEDDED, "surveyMetadataIds": METADATA}
+            "embeddedDataIds": EMBEDDED_BY_SURVEY.get(survey, []), "surveyMetadataIds": METADATA}
     if in_progress:
         body["exportResponsesInProgress"] = True
 
@@ -637,40 +639,35 @@ def main():
         channels_4w.append({"channel": ch, "valid": f["valid"], "new_schools": f["new_schools"], "conv_valid_new": f["conv_valid_new"]})
     channels_4w.sort(key=lambda c: (-c["new_schools"], -c["valid"]))
     callouts = []
-    # headline basis = middle + high schools, so the state gap callout uses the same basis
-    def mh_of(st_row):
-        m, h = st_row["by_level"].get("middle", {"eligible": 0, "covered": 0}), st_row["by_level"].get("high", {"eligible": 0, "covered": 0})
-        e, cv = m["eligible"] + h["eligible"], m["covered"] + h["covered"]
-        return e, cv, e - cv, pct(cv, e)
-    top_state = max(states, key=lambda s: mh_of(s)[2]) if states else None
-    if top_state:
-        e, cv, rem, p_ = mh_of(top_state)
-        callouts.append({"rule": "largest_state_gap", "at_stake": rem, "stat": f"{rem:,}",
-                         "title": f"{top_state['state']} has the most middle and high schools still uncovered.",
-                         "body": f"{p_}% covered ({cv:,} of {e:,}). {top_state['new_last_week']} new last week.",
-                         "action": f"Uncovered schools in {top_state['st']}", "target": f"gaps?state={top_state['st']}"})
-    el_stale = coverage["by_level"]["elementary"]["stale"]
-    if el_stale:
-        stale_states = collections.Counter(s["state_name"] for s in elig if s["needs_refresh"] and s["level"] == "elementary").most_common(3)
-        callouts.append({"rule": "stale_elementary", "at_stake": el_stale, "stat": f"{el_stale:,}",
-                         "title": "Elementary schools that reported in an earlier wave need the new survey before they count.",
-                         "body": "Most in " + ", ".join(f"{n} ({c:,})" for n, c in stale_states) + ".",
-                         "action": "Stale elementary list", "target": "lists/stale_elementary.csv"})
-    eligible_ch = [c for c in channels_4w if c["channel"] not in ("unknown", "redirect_from_educator") and c["valid"] >= 20 and c["conv_valid_new"] is not None]
-    best = max(eligible_ch, key=lambda c: c["conv_valid_new"]) if eligible_ch else None
-    if best:
-        callouts.append({"rule": "best_yield_source", "at_stake": best["new_schools"], "stat": f"{best['conv_valid_new']}%",
-                         "title": f"{best['channel'].replace('_', ' ')} is the best-yielding source this month.",
-                         "body": f"{best['new_schools']:,} new schools from {best['valid']:,} valid reports in 4 weeks. Worth more of.",
-                         "action": "Acquisition", "target": "acquisition"})
-    lag_no_partner = [s for s in states if s["lagging"] and s["eligible"] >= 300 and not any(s["st"] in (p["expected_states"] or "").split("|") for p in partner_rows)]
-    if lag_no_partner:
-        worst = min(lag_no_partner, key=lambda s: s["pct"] or 0)
-        callouts.append({"rule": "lagging_state_no_partner", "at_stake": worst["remaining"], "stat": f"{worst['pct']}%",
-                         "title": f"{worst['state']} is lagging with no partner working it.",
-                         "body": f"{worst['remaining']:,} schools uncovered, {worst['new_last_week']} new last week.",
-                         "action": f"Uncovered schools in {worst['st']}", "target": f"gaps?state={worst['st']}"})
-    callouts.sort(key=lambda c: -c["at_stake"])
+    # (a) average daily valid responses, last 7 days vs the 7 before
+    valid_by_day = {x["date"]: x["valid_responses"] for x in daily}
+    last7 = [valid_by_day.get(str((now - timedelta(days=i)).date()), 0) for i in range(0, 7)]
+    prev7 = [valid_by_day.get(str((now - timedelta(days=i)).date()), 0) for i in range(7, 14)]
+    avg7, avgp = sum(last7) / 7.0, sum(prev7) / 7.0
+    if sum(last7) or sum(prev7):
+        delta = pct(avg7 - avgp, avgp) if avgp else None
+        callouts.append({"rule": "avg_daily_responses", "at_stake": 0, "stat": f"{avg7:,.0f}",
+                         "title": "valid reports per day, last 7 days.",
+                         "body": (f"{'Up' if delta >= 0 else 'Down'} {abs(delta):.0f}% on the 7 days before." if delta is not None else "First week of responses.") + f" {sum(last7):,} this week.",
+                         "action": "Data quality", "target": "quality"})
+    # (b) spike: a day with more than 2x the trailing 14-day average and at least 20 responses
+    recent14 = [(str((now - timedelta(days=i)).date()), valid_by_day.get(str((now - timedelta(days=i)).date()), 0)) for i in range(0, 14)]
+    base = sum(n for _, n in recent14) / 14.0
+    spikes = [(d_, n) for d_, n in recent14 if base and n >= 20 and n >= 2 * base]
+    if spikes:
+        d_, n = max(spikes, key=lambda x: x[1])
+        callouts.append({"rule": "response_spike", "at_stake": 0, "stat": f"{n:,}",
+                         "title": f"responses on {d_}, {n / base:.1f}x the daily average.",
+                         "body": "Worth matching to that day's outreach so the source gets credit.", "action": "Data quality", "target": "quality"})
+    elif sum(n for _, n in recent14):
+        callouts.append({"rule": "response_spike", "at_stake": 0, "stat": "—", "title": "No response spike in the last 14 days.",
+                         "body": f"Daily average {base:,.0f}; a spike is a day at 2x that with at least 20 responses.", "action": "Data quality", "target": "quality"})
+    # (c) new schools this week vs the pace the target needs
+    if pace.get("needed_per_week"):
+        callouts.append({"rule": "pace_vs_needed", "at_stake": 0, "stat": f"+{new_this:,}",
+                         "title": "new schools this week so far." if new_this else "new schools this week so far.",
+                         "body": f"Last week {new_last:,}. The target date needs about {pace['needed_per_week']:,} per week; 4-week average is {rolling:,.0f}.",
+                         "action": "Gaps", "target": "gaps"})
     callouts = callouts[:3]
 
     # ---- funnel (visits come from inputs/traffic.csv when the team pastes analytics in; Qualtrics has no page views)

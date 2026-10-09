@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-09T21:54:24Z",
- "as_of": "2026-10-09T21:54:21Z",
+ "generated_at": "2026-10-09T21:56:12Z",
+ "as_of": "2026-10-09T21:56:09Z",
  "synthetic": false,
  "test_mode": true,
  "pending_launch": true,
@@ -3333,31 +3333,13 @@
  },
  "callouts": [
   {
-   "rule": "stale_elementary",
-   "at_stake": 7069,
-   "stat": "7,069",
-   "title": "Elementary schools that reported in an earlier wave need the new survey before they count.",
-   "body": "Most in Illinois (752), California (607), Maryland (523).",
-   "action": "Stale elementary list",
-   "target": "lists/stale_elementary.csv"
-  },
-  {
-   "rule": "largest_state_gap",
-   "at_stake": 2397,
-   "stat": "2,397",
-   "title": "Texas has the most middle and high schools still uncovered.",
-   "body": "39.0% covered (1,531 of 3,928). 0 new last week.",
-   "action": "Uncovered schools in TX",
-   "target": "gaps?state=TX"
-  },
-  {
-   "rule": "lagging_state_no_partner",
-   "at_stake": 1341,
-   "stat": "0.2%",
-   "title": "Puerto Rico is lagging with no partner working it.",
-   "body": "1,341 schools uncovered, 0 new last week.",
-   "action": "Uncovered schools in PR",
-   "target": "gaps?state=PR"
+   "rule": "pace_vs_needed",
+   "at_stake": 0,
+   "stat": "+0",
+   "title": "new schools this week so far.",
+   "body": "Last week 0. The target date needs about 2,449 per week; 4-week average is 0.",
+   "action": "Gaps",
+   "target": "gaps"
   }
  ],
  "partners": [],

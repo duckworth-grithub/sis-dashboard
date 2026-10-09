@@ -296,7 +296,7 @@
   }
   const rampLegend = `<span class="ramp">${["#C3E5CB", "#8FC49B", "#5C9F6F", "#2C7A4B", "#1C5E3D", "#1E4034"].map((h) => `<i style="background:${h}"></i>`).join("")}&nbsp;&lt;25% → 65%+</span>`;
   // leaderboard and gaps on the same basis as the headline: middle + high schools
-  const mh = d.states.map((x) => { const m = x.by_level.middle || { eligible: 0, covered: 0 }, h = x.by_level.high || { eligible: 0, covered: 0 }; const e = m.eligible + h.eligible, cv = m.covered + h.covered; return { ...x, eligible: e, covered: cv, remaining: e - cv, pct: e ? +(100 * cv / e).toFixed(1) : null }; });
+  const mh = d.states.map((x) => { const m = x.by_level.middle || { eligible: 0, covered: 0, two_plus: 0 }, h = x.by_level.high || { eligible: 0, covered: 0, two_plus: 0 }; const e = m.eligible + h.eligible, cv = m.covered + h.covered, tp = (m.two_plus || 0) + (h.two_plus || 0); return { ...x, eligible: e, covered: cv, remaining: e - cv, pct: e ? +(100 * cv / e).toFixed(1) : null, one: cv - tp, two_plus: tp }; });
   const topGaps = mh.filter((x) => x.eligible > 0).sort((a, b) => b.remaining - a.remaining).slice(0, 5);
   const ranked = mh.filter((x) => x.pct != null && x.eligible >= 50).sort((a, b) => b.pct - a.pct || b.covered - a.covered);
   const topPct = Math.max(1, ...ranked.map((x) => x.pct));
@@ -341,9 +341,9 @@
     const lvl = lf.value, q = ($("#stateSearch").value || "").trim().toLowerCase();
     const pick = (s) => {
       if (!lvl) return { ...s };
-      if (lvl === "mshs") { const m = mhByCode[s.st]; return m ? { ...s, eligible: m.eligible, covered: m.covered, remaining: m.remaining, pct: m.pct, one: null, two_plus: null } : { ...s }; }
-      const b = s.by_level[lvl] || { eligible: 0, covered: 0 };
-      return { ...s, eligible: b.eligible, covered: b.covered, remaining: b.eligible - b.covered, pct: b.eligible ? +(100 * b.covered / b.eligible).toFixed(1) : null, stale: null, one: null, two_plus: null, new_this_week: null, new_last_week: null };
+      if (lvl === "mshs") { const m = mhByCode[s.st]; return m ? { ...s, eligible: m.eligible, covered: m.covered, remaining: m.remaining, pct: m.pct, one: m.one, two_plus: m.two_plus } : { ...s }; }
+      const b = s.by_level[lvl] || { eligible: 0, covered: 0, two_plus: 0 };
+      return { ...s, eligible: b.eligible, covered: b.covered, remaining: b.eligible - b.covered, pct: b.eligible ? +(100 * b.covered / b.eligible).toFixed(1) : null, stale: b.stale, one: b.covered - (b.two_plus || 0), two_plus: b.two_plus || 0, new_this_week: null, new_last_week: null };
     };
     let rows = d.states.map(pick).filter((s) => s.eligible > 0);
     if (q) rows = rows.filter((s) => s.state.toLowerCase().includes(q) || s.st.toLowerCase() === q);
