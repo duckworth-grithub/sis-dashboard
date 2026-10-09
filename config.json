@@ -1,0 +1,37 @@
+{
+  "cycle_name": "Fall 2026\u2013Spring 2027",
+  "cycle_start": "2026-10-13T00:00:00Z",
+  "eligible_states": "all",
+  "speeder_seconds": 60,
+  "lagging_state_gap_points": 10,
+  "rolling_weeks": 4,
+  "weekly_chart_weeks": 12,
+  "surveys": {
+    "student": "SV_6LFWjsZ51O8XInY",
+    "educator": "SV_bxUuSACfns11z5s",
+    "librarian": "SV_9BO9iR0YKZ2lVie"
+  },
+  "_notes": {
+    "cycle_start": "Launch of the 2026-27 surveys (UTC). Summer 2026 is its own cycle and enters as a carried-forward wave (build_historical.py --summer2026). Everything recorded before cycle_start is excluded as before_cycle.",
+    "eligible_states": "all (decided Oct 9, 2026: every school in the NCES dropdown is eligible, territories included) or 50_plus_dc.",
+    "speeder_seconds": "Completes faster than this are invalid (reason speeder). Revisit after week 1.",
+    "target_date": "Date by which the team wants 100% coverage (UTC date). Drives 'needed per week'. 2027-06-30 is an assumption: change it.",
+    "require_open_school": "Decided Oct 9, 2026: false. Closed/inactive schools may still report on past years; cleaning decides later.",
+    "require_regular_school": "Decided Oct 9, 2026: false.",
+    "require_in_nces_panel": "Decided Oct 9, 2026: false. Dropdown rows missing from the panel stay eligible with level unknown.",
+    "fresh_start_levels": "Levels whose coverage restarts at 0 this cycle because the survey is new (decided Oct 9, 2026: elementary). Other levels carry 2025-26 reports forward into the count."
+  },
+  "target_date": "2027-06-30",
+  "require_open_school": false,
+  "require_regular_school": false,
+  "require_in_nces_panel": false,
+  "fresh_start_levels": [
+    "elementary"
+  ],
+  "waves": {
+    "spring_summer_2025": "Spring and Summer 2025",
+    "fall2025_spring2026": "Fall 2025\u2013Spring 2026",
+    "summer_2026": "Summer 2026",
+    "current": "Fall 2026\u2013Spring 2027"
+  }
+}

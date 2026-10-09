@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>School Coverage</title>
+<meta name="description" content="Screens in Schools: how many U.S. public schools have a valid report this cycle, how fast that is growing, where the gaps are, and what to do next.">
+<style>
+  :root {
+    --ground: #EDEDEB; --card: #FFFFFF; --ink: #1A1A1A; --slate: #444444; --muted: #6B6B6B;
+    --rule: #E4E4E2; --rule-in: #EFEFEF; --axis: #DADADA; --track: #EFEFEF;
+    --chalk: #1E4034; --study: #2C7A4B; --seed: #8FC49B; --light: #C3E5CB;
+    --shadow: 0 1px 3px rgba(28,28,26,0.10);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--ground); color: var(--ink); font: 14px/1.45 "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: var(--study); font-weight: 700; text-decoration: none; }
+  a:hover { color: var(--chalk); }
+  button { font: inherit; cursor: pointer; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 0 32px 40px; }
+  @media (max-width: 760px) { .wrap { padding: 0 16px 32px; } }
+
+  header.app { background: var(--card); border-bottom: 1px solid var(--rule); }
+  header.app .in { max-width: 1280px; margin: 0 auto; padding: 14px 32px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  @media (max-width: 760px) { header.app .in { padding: 12px 16px; } }
+  .brand { position: relative; display: inline-block; font-family: Georgia, serif; font-weight: 700; font-size: 22px; line-height: 1; white-space: nowrap; }
+  .brand .s { color: var(--study); } .brand .i { color: var(--chalk); }
+  .brand svg { position: absolute; top: -7.8px; left: -5.7px; }
+  nav.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  nav.tabs button { border: 0; background: transparent; color: var(--slate); font-weight: 700; font-size: 14px; padding: 8px 14px; border-radius: 999px; white-space: nowrap; }
+  nav.tabs button[aria-selected="true"] { background: var(--ground); color: var(--ink); }
+  .pill { display: inline-block; background: var(--ground); color: var(--chalk); padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 700; border: 0; white-space: nowrap; }
+  .pill.primary { background: var(--chalk); color: #FFFFFF; padding: 9px 18px; }
+  .pill.primary:hover { background: #1C5E3D; }
+  .hdr-right { display: flex; gap: 8px; align-items: center; }
+
+  .notice { margin: 16px 0 0; padding: 10px 16px; border-radius: 12px; background: var(--card); box-shadow: var(--shadow); font-size: 13px; color: var(--slate); display: flex; gap: 8px 20px; flex-wrap: wrap; }
+  .notice b { color: var(--ink); }
+  .notice.warn { border-left: 4px solid #E15B47; }
+
+  .kicker { font-size: 13px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--study); }
+  .card { background: var(--card); border-radius: 20px; padding: 22px 24px; box-shadow: var(--shadow); min-width: 0; }
+  .card.action { cursor: pointer; transition: box-shadow 120ms; }
+  .card.action:hover { box-shadow: 0 0 0 2px var(--study), 0 14px 30px rgba(30,64,52,0.14); }
+  .card-title { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+  .sec-note { font-size: 12px; color: var(--slate); }
+  .stat28 { font-weight: 700; font-size: 28px; letter-spacing: -0.02em; line-height: 1; }
+  .stat40 { font-weight: 700; font-size: 40px; letter-spacing: -0.03em; line-height: 1; color: var(--chalk); }
+  .sub12 { font-size: 12px; color: var(--slate); margin-top: 4px; }
+  .pretty { text-wrap: pretty; }
+  section.block { margin-top: 28px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 12px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1.3fr; gap: 16px; margin-top: 16px; }
+  .grid2eq { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: center; }
+  @media (max-width: 1180px) { .grid3 { grid-template-columns: 1fr; } .grid2, .grid2eq { grid-template-columns: 1fr; } }
+
+  .band { background: var(--chalk); color: #FFFFFF; margin-top: 24px; border-radius: 28px; padding: 36px 40px 34px; display: grid; grid-template-columns: 1fr; gap: 24px; align-items: center; }
+  @media (max-width: 1180px) { .band { grid-template-columns: 1fr; padding: 28px 24px; } }
+  .band .kicker { color: var(--seed); }
+  .hero { font-weight: 700; font-size: 112px; line-height: 0.9; letter-spacing: -0.045em; }
+  @media (max-width: 760px) { .hero { font-size: 72px; } }
+  .band .ctx { font-size: 18px; line-height: 1.4; color: var(--light); max-width: 360px; }
+  .band b { color: #FFFFFF; }
+  .cbar { position: relative; height: 16px; margin-top: 24px; background: rgba(255,255,255,0.16); border-radius: 999px; overflow: hidden; }
+  .cbar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; display: block; }
+  .cbar .f1 { background: var(--seed); } .cbar .f2 { background: #FFFFFF; }
+  .legend { display: flex; justify-content: space-between; font-size: 13px; color: var(--light); margin-top: 10px; gap: 16px; flex-wrap: wrap; }
+  .legend .l { display: flex; gap: 18px; flex-wrap: wrap; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+  .lvl { background: rgba(255,255,255,0.08); border-radius: 20px; padding: 18px 22px; }
+  .lvl + .lvl { margin-top: 14px; }
+  .lvl .top { display: flex; justify-content: space-between; align-items: baseline; }
+  .lvl .top .k { font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: var(--seed); }
+  .lvl .top .w { font-size: 12px; color: var(--light); }
+  .lvl .pct { font-weight: 700; font-size: 44px; line-height: 1; letter-spacing: -0.03em; }
+  .lvl .rem { font-size: 13px; color: var(--light); }
+  .lvl .bar { height: 6px; margin-top: 12px; background: rgba(255,255,255,0.16); border-radius: 999px; overflow: hidden; }
+  .lvl .bar i { display: block; height: 100%; background: var(--seed); }
+
+  .callout { display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; }
+  .callout .t { font-size: 16px; font-weight: 700; line-height: 1.3; }
+  .callout .b { font-size: 14px; color: var(--slate); line-height: 1.45; }
+  .callout .a { margin-top: auto; padding-top: 10px; }
+
+  .pace-stats { display: flex; gap: 28px; margin-top: 16px; flex-wrap: wrap; }
+  .cols { position: relative; flex: 1; min-height: 130px; margin-top: 18px; border-bottom: 1px solid var(--axis); }
+  .cols .bars { position: absolute; inset: 0; display: flex; align-items: flex-end; gap: 6px; }
+  .cols .bars i { flex: 1; display: block; border-radius: 4px 4px 0 0; background: var(--seed); min-width: 0; }
+  .cols .bars i.cur { background: var(--chalk); }
+  .cols .avg { position: absolute; left: 0; right: 0; border-top: 2px dashed var(--study); }
+  .cols .bars i:hover { opacity: 0.85; }
+  .xlab { display: flex; justify-content: space-between; font-size: 11px; color: var(--slate); margin-top: 6px; white-space: nowrap; }
+
+  .mapgrid { display: grid; grid-template-columns: 1fr 200px; gap: 24px; align-items: center; margin-top: 8px; }
+  @media (max-width: 760px) { .mapgrid { grid-template-columns: 1fr; } }
+  svg.map path { stroke: #FFFFFF; stroke-width: 1.5; cursor: pointer; transition: opacity 120ms; }
+  svg.map path:hover { opacity: 0.8; }
+  .ranked .row { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; padding: 9px 0; border-bottom: 1px solid var(--rule-in); gap: 10px; }
+  .ranked .row .n { font-weight: 700; }
+  .ranked .row .v small { color: var(--muted); font-size: 12px; }
+  .ramp { display: inline-flex; align-items: center; gap: 4px; background: var(--ground); border-radius: 999px; padding: 4px 10px; font-size: 11px; color: var(--slate); }
+  .ramp i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; }
+
+  .strip { margin-top: 16px; padding: 18px 24px; }
+  .strip .srcs { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+  .strip .srcs div { display: flex; justify-content: space-between; font-size: 13px; }
+  .strip .review { border-left: 1px solid var(--rule); padding-left: 32px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+  @media (max-width: 1180px) { .strip .review { border-left: 0; padding-left: 0; border-top: 1px solid var(--rule); padding-top: 16px; } }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead th { text-align: left; color: var(--slate); font-weight: 700; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--rule); padding: 8px 8px; white-space: nowrap; cursor: pointer; user-select: none; }
+  th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tbody td { padding: 9px 8px; border-bottom: 1px solid var(--rule-in); }
+  tbody tr:hover td { background: #F7F7F5; }
+  .tablewrap { overflow-x: auto; }
+  .barcell i { display: inline-block; height: 8px; border-radius: 999px; background: var(--study); vertical-align: middle; margin-right: 8px; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--ground); color: var(--slate); font-weight: 700; }
+  .tag.warn { background: #FFF2EF; color: #B3261E; }
+  .tag.good { background: #E4EDE6; color: #1C5E3D; }
+  .filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 16px 0 12px; }
+  .filters select, .filters input { font: inherit; font-weight: 700; font-size: 13px; padding: 8px 14px; border: 0; border-radius: 999px; background: var(--card); color: var(--chalk); box-shadow: var(--shadow); }
+  .page { display: none; } .page.on { display: block; }
+  .tip { position: fixed; pointer-events: none; display: none; background: var(--card); color: var(--ink); border-radius: 12px; padding: 8px 12px; font-size: 13px; box-shadow: 0 8px 24px rgba(28,28,26,0.18); z-index: 10; }
+  footer.foot { margin-top: 28px; font-size: 12px; color: var(--muted); }
+  details summary { cursor: pointer; color: var(--slate); font-size: 13px; margin-top: 10px; }
+  h2.ph { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin: 28px 0 4px; }
+  p.pd { margin: 0 0 8px; color: var(--slate); }
+</style>
+</head>
+<body>
+<header class="app"><div class="in">
+  <div style="display:flex;align-items:center;gap:24px;min-width:0;flex-wrap:wrap">
+    <div class="brand"><span class="s">Screens</span><span class="i"> in Schools</span>
+      <svg viewBox="0 0 96 46" width="26" height="12.6" aria-hidden="true"><path d="M48 4 L82 16 L48 28 L14 16 Z" fill="#1E4034"></path><circle cx="48" cy="13" r="2.5" fill="#1E4034"></circle><path d="M48 13 C60 13.5 73 15 79.5 17.5 C80.3 21 80.5 24 80.5 27" stroke="#1E4034" stroke-width="3" fill="none" stroke-linecap="round"></path><circle cx="80.5" cy="29.5" r="2.8" fill="#1E4034"></circle><path d="M78.5 33 C76.5 35.5 76 38 76.3 40 C76.3 42.5 84.7 42.5 84.7 40 C85 38 84.5 35.5 82.5 33 Z" fill="#1E4034"></path></svg></div>
+    <nav class="tabs" id="tabs" role="tablist"></nav>
+  </div>
+  <div class="hdr-right"></div>
+</div></header>
+
+<main class="wrap">
+  <div id="notices"></div>
+
+  <div class="page on" id="page-overview">
+    <div class="band" id="band"></div>
+    <section class="block"><div class="kicker">What to do next</div><div class="grid3" id="callouts"></div></section>
+    <div class="grid2">
+      <div class="card" style="display:flex;flex-direction:column" id="pace"></div>
+      <div class="card" id="gapsCard"></div>
+    </div>
+    <div class="card strip grid2eq" id="strip"></div>
+  </div>
+
+  <div class="page" id="page-gaps">
+    <h2 class="ph">Coverage gaps</h2><p class="pd">Every eligible school that still has no report this cycle. "Stale" = reported in an earlier wave, nothing yet this cycle. "Lagging" = more than <span id="gapPts"></span> points below the national rate.</p>
+    <div class="card" id="gapsMapBig"></div>
+    <div class="filters"><select id="levelFilter"></select><input id="stateSearch" placeholder="Find state" size="12"><span class="sec-note" id="listLinks"></span></div>
+    <div class="card tablewrap"><table id="states"><thead></thead><tbody></tbody></table></div>
+  </div>
+
+
+
+  <div class="page" id="page-bystate">
+    <h2 class="ph">By state</h2><p class="pd">One state at a time: which schools and districts are in the data, and which are not yet. "In the data" = at least one report (earlier waves carry forward for middle/high; elementary counts only with the new survey).</p>
+    <div class="filters"><select id="rosterState"></select><span class="sec-note" id="rosterNote"></span></div>
+    <div class="grid3" id="rosterTiles" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
+    <div class="grid3" id="rosterCols" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
+  </div>
+
+  <div class="page" id="page-elementary">
+    <h2 class="ph">Elementary</h2><p class="pd">The elementary survey is new this year, so elementary coverage restarts at zero. Schools that reported in earlier waves are listed as "reported before" and count once they take the new survey. Elementary is not part of the headline KPI. <span class="tag warn">qualifier under review</span> Elementary-only librarians currently never count because they answer no policy question; the team expects to change what counts for elementary.</p>
+    <div class="grid3" id="elemTiles"></div>
+    <div class="grid2" id="elemBody"></div>
+  </div>
+
+  <div class="page" id="page-student">
+    <h2 class="ph">Students</h2><p class="pd">Teens report on their own middle or high school. A student report counts for coverage like any other valid report; this tab shows what students alone contribute.</p>
+    <div class="grid3" id="studentTiles"></div>
+    <div class="grid2" id="studentBody"></div>
+  </div>
+
+  <div class="page" id="page-librarian">
+    <h2 class="ph">Librarians</h2><p class="pd">School librarians count for coverage only when they answer the phone-policy questions for a specific school. District-only librarians give circulation data and are kept apart. <span class="tag warn">qualifier under review</span> Elementary-only and district librarians never count today; the team expects to revisit this.</p>
+    <div class="grid3" id="libTiles"></div>
+    <div class="grid2" id="libBody"></div>
+  </div>
+
+  <div class="page" id="page-quality">
+    <h2 class="ph">Data quality</h2><p class="pd">Coverage only counts valid reports. Everything excluded is listed so a rule that eats too much is visible the day it happens.</p>
+    <div class="grid2eq" style="align-items:stretch"><div class="card" id="dq1"></div><div class="card" id="dq2"></div></div>
+  </div>
+
+
+  <footer class="foot" id="foot"></footer>
+</main>
+<div class="tip" id="tip"></div>
+
+<script>
+(async function () {
+  const $ = (s) => document.querySelector(s);
+  const fmt = (n) => n == null ? "—" : Number(n).toLocaleString("en-US");
+  const pct = (n, d = 1) => n == null ? "—" : Number(n).toFixed(d) + "%";
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const LEVEL = { elementary: "Elementary", middle: "Middle", high: "High", other: "Other", unknown: "Level unknown" };
+  const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const mdy = (iso) => { const d = new Date(iso + "T00:00:00Z"); return `${MON[d.getUTCMonth()]} ${d.getUTCDate()}`; };
+  const my = (iso) => { const d = new Date(iso + "T00:00:00Z"); return `${MON[d.getUTCMonth()]} ${d.getUTCFullYear()}`; };
+  const nice = (s) => String(s || "").replace(/_/g, " ");
+
+  let d, paths = null;
+  try { d = await (await fetch("./coverage-data.json", { cache: "no-store" })).json(); }
+  catch (e) { $("#notices").innerHTML = `<div class="notice warn"><b>No data.</b> coverage-data.json was not found next to this page. Run coverage_export.py first.</div>`; return; }
+  try { paths = (await (await fetch("./assets/us-states-paths.json", { cache: "no-store" })).json()).paths; } catch (e) { paths = null; }
+
+  const c = d.coverage, o = c.overall, v = d.velocity, dq = d.dq, pace = v.pace || {};
+  const ramp = (p) => p == null ? "#EFEFEF" : p < 25 ? "#C3E5CB" : p < 35 ? "#8FC49B" : p < 45 ? "#5C9F6F" : p < 55 ? "#2C7A4B" : p < 65 ? "#1C5E3D" : "#1E4034";
+  const byCode = {}; d.states.forEach((s) => (byCode[s.st] = s));
+
+  // ---- header
+  const TABS = [["overview", "Overview"], ["gaps", "Gaps"], ["bystate", "By state"], ["elementary", "Elementary"], ["student", "Students"], ["librarian", "Librarians"], ["quality", "Data quality"]];
+  $("#tabs").innerHTML = TABS.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${k === "overview"}">${l}</button>`).join("");
+  function show(tab, params = {}) {
+    document.querySelectorAll(".page").forEach((p) => p.classList.toggle("on", p.id === "page-" + tab));
+    document.querySelectorAll("#tabs button").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === tab));
+    if (tab === "gaps" && params.state) { $("#stateSearch").value = params.state; renderStates(); }
+    if (tab === "bystate" && params.state) { $("#rosterState").value = params.state; loadRoster(params.state); }
+    window.scrollTo({ top: 0 });
+  }
+  function go(target) {
+    if (!target) return;
+    if (target.endsWith(".csv") || target.endsWith(".md")) { window.location.href = target; return; }
+    let [tab, q] = target.split("?");
+    if (!TABS.some(([k]) => k === tab)) tab = "overview";
+    const params = Object.fromEntries(new URLSearchParams(q || ""));
+    location.hash = tab + (q ? "?" + q : "");
+    show(tab, params);
+  }
+  $("#tabs").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) go(b.dataset.tab); });
+  window.addEventListener("hashchange", () => go(location.hash.slice(1) || "overview"));
+
+  // ---- notices
+  let n = "";
+  const P = !!d.pending_launch, PEND = "Pending Fall 2026 launch";
+  const pendCard = (title) => `<div class="card"><div class="card-title">${title}</div><div class="sub12" style="margin-top:6px">${PEND}. This section fills in once ${esc(d.cycle.name)} responses arrive.</div></div>`;
+  if (d.synthetic) n += `<div class="notice warn"><b>Synthetic data.</b> These numbers come from make_sample_data.py, not from survey responses.</div>`;
+  if (P) n += `<div class="notice"><b>${PEND}.</b> Coverage below comes from the earlier waves (Spring/Summer 2025, Fall 2025–Spring 2026, Summer 2026). Weekly pace, sources, funnel and data quality fill in once ${esc(d.cycle.name)} responses arrive.</div>`;
+  if (!d.ccd_loaded) n += `<div class="notice"><b>School levels unknown.</b> Load the NCES panel to split elementary / middle / high.</div>`;
+  if (d.alerts && d.alerts.length) n += `<div class="notice warn"><b>Attention</b>${d.alerts.map((a) => `<span>${esc(a)}</span>`).join("")}</div>`;
+  $("#notices").innerHTML = n;
+
+  // ---- band: headline = middle + high schools with at least one report (elementary has its own tab)
+  const wk = v.weekly || [], cur = wk[wk.length - 1] || { by_level: {} };
+  const H = c.mshs && c.mshs.eligible ? c.mshs : o;
+  const hLabel = c.mshs && c.mshs.eligible ? "Every U.S. middle and high school represented" : "Every U.S. public school represented";
+  const mshsRemainingRate = (v.rolling_avg_weekly_new || 0) * ((((cur.by_level.middle || 0) + (cur.by_level.high || 0)) || 1) / Math.max(1, cur.by_level.elementary + cur.by_level.middle + cur.by_level.high + (cur.by_level.other || 0) + (cur.by_level.unknown || 0)));
+  const wkNewH = (c.mshs && c.mshs.eligible) ? ((cur.by_level.middle || 0) + (cur.by_level.high || 0)) : v.this_week.new;
+  const weeksLeftH = (c.mshs && c.mshs.eligible) ? (mshsRemainingRate > 0 ? Math.round(H.remaining / mshsRemainingRate) : null) : (v.weeks_to_full && v.weeks_to_full.overall != null ? Math.round(v.weeks_to_full.overall) : null);
+  $("#band").innerHTML = `
+    <div>
+      <div class="kicker">${hLabel}</div>
+      <div style="display:flex;align-items:baseline;gap:20px;margin-top:18px;flex-wrap:wrap"><span class="hero">${pct(H.pct)}</span>
+        <span class="ctx pretty"><b>${fmt(H.covered)}</b> of ${fmt(H.eligible)} schools have at least one report. <b>${fmt(H.remaining)}</b> to go.</span></div>
+      <div class="cbar" aria-label="Coverage: ${pct(H.pct)} with at least one report, ${pct(H.depth_pct["2plus"])} with two or more"><i class="f1" style="width:${Math.max(H.pct || 0, 0.4)}%"></i><i class="f2" style="width:${Math.max(H.depth_pct["2plus"] || 0, 0.25)}%"></i></div>
+      <div class="legend"><span class="l">
+        <span><span class="dot" style="background:#FFFFFF"></span><b>${fmt(H.depth["2plus"])}</b> with 2+ reports · ${pct(H.depth_pct["2plus"])}</span>
+        <span><span class="dot" style="background:#8FC49B"></span><b>${fmt(H.depth["1"])}</b> with 1 report · ${pct(H.depth_pct["1"])}</span>
+        <span><span class="dot" style="background:rgba(255,255,255,0.16)"></span><b>${fmt(H.depth["0"])}</b> with none</span></span>
+        <span>${P ? PEND : `<b>+${fmt(wkNewH)}</b> this week${weeksLeftH == null ? "" : ` · 100% in about <b>${fmt(weeksLeftH)} wks</b>`}`}</span></div>
+    </div>
+`;
+
+  // ---- callouts
+  $("#callouts").innerHTML = (d.callouts || []).map((x) => `<div class="card action callout" data-go="${esc(x.target || "")}">
+    <div class="stat40">${esc(x.stat)}</div><div class="t pretty">${esc(x.title)}</div><div class="b pretty">${esc(x.body)}</div>
+    <div class="a"><span class="pill">${esc(x.action)} →</span></div></div>`).join("") || `<div class="card sec-note">${PEND}: callouts appear once there is a week of data.</div>`;
+  document.addEventListener("click", (e) => { const t = e.target.closest("[data-go]"); if (t) go(t.dataset.go); });
+
+  // ---- pace
+  const last12 = wk.slice(-12), mx = Math.max(1, ...last12.map((w) => w.new));
+  const avgH = Math.round(100 * (v.rolling_avg_weekly_new || 0) / mx);
+  $("#pace").innerHTML = P ? `<div class="card-title">Pace</div><div class="sub12" style="margin-top:6px">${PEND}. New schools per week, the 4-week average and the projected 100% date appear once responses arrive.</div>` : `<div style="display:flex;justify-content:space-between;align-items:baseline"><div class="card-title">Pace</div><div class="sec-note">new schools per week · ${last12.length} weeks</div></div>
+    <div class="pace-stats">
+      <div><div class="stat28">${fmt(v.rolling_avg_weekly_new)}</div><div class="sub12">4-week average</div></div>
+      <div><div class="stat28">+${pace.pts_per_week == null ? "—" : pace.pts_per_week} pts</div><div class="sub12">coverage per week</div></div>
+      <div><div class="stat28" style="color:var(--study)">${pace.projected_full_date ? my(pace.projected_full_date) : "—"}</div><div class="sub12">projected 100%</div></div>
+      ${pace.needed_per_week ? `<div><div class="stat28">${fmt(pace.needed_per_week)}</div><div class="sub12">needed / wk for ${my(pace.target_date)}</div></div>` : ""}
+    </div>
+    <div class="cols"><div class="bars">${last12.map((w) => `<i class="${w.partial ? "cur" : ""}" style="height:${Math.max(2, Math.round(100 * w.new / mx))}%" data-tip="<b>Week of ${mdy(w.week_start)}${w.partial ? " (partial)" : ""}</b><br>${fmt(w.new)} new schools · ${fmt(w.second_reports)} second reports"></i>`).join("")}</div>
+      <div class="avg" style="bottom:${avgH}%"></div></div>
+    <div class="xlab"><span>${last12.length ? mdy(last12[0].week_start) : ""}</span><span>${last12.length > 2 ? mdy(last12[Math.floor(last12.length / 2)].week_start) : ""}</span><span>${last12.length ? mdy(last12[last12.length - 1].week_start) : ""}</span></div>`;
+
+  // ---- map + gaps
+  function mapSvg(cls) {
+    if (!paths) return `<div class="sec-note" style="padding:40px 0;text-align:center">Map needs assets/us-states-paths.json next to this page.</div>`;
+    return `<svg class="map ${cls}" viewBox="0 0 1180 660" style="width:100%;display:block" role="img" aria-label="Coverage by state">${Object.keys(paths).map((k) => { const s = byCode[k]; return `<path d="${paths[k]}" fill="${ramp(s ? s.pct : null)}" data-go="gaps?state=${k}" data-tip="<b>${esc(s ? s.state : k)}</b><br>${s ? `${fmt(s.covered)} of ${fmt(s.eligible)} covered · ${pct(s.pct)}` : "no data"}"></path>`; }).join("")}</svg>`;
+  }
+  const rampLegend = `<span class="ramp">${["#C3E5CB", "#8FC49B", "#5C9F6F", "#2C7A4B", "#1C5E3D", "#1E4034"].map((h) => `<i style="background:${h}"></i>`).join("")}&nbsp;&lt;25% → 65%+</span>`;
+  // leaderboard and gaps on the same basis as the headline: middle + high schools
+  const mh = d.states.map((x) => { const m = x.by_level.middle || { eligible: 0, covered: 0 }, h = x.by_level.high || { eligible: 0, covered: 0 }; const e = m.eligible + h.eligible, cv = m.covered + h.covered; return { ...x, eligible: e, covered: cv, remaining: e - cv, pct: e ? +(100 * cv / e).toFixed(1) : null }; });
+  const topGaps = mh.filter((x) => x.eligible > 0).sort((a, b) => b.remaining - a.remaining).slice(0, 5);
+  const ranked = mh.filter((x) => x.pct != null && x.eligible >= 50).sort((a, b) => b.pct - a.pct || b.covered - a.covered);
+  const topPct = Math.max(1, ...ranked.map((x) => x.pct));
+  const mhByCode = {}; mh.forEach((x) => (mhByCode[x.st] = x));
+  const rankOf = {}; ranked.forEach((x, i) => (rankOf[x.st] = i + 1));
+  function mapSvgMH() {
+    if (!paths) return `<div class="sec-note" style="padding:40px 0;text-align:center">Map needs assets/us-states-paths.json next to this page.</div>`;
+    return `<svg class="map" viewBox="0 0 1180 660" style="width:100%;display:block" role="img" aria-label="Middle and high school coverage by state">${Object.keys(paths).map((k) => { const x = mhByCode[k]; return `<path d="${paths[k]}" fill="${ramp(x ? x.pct : null)}" data-go="gaps?state=${k}" data-tip="<b>${esc(x ? x.state : k)}</b>${rankOf[k] ? ` · #${rankOf[k]} of ${ranked.length}` : ""}<br>${x ? `${fmt(x.covered)} of ${fmt(x.eligible)} middle/high schools · ${pct(x.pct)}` : "no data"}"></path>`; }).join("")}</svg>`;
+  }
+  $("#gapsCard").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">State leaderboard</div><div class="sec-note">% of middle and high schools with at least one report ${rampLegend}</div></div>
+    <div class="mapgrid">${mapSvgMH()}<div class="ranked"><div class="kicker" style="color:var(--slate);font-size:12px;letter-spacing:0.12em">Most uncovered</div>
+      ${topGaps.map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc(g.state)}</span><span class="v">${fmt(g.remaining)} <small>· ${pct(g.pct)}</small></span></div>`).join("")}
+      <div class="sub12" style="margin-top:10px">middle/high schools without a report · state coverage</div>
+      <div style="margin-top:12px"><span class="pill" data-go="gaps">All states →</span></div></div></div>`;
+  $("#gapsMapBig").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Coverage by state</div><div class="sec-note">${rampLegend} · click a state to filter the table</div></div><div style="max-width:760px;margin:8px auto 0">${mapSvg("big")}</div>`;
+
+  // ---- strip: funnel (4 weeks) + needs review
+  const fn = (d.funnel && d.funnel.last_4w) || {};
+  const stages = [["Website visits", fn.visits, "#C3E5CB"], ["Survey starts", fn.starts, "#8FC49B"], ["Completions", fn.completes, "#5C9F6F"], ["Valid reports", fn.valid, "#2C7A4B"], ["New schools", fn.new_schools, "#1E4034"]].filter((x) => x[1] != null);
+  const fmax = Math.max(1, ...stages.map((x) => x[1]));
+  $("#strip").innerHTML = P ? `<div><span style="font-size:13px;font-weight:700">Funnel, last 4 weeks</span><div class="sub12">${PEND}.</div></div><div class="review"><div><div style="font-size:13px;font-weight:700">Needs review</div><div class="sub12">${PEND}.</div></div></div>` : `<div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;font-weight:700">Funnel, last 4 weeks</span></div>
+      <div class="srcs" style="gap:6px">${stages.map(([l, n2, col]) => `<div style="align-items:center;gap:10px"><span style="color:var(--slate);width:110px;flex-shrink:0">${l}</span><span style="flex:1;height:8px;background:var(--track);border-radius:999px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(2, Math.round(100 * n2 / fmax))}%;background:${col};border-radius:999px"></i></span><b style="width:64px;text-align:right">${fmt(n2)}</b></div>`).join("")}
+      ${fn.visits == null ? `<div class="sec-note" style="margin-top:4px">Website visits appear once analytics are pasted into inputs/traffic.csv.</div>` : ""}</div></div>
+    <div class="review"><div><div style="font-size:13px;font-weight:700">Needs review</div><div class="sub12 pretty"><b style="color:var(--ink)">${fmt(dq.needs_review)}</b> responses unmatched, ambiguous or too fast. Match rate ${pct(dq.match_rate)}. Queue ${fmt(dq.queue.size)}${dq.queue.oldest_days != null ? `, oldest ${dq.queue.oldest_days} d` : ""}.</div></div>
+      <span class="pill primary" data-go="quality">Review →</span></div>`;
+
+  // ---- gaps tab table
+  $("#gapPts").textContent = d.config.lagging_state_gap_points;
+  const lf = $("#levelFilter");
+  const levelsPresent = d.levels.filter((l) => c.by_level[l].eligible > 0);
+  lf.innerHTML = `<option value="">All levels ▾</option>` + levelsPresent.map((l) => `<option value="${l}">${LEVEL[l]}</option>`).join("");
+  let sortKey = "pct", sortDir = 1;
+  const stateCols = [["state", "State", false], ["eligible", "Eligible", true], ["covered", "Covered", true], ["pct", "Coverage", true], ["remaining", "Remaining", true], ["stale", "Stale", true], ["one", "1 report", true], ["two_plus", "2+", true], ["new_this_week", "New this wk", true], ["new_last_week", "New last wk", true]];
+  function stateRows() {
+    const lvl = lf.value, q = ($("#stateSearch").value || "").trim().toLowerCase();
+    let rows = d.states.map((s) => { if (!lvl) return { ...s }; const b = s.by_level[lvl] || { eligible: 0, covered: 0 }; return { ...s, eligible: b.eligible, covered: b.covered, remaining: b.eligible - b.covered, pct: b.eligible ? +(100 * b.covered / b.eligible).toFixed(1) : null, stale: null, one: null, two_plus: null, new_this_week: null, new_last_week: null }; });
+    if (q) rows = rows.filter((s) => s.state.toLowerCase().includes(q) || s.st.toLowerCase() === q);
+    rows.sort((a, b) => { const x = a[sortKey], y = b[sortKey]; if (x == null) return 1; if (y == null) return -1; return (x < y ? -1 : x > y ? 1 : 0) * sortDir * (sortKey === "state" ? -1 : 1); });
+    return rows;
+  }
+  function renderStates() {
+    const rows = stateRows(), maxPct = Math.max(1, ...rows.map((r) => r.pct || 0));
+    $("#states thead").innerHTML = `<tr>${stateCols.map(([k, l, num]) => `<th class="${num ? "num" : ""}" data-k="${k}">${l}${sortKey === k ? (sortDir === 1 ? " ▲" : " ▼") : ""}</th>`).join("")}</tr>`;
+    $("#states tbody").innerHTML = rows.map((s) => `<tr><td>${esc(s.state)} <span style="color:var(--muted)">${s.st}</span>${s.lagging ? ' <span class="tag warn">lagging</span>' : ""}</td><td class="num">${fmt(s.eligible)}</td><td class="num">${fmt(s.covered)}</td>
+      <td class="num barcell"><i style="width:${Math.max(2, 80 * (s.pct || 0) / maxPct)}px"></i>${pct(s.pct)}</td><td class="num">${fmt(s.remaining)}</td><td class="num">${fmt(s.stale)}</td><td class="num">${fmt(s.one)}</td><td class="num">${fmt(s.two_plus)}</td><td class="num">${fmt(s.new_this_week)}</td><td class="num">${fmt(s.new_last_week)}</td></tr>`).join("");
+  }
+  $("#states thead").addEventListener("click", (e) => { const th = e.target.closest("th"); if (!th || th.dataset.k === "dl") return; const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = k === "state" ? 1 : -1; } renderStates(); });
+  lf.addEventListener("change", renderStates); $("#stateSearch").addEventListener("input", renderStates);
+  renderStates();
+  $("#listLinks").innerHTML = `${fmt(d.lists["remaining_all.csv"])} schools remaining · ${fmt(d.lists["stale_elementary.csv"])} elementary reported in an earlier wave · ${fmt(d.lists["one_report.csv"])} with exactly one report`;
+  let remainingCsv = null;
+  $("#states tbody").addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-st]"); if (!btn) return;
+    btn.textContent = "loading…";
+    try {
+      if (!remainingCsv) remainingCsv = (await (await fetch("lists/remaining_all.csv", { cache: "no-store" })).text()).split(/\r?\n/);
+      const head = remainingCsv[0].split(","), iSt = head.indexOf("st"), iLv = head.indexOf("level"), lvl = lf.value;
+      const out = [remainingCsv[0]].concat(remainingCsv.slice(1).filter((l) => { if (!l) return false; const cells = l.split(","); return cells[iSt] === btn.dataset.st && (!lvl || cells[iLv] === lvl); }));
+      const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([out.join("\n")], { type: "text/csv" })); a.download = `remaining_${btn.dataset.st}${lvl ? "_" + lvl : ""}.csv`; a.click();
+      btn.textContent = `remaining (${out.length - 1})`;
+    } catch (err) { btn.textContent = "unavailable"; }
+  });
+
+  // ---- acquisition
+  const chCols = [["channel", "Source"], ["starts", "Starts"], ["completes", "Completes"], ["valid", "Valid"], ["new_schools", "New schools"], ["second_reports", "2nd reports"], ["redundant", "Already 2+"], ["conv_complete_valid", "Complete → valid"], ["conv_valid_new", "Yield"], ["new_last_week", "New last wk"], ["new_this_week", "New this wk"]];
+  if ($("#channels")) $("#channels thead").innerHTML = `<tr>${chCols.map(([k, l], i) => `<th class="${i ? "num" : ""}">${l}</th>`).join("")}</tr>`;
+  const maxNew = Math.max(1, ...d.channels.map((x) => x.new_schools));
+  if ($("#channels")) $("#channels tbody").innerHTML = P ? `<tr><td colspan="11" class="sec-note">${PEND}.</td></tr>` : d.channels.map((x) => `<tr><td>${esc(nice(x.channel))}${x.channel === "unknown" ? ' <span class="tag warn">no utm</span>' : ""}</td><td class="num">${fmt(x.starts)}</td><td class="num">${fmt(x.completes)}</td><td class="num">${fmt(x.valid)}</td>
+    <td class="num barcell"><i style="width:${Math.max(2, 70 * x.new_schools / maxNew)}px"></i><b>${fmt(x.new_schools)}</b></td><td class="num">${fmt(x.second_reports)}</td><td class="num">${fmt(x.redundant)}</td><td class="num">${pct(x.conv_complete_valid)}</td><td class="num">${pct(x.conv_valid_new)}</td><td class="num">${fmt(x.new_last_week)}</td><td class="num">${fmt(x.new_this_week)}</td></tr>`).join("");
+  if ($("#channels4")) $("#channels4 thead").innerHTML = `<tr><th>Source</th><th class="num">Valid</th><th class="num">New schools</th><th class="num">Yield</th></tr>`;
+  if ($("#channels4")) $("#channels4 tbody").innerHTML = P ? `<tr><td colspan="4" class="sec-note">${PEND}.</td></tr>` : (d.channels_4w || []).map((x) => `<tr><td>${esc(nice(x.channel))}</td><td class="num">${fmt(x.valid)}</td><td class="num"><b>${fmt(x.new_schools)}</b></td><td class="num">${pct(x.conv_valid_new)}</td></tr>`).join("");
+
+  // ---- partners
+  const stage = (s) => `<span class="tag ${s === "activated" ? "good" : ""}">${s}</span>`;
+  if ($("#partners")) $("#partners thead").innerHTML = `<tr><th>Partner</th><th>Stage</th><th>Activated</th><th class="num">Starts</th><th class="num">Valid</th><th class="num">New schools</th><th class="num">2nd reports</th><th class="num">Yield</th><th>Levels</th><th>States</th><th class="num">Cost / new school</th><th>Remaining list</th></tr>`;
+  if ($("#partners")) $("#partners tbody").innerHTML = P && !d.partners.length ? `<tr><td colspan="12" class="sec-note">${PEND}. Add partners to partners.csv as they are contacted.</td></tr>` : d.partners.length ? d.partners.map((p) => `<tr><td><b>${esc(p.display_name)}</b> <span style="color:var(--muted)">${esc(p.type)}</span></td><td>${stage(p.stage)}</td><td>${esc(p.activated_on || "—")}</td><td class="num">${fmt(p.starts)}</td><td class="num">${fmt(p.valid)}</td><td class="num"><b>${fmt(p.new_schools)}</b></td><td class="num">${fmt(p.second_reports)}</td><td class="num">${pct(p.conv_valid_new)}</td>
+    <td>${p.levels_reached.filter((l) => l !== "unknown").map((l) => LEVEL[l]).join(", ") || "—"}</td><td title="${esc(p.states_reached.join(", "))}">${p.states_reached.length}</td><td class="num">${p.cost_per_new_school == null ? "—" : "$" + fmt(p.cost_per_new_school)}</td>
+    <td>${d.lists[`partner_remaining_${p.partner}.csv`] != null ? `<a href="lists/partner_remaining_${esc(p.partner)}.csv" download>${fmt(d.lists[`partner_remaining_${p.partner}.csv`])} schools</a>` : "—"}</td></tr>`).join("") : `<tr><td colspan="12" class="sec-note">No partners in partners.csv yet.</td></tr>`;
+
+  const tile = (label, value, sub) => `<div class="card"><div class="sec-note">${label}</div><div class="stat40" style="margin-top:4px">${value}</div>${sub ? `<div class="sub12">${sub}</div>` : ""}</div>`;
+  // ---- by state: the four-column roster
+  const rosterCounts = d.rosters || {};
+  const stateNames = {}; d.states.forEach((x) => (stateNames[x.st] = x.state));
+  const rsel = $("#rosterState");
+  rsel.innerHTML = Object.keys(rosterCounts).sort((a, b) => (stateNames[a] || a).localeCompare(stateNames[b] || b)).map((st) => `<option value="${st}">${esc(stateNames[st] || st)}</option>`).join("");
+  const dlCsv = (name, rows) => { const a2 = document.createElement("a"); a2.href = URL.createObjectURL(new Blob([rows.map((r) => '"' + String(r).replace(/"/g, '""') + '"').join("\n")], { type: "text/csv" })); a2.download = name; a2.click(); };
+  async function loadRoster(st) {
+    if (!st) return;
+    $("#rosterNote").textContent = "loading…";
+    try {
+      const r = await (await fetch(`lists/state/${st}.json`, { cache: "no-store" })).json();
+      const cnt = r.counts;
+      $("#rosterTiles").innerHTML = tile("Schools in the data", fmt(cnt.schools_in), `${pct(100 * cnt.schools_in / Math.max(1, cnt.schools_in + cnt.schools_out))} of ${fmt(cnt.schools_in + cnt.schools_out)}`) + tile("Districts in the data", fmt(cnt.districts_in), `of ${fmt(cnt.districts_in + cnt.districts_out)}`) + tile("Schools not yet", fmt(cnt.schools_out), "") + tile("Districts not yet", fmt(cnt.districts_out), "");
+      const col = (title, rows, file) => `<div class="card" style="padding:16px 18px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><div class="card-title" style="font-size:14px">${title}</div></div><div style="max-height:520px;overflow:auto;margin-top:8px;font-size:13px;line-height:1.5">${rows.length ? rows.map((x) => `<div style="padding:3px 0;border-bottom:1px solid var(--rule-in)">${esc(x)}</div>`).join("") : `<div class="sec-note">none</div>`}</div></div>`;
+      $("#rosterCols").innerHTML = col("Schools in the data", r.schools_in, "schools_in") + col("Districts in the data", r.districts_in, "districts_in") + col("Schools not yet", r.schools_out, "schools_out") + col("Districts not yet", r.districts_out, "districts_out");
+      $("#rosterNote").textContent = `${esc(r.state)}`;
+    } catch (e) { $("#rosterNote").textContent = "roster not available"; }
+  }
+  rsel.addEventListener("change", () => loadRoster(rsel.value));
+  if (rsel.value) loadRoster(rsel.value);
+
+  // ---- elementary, students, librarians
+  const E = c.by_level.elementary || {};
+  const elemWeekly = wk.map((w) => ({ ...w, n: w.by_level.elementary || 0 })), emx = Math.max(1, ...elemWeekly.map((w) => w.n));
+  $("#elemTiles").innerHTML = tile("Elementary schools with a " + esc(d.cycle.name) + " report", P ? PEND : pct(E.pct), P ? `${fmt(E.eligible)} elementary schools in scope` : `${fmt(E.covered)} of ${fmt(E.eligible)} · ${fmt(E.remaining)} remaining`) +
+    tile("Reported in an earlier wave, need the new survey", fmt(E.stale), "count once they take the new survey") +
+    tile("New elementary schools this week", P ? PEND : fmt(cur.by_level.elementary || 0), P ? "" : `last week ${fmt((wk[wk.length - 2] || { by_level: {} }).by_level.elementary || 0)}`);
+  const elemStates = [...d.states].map((s2) => ({ st: s2.st, state: s2.state, ...(s2.by_level.elementary || { eligible: 0, covered: 0 }) })).filter((x) => x.eligible > 0).map((x) => ({ ...x, remaining: x.eligible - x.covered, pct: +(100 * x.covered / x.eligible).toFixed(1) })).sort((a, b) => b.remaining - a.remaining).slice(0, 8);
+  $("#elemBody").innerHTML = `<div class="card" style="display:flex;flex-direction:column"><div class="card-title">Elementary schools newly represented per week</div>
+      <div class="cols"><div class="bars">${elemWeekly.map((w) => `<i class="${w.partial ? "cur" : ""}" style="height:${Math.max(2, Math.round(100 * w.n / emx))}%" data-tip="<b>Week of ${mdy(w.week_start)}</b><br>${fmt(w.n)} elementary schools"></i>`).join("")}</div></div>
+      <div class="xlab"><span>${elemWeekly.length ? mdy(elemWeekly[0].week_start) : ""}</span><span></span><span>${elemWeekly.length ? mdy(elemWeekly[elemWeekly.length - 1].week_start) : ""}</span></div>
+      <div class="sub12" style="margin-top:10px">Depth: ${fmt(E.depth ? E.depth["1"] : null)} with one report · ${fmt(E.depth ? E.depth["2plus"] : null)} with two or more.</div></div>
+    <div class="card"><div class="card-title">Most uncovered elementary schools</div><div class="ranked" style="margin-top:6px">${elemStates.map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc(g.state)}</span><span class="v">${fmt(g.remaining)} <small>· ${pct(g.pct)}</small></span></div>`).join("")}</div>
+      <div style="margin-top:12px"><span class="pill" data-go="gaps">All states →</span></div></div>`;
+
+  function rolePage(key, tilesId, bodyId, noun) {
+    const R = (c.by_role || {})[key] || {};
+    if (P) { $("#" + tilesId).innerHTML = tile(`Schools with a ${noun} report this cycle`, PEND, "") ; $("#" + bodyId).innerHTML = pendCard(key === "student" ? "Reports" : "By school level") + pendCard(`States with the most ${noun}-reported schools`); return; }
+    const tiles = tile(`Schools with a ${noun} report this cycle`, fmt(R.schools), `${fmt(R.valid_reports)} valid ${noun} reports`) +
+      tile(`Schools ${noun}s put on the map`, fmt(R.new_schools), "first-ever report came from a " + noun) +
+      tile(`${noun[0].toUpperCase() + noun.slice(1)} reports this week`, fmt(R.this_week), `last week ${fmt(R.last_week)}`);
+    const lvls = Object.entries(R.by_level || {}).filter(([l, n2]) => n2 > 0);
+    const levelCard = key === "student" ? `<div class="card"><div class="card-title">Reports</div><div class="sub12" style="margin-top:6px">Students must be 13 or older, so student reports are middle and high school by definition.</div>
+        <div class="sub12" style="margin-top:10px">Source surveys: ${Object.entries(R.by_survey || {}).map(([sv, n2]) => `${sv} ${fmt(n2)}`).join(" · ") || "—"}</div></div>`
+      : `<div class="card"><div class="card-title">By school level</div><div class="ranked" style="margin-top:6px">${lvls.map(([l, n2]) => `<div class="row"><span class="n">${LEVEL[l]}</span><span class="v">${fmt(n2)} <small>schools</small></span></div>`).join("") || `<div class="sec-note">No ${noun} reports yet.</div>`}</div>
+        <div class="sub12" style="margin-top:10px">Source surveys: ${Object.entries(R.by_survey || {}).map(([sv, n2]) => `${sv} ${fmt(n2)}`).join(" · ") || "—"}</div></div>`;
+    const body = levelCard + `<div class="card"><div class="card-title">States with the most ${noun}-reported schools</div><div class="ranked" style="margin-top:6px">${(R.top_states || []).map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc((byCode[g.st] || {}).state || g.st)}</span><span class="v">${fmt(g.schools)} <small>schools</small></span></div>`).join("") || `<div class="sec-note">—</div>`}</div></div>`;
+    $("#" + tilesId).innerHTML = tiles; $("#" + bodyId).innerHTML = body;
+  }
+  rolePage("student", "studentTiles", "studentBody", "student");
+  rolePage("librarian", "libTiles", "libBody", "librarian");
+  $("#libBody").insertAdjacentHTML("beforeend", `<div class="card" style="grid-column:1 / -1"><div class="card-title">District-only librarians</div><div class="sub12">${fmt(((c.by_role || {}).district_librarian || {}).reports)} completed reports about district-wide circulation. They name a district, not a school, so they never count toward school coverage.</div></div>`);
+
+  // ---- data quality
+  $("#dq1").innerHTML = P ? pendCard("Submissions this cycle") : `<div class="sec-note">Submissions this cycle</div><div class="stat40" style="margin-top:4px">${fmt(dq.submissions)}</div>
+    <div class="sub12">${fmt(dq.completes)} completes · <b style="color:var(--ink)">${fmt(dq.valid)} valid</b> · ${Object.entries(dq.by_survey).map(([s, x]) => `${s} ${fmt(x.valid)}`).join(" · ")}</div>
+    <table style="margin-top:12px"><thead><tr><th>Excluded because</th><th class="num">Responses</th><th class="num">Share</th></tr></thead><tbody>${Object.entries(dq.excluded).map(([k, n2]) => `<tr><td>${esc(nice(k))}</td><td class="num">${fmt(n2)}</td><td class="num">${pct(100 * n2 / Math.max(1, dq.submissions))}</td></tr>`).join("")}</tbody></table>
+    <div class="sub12" style="margin-top:8px">${fmt(dq.before_cycle_total)} responses recorded before the cycle start are ignored entirely.</div>`;
+  const q = dq.queue;
+  $("#dq2").innerHTML = P ? pendCard("School matching") : `<div class="sec-note">School matching</div><div class="stat40" style="margin-top:4px">${pct(dq.match_rate)}</div><div class="sub12">of completes matched to one school</div>
+    <table style="margin-top:12px"><tbody>
+      <tr><td>Manual match queue</td><td class="num"><b>${fmt(q.size)}</b> ${q.oldest_days != null ? `<span class="tag ${q.oldest_days > 7 ? "warn" : ""}">oldest ${q.oldest_days} d</span>` : ""}</td></tr>
+      <tr><td style="padding-left:22px;color:var(--slate)">school not in dropdown (typed name)</td><td class="num">${fmt(q.by_type.unmatched_typed || 0)}</td></tr>
+      <tr><td style="padding-left:22px;color:var(--slate)">name matches 2+ schools</td><td class="num">${fmt(q.by_type.ambiguous || 0)}</td></tr>
+      <tr><td>Schools with coverage earned but not countable</td><td class="num">${fmt(dq.pending_ambiguous_schools_uncounted)}</td></tr>
+      <tr><td>Valid reports with no identifiable source</td><td class="num">${pct(dq.unknown_channel_share)} ${dq.unknown_channel_share > 20 ? '<span class="tag warn">&gt; 20%</span>' : ""}</td></tr>
+      <tr><td>Students via the educator redirect (source lost)</td><td class="num">${fmt(dq.redirect_from_educator)}</td></tr>
+      <tr><td>District-only librarian reports (kept apart)</td><td class="num">${fmt(dq.district_reports)}</td></tr>
+      <tr><td>Respondent level disagrees with school level</td><td class="num">${fmt(dq.respondent_level_mismatch)}</td></tr>
+      <tr><td>Manual matches applied</td><td class="num">${fmt(dq.manual_matches_applied)}</td></tr>
+    </tbody></table>`;
+
+  // ---- schools
+  const L = d.lists;
+  if ($("#schoolsLists")) $("#schoolsLists").innerHTML = `<div class="card-title">Lists</div><div class="ranked" style="margin-top:6px">${Object.entries(L).map(([f, n2]) => `<div class="row"><span class="n"><a href="lists/${esc(f)}" download>${esc(f)}</a></span><span class="v">${fmt(n2)} <small>schools</small></span></div>`).join("")}</div>`;
+  if ($("#depthCard")) $("#depthCard").innerHTML = `<div class="card-title">Depth</div><div class="pace-stats">
+    <div><div class="stat28">${fmt(o.depth["1"])}</div><div class="sub12">schools with exactly one report</div></div>
+    <div><div class="stat28">${fmt(o.depth["2plus"])}</div><div class="sub12">with two or more</div></div>
+    <div><div class="stat28">${fmt(d.depth.new_two_plus_last_week)}</div><div class="sub12">moved to 2+ last week</div></div>
+    <div><div class="stat28">${fmt(d.depth.median_days_first_to_second)}</div><div class="sub12">median days first → second</div></div></div>
+    <div class="sub12" style="margin-top:12px">Out of scope (not in the denominator): ${Object.entries(c.out_of_scope).map(([k, n2]) => `${nice(k)} ${fmt(n2)}`).join(" · ") || "none"}.</div>`;
+
+  $("#foot").textContent = `Data as of ${d.as_of.slice(0, 10)} · generated ${d.generated_at.replace("T", " ").slice(0, 16)} UTC by coverage_export.py · definitions in COVERAGE-DESIGN.md · eligible = 50 states + DC${d.ccd_loaded ? ", open regular schools per the NCES panel" : ""}.`;
+
+  // ---- tooltips + routing
+  const tip = $("#tip");
+  document.addEventListener("mousemove", (e) => { const t = e.target.closest && e.target.closest("[data-tip]"); if (!t) { tip.style.display = "none"; return; } tip.innerHTML = t.getAttribute("data-tip"); tip.style.display = "block"; tip.style.left = Math.min(window.innerWidth - tip.offsetWidth - 12, e.clientX + 12) + "px"; tip.style.top = Math.min(window.innerHeight - tip.offsetHeight - 12, e.clientY + 12) + "px"; });
+  if (location.hash.length > 1) go(location.hash.slice(1));
+})();
+</script>
+</body>
+</html>

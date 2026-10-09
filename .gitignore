@@ -1,0 +1,16 @@
+# Raw survey exports and source files never go to GitHub (free text, and the originals hold email/IP)
+inputs/phonebans/use this/
+*.dta
+*.xlsx
+# response-level run output stays on the machine that ran it
+out/
+# synthetic test data, design exploration, partners (not in use yet), system files
+sample/
+dashboard/design-ref/
+inputs/partners.csv
+__pycache__/
+*.pyc
+.DS_Store
+
+# internal docs live outside the repo
+COVERAGE-DESIGN.md

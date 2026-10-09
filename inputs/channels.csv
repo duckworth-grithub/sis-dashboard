@@ -1,0 +1,20 @@
+priority,channel,utm_source,utm_medium,utm_campaign,src,referer_host,note
+10,partner,@partners,,,,,"utm_source equals a partner slug in partners.csv; also sets partner"
+20,angela_social,angela,,,,,"Angela Duckworth's own channels"
+30,paid,,paid|cpc|ads,,,,"any paid placement"
+31,paid,meta|google|tiktok|facebook|instagram,,,,,"paid platforms used as utm_source"
+40,sis_social,sis|screensinschools,social,,,,"Screens in Schools organic social"
+50,direct_outreach,sis|screensinschools,email,,,,"team-sent email"
+60,district_outreach,,,*direct,,,"campaign ending in 'direct' (last year's texasdirect style) = state/district outreach"
+61,district_outreach,district,,,,,"utm_source=district"
+70,peer_share,share,,,,,"share buttons on thank-you / results pages"
+71,peer_share,,referral,,,,
+72,peer_share,,,,share,,"student survey src=share"
+80,qr,,qr,,,,
+81,qr,,,,qr,,
+90,press,press-*,,,,,"utm_source starting press-"
+100,email_other,,email,,,,"email with an unrecognised sender"
+110,redirect_from_educator,,,,,wharton.qualtrics.com,"student arrived via the educator survey's redirect; no utm survives today"
+120,website_organic,,,,,*screensinschools.org,"came from the site without utm"
+130,search_organic,,,,,*google.*|*bing.com|*duckduckgo.com,
+999,unknown,,,,,,"nothing matched"
