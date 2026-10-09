@@ -193,6 +193,7 @@
 
   <div class="page" id="page-quality">
     <h2 class="ph">Data quality</h2><p class="pd">Coverage only counts valid reports. Everything excluded is listed so a rule that eats too much is visible the day it happens.</p>
+    <div id="alerts"></div>
     <div class="grid2eq" style="align-items:stretch"><div class="card" id="dq1"></div><div class="card" id="dq2"></div></div>
   </div>
 
@@ -252,7 +253,6 @@
   if (d.test_mode) n += `<div class="notice warn"><b>Pre-launch test data.</b> Current-cycle numbers come from test runs of the surveys. They disappear automatically once Qualtrics is wiped before launch.</div>`;
   if (P) n += `<div class="notice"><b>${PEND}.</b> Coverage below comes from the earlier waves (Spring/Summer 2025, Fall 2025–Spring 2026, Summer 2026). Weekly pace, sources, funnel and data quality fill in once ${esc(d.cycle.name)} responses arrive.</div>`;
   if (!d.ccd_loaded) n += `<div class="notice"><b>School levels unknown.</b> Load the NCES panel to split elementary / middle / high.</div>`;
-  if (d.alerts && d.alerts.length) n += `<div class="notice warn"><b>Attention</b>${d.alerts.map((a) => `<span>${esc(a)}</span>`).join("")}</div>`;
   $("#notices").innerHTML = n;
 
   // ---- band: headline = middle + high schools with at least one report (elementary has its own tab)
@@ -266,14 +266,14 @@
   $("#band").innerHTML = `
     <div>
       <div class="kicker">${hLabel}</div>
-      <div style="display:flex;align-items:baseline;gap:20px;margin-top:18px;flex-wrap:wrap"><span class="hero">${pct(H.pct)}</span>
-        <span class="ctx pretty"><b>${fmt(H.covered)}</b> of ${fmt(H.eligible)} schools have at least one report. <b>${fmt(H.remaining)}</b> to go.</span></div>
+      <div class="hero" style="margin-top:18px">${pct(H.pct)}</div>
+      <div class="ctx" style="margin-top:10px;max-width:none"><b>${fmt(H.covered)}</b> of ${fmt(H.eligible)} MS/HS have at least one report.</div>
       <div class="cbar" aria-label="Coverage: ${pct(H.pct)} with at least one report, ${pct(H.depth_pct["2plus"])} with two or more"><i class="f1" style="width:${Math.max(H.pct || 0, 0.4)}%"></i><i class="f2" style="width:${Math.max(H.depth_pct["2plus"] || 0, 0.25)}%"></i></div>
       <div class="legend"><span class="l">
-        <span><span class="dot" style="background:#FFFFFF"></span><b>${fmt(H.depth["2plus"])}</b> with 2+ reports · ${pct(H.depth_pct["2plus"])}</span>
-        <span><span class="dot" style="background:#8FC49B"></span><b>${fmt(H.depth["1"])}</b> with 1 report · ${pct(H.depth_pct["1"])}</span>
-        <span><span class="dot" style="background:rgba(255,255,255,0.16)"></span><b>${fmt(H.depth["0"])}</b> with none</span></span>
-        <span>${P ? PEND : `<b>+${fmt(wkNewH)}</b> this week${weeksLeftH == null ? "" : ` · 100% in about <b>${fmt(weeksLeftH)} wks</b>`}`}</span></div>
+        <span><span class="dot" style="background:#FFFFFF"></span>2+ reports · <b>${pct(H.depth_pct["2plus"])}</b></span>
+        <span><span class="dot" style="background:#8FC49B"></span>1 report · <b>${pct(H.depth_pct["1"])}</b></span>
+        <span><span class="dot" style="background:rgba(255,255,255,0.16)"></span>none · <b>${pct(H.depth_pct["0"])}</b></span></span>
+        <span>${P ? PEND : `<b>+${fmt(wkNewH)}</b> this week`}</span></div>
     </div>
     <div class="stan"><img src="assets/stan.png" alt="Stan, the Screens in Schools mascot"><div class="say">${stanSays}</div><div class="who">Stan</div></div>`;
 
@@ -467,6 +467,7 @@
   $("#libBody").insertAdjacentHTML("beforeend", `<div class="card" style="grid-column:1 / -1"><div class="card-title">District-only librarians</div><div class="sub12">${fmt(((c.by_role || {}).district_librarian || {}).reports)} completed reports about district-wide circulation. They name a district, not a school, so they never count toward school coverage.</div></div>`);
 
   // ---- data quality
+  $("#alerts").innerHTML = (d.alerts && d.alerts.length) ? `<div class="notice warn" style="margin:0 0 16px"><b>Attention</b>${d.alerts.map((a) => `<span>${esc(a)}</span>`).join("")}</div>` : "";
   $("#dq1").innerHTML = P ? pendCard("Submissions this cycle") : `<div class="sec-note">Submissions this cycle</div><div class="stat40" style="margin-top:4px">${fmt(dq.submissions)}</div>
     <div class="sub12">${fmt(dq.completes)} completes · <b style="color:var(--ink)">${fmt(dq.valid)} valid</b> · ${Object.entries(dq.by_survey).map(([s, x]) => `${s} ${fmt(x.valid)}`).join(" · ")}</div>
     <table style="margin-top:12px"><thead><tr><th>Excluded because</th><th class="num">Responses</th><th class="num">Share</th></tr></thead><tbody>${Object.entries(dq.excluded).map(([k, n2]) => `<tr><td>${esc(nice(k))}</td><td class="num">${fmt(n2)}</td><td class="num">${pct(100 * n2 / Math.max(1, dq.submissions))}</td></tr>`).join("")}</tbody></table>
