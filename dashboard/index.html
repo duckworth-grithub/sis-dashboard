@@ -28,7 +28,8 @@
   .brand svg { position: absolute; top: -7.8px; left: -5.7px; }
   nav.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
   @media (max-width: 760px) {
-    header.app .in { flex-direction: column; align-items: stretch; gap: 8px; }
+    header.app .in { flex-direction: column; align-items: stretch; gap: 8px; padding-top: 18px; }
+    header.app, header.app .in, .brand { overflow: visible; }
     header.app .in > * { min-width: 0; max-width: 100%; }
     .hdr-right { display: block; width: 100%; }
     nav.tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; min-width: 0; width: 100%; box-sizing: border-box; margin: 0; padding: 0 0 4px; scrollbar-width: none; }
@@ -76,9 +77,9 @@
   .stan.float { display: none; }
   @media (max-width: 760px) {
     .band .stan { display: none; }
-    .stan.float { display: flex; position: fixed; right: 12px; bottom: 12px; z-index: 50; gap: 8px; pointer-events: auto; cursor: pointer; }
-    .stan.float img { height: 72px; }
-    .stan.float .bubble { font-size: 13px; padding: 8px 12px; max-width: 170px; box-shadow: 0 6px 18px rgba(28,28,26,0.18); }
+    .stan.float { display: flex; position: fixed; right: 22px; bottom: 18px; z-index: 50; gap: 10px; pointer-events: auto; cursor: pointer; }
+    .stan.float img { height: 96px; filter: drop-shadow(0 14px 22px rgba(0,0,0,0.38)) drop-shadow(0 3px 6px rgba(0,0,0,0.25)); }
+    .stan.float .bubble { font-size: 13px; padding: 9px 13px; max-width: 170px; box-shadow: 0 10px 24px rgba(28,28,26,0.26), 0 2px 6px rgba(28,28,26,0.12); }
     .stan.float.quiet .bubble { display: none; }
     #states td:first-child { min-width: 170px; }
   }
@@ -306,12 +307,26 @@
   const weeksLeftH = (c.mshs && c.mshs.eligible) ? (mshsRemainingRate > 0 ? Math.round(H.remaining / mshsRemainingRate) : null) : (v.weeks_to_full && v.weeks_to_full.overall != null ? Math.round(v.weeks_to_full.overall) : null);
   // Stan's line: a fresh pick from the pool on every load; data-tied lines join the pool only when they are true
   const STAN_PRE = ["Launch day is coming!", "Fall 2026, here we come.", "Getting ready for the first report.", "Counting down to launch.", "Almost launch time!", "The surveys open soon.", "Big fall ahead!", "Warming up for Fall 2026."];
-  const STAN_GENERAL = ["Every report counts!", "One school at a time.", "Keep them coming!", "Filling in the map.", "Another school on the board.", "More schools, more data.", "Small steps, big map.", "Steady as we go.", "Still growing, week by week.", "Every week adds to the map.", "Thanks for reporting!", "Every school has a story.", "Look at that map!", "Reports make the map.", "This is how it gets done.", "On our way!", "Growing every day."];
+  const STAN_GENERAL = ["Every report counts!", "One school at a time.", "Keep them coming!", "Filling in the map.", "Another school on the board.", "More schools, more data.", "Small steps, big map.", "Steady as we go.", "Still growing, week by week.", "Every week adds to the map.", "Thanks for reporting!", "Every school has a story.", "Look at that map!", "Reports make the map.", "This is how it gets done.", "On our way!", "Growing every day.", "Still here, still counting.", "The map thanks you.", "Data day is every day.", "Good things take reports."];
   const DAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][new Date().getDay()];
   const STAN_DAY = [`Happy ${DAY}!`, "You got this!"].concat(DAY === "Wednesday" ? ["Happy hump day!"] : [], DAY === "Friday" ? ["TGIF!"] : [], DAY === "Monday" ? ["New week, new reports."] : []);
   const leadRows = d.states.map((x) => { const m = x.by_level.middle || {}, h = x.by_level.high || {}; const e = (m.eligible || 0) + (h.eligible || 0), cv = (m.covered || 0) + (h.covered || 0); return { st: x.st, state: x.state, e, cv, pct: e ? cv / e : null }; }).filter((x) => x.pct != null && x.e >= 50 && x.st !== "DC" && !["PR", "GU", "VI", "AS", "MP", "DA", "BI"].includes(x.st)).sort((a, b) => b.pct - a.pct || b.cv - a.cv);
   const STAN_LEAD = leadRows.length ? [`${leadRows[0].state} is in the lead!`] : [];
-  const stanPool = STAN_DAY.concat(STAN_LEAD, (P || d.test_mode) ? STAN_PRE : STAN_GENERAL.concat(
+  // date-based lines: season, month edges, countdown to the target date
+  const today = new Date(), mo = today.getMonth() + 1, dom = today.getDate(), lastDom = new Date(today.getFullYear(), mo, 0).getDate();
+  const target = new Date(d.target_date + "T00:00:00"), cycStart = new Date(d.cycle.start), daysLeft = Math.round((target - today) / 864e5), weeksLeft = Math.round(daysLeft / 7);
+  const cycFrac = cycStart.getFullYear() > 2020 ? (today - cycStart) / (target - cycStart) : null;
+  const STAN_DATE = [].concat(
+    (mo === 8 || mo === 9) ? ["Happy new school year!"] : [], (mo >= 9 && mo <= 11) ? ["Happy fall!"] : [], mo === 1 ? ["Happy new year!"] : [], (mo >= 3 && mo <= 5) ? ["Spring is here!"] : [], (mo === 6 || mo === 7) ? ["Summer break, map still open."] : [],
+    dom === 1 ? ["First of the month!"] : [], dom === lastDom ? ["Last day of the month!"] : [],
+    weeksLeft > 1 && weeksLeft <= 52 ? [`${weeksLeft} weeks to July 1.`] : [], cycFrac != null && cycFrac >= 0.45 && cycFrac <= 0.55 ? ["Halfway to the deadline."] : []);
+  // state and survey lines from the data
+  const above75 = leadRows.filter((x) => x.pct >= 0.75).length;
+  const topMover = d.states.filter((x) => (x.new_this_week || 0) > 0 && x.st !== "DC" && !["PR", "GU", "VI", "AS", "MP", "DA", "BI"].includes(x.st)).sort((a, b) => b.new_this_week - a.new_this_week)[0];
+  const bySvLead = Object.entries(d.dq.by_survey || {}).filter(([, v]) => v && v.valid > 0).sort((a, b) => b[1].valid - a[1].valid)[0];
+  const SV_LINE = { student: "Students are showing up!", educator: "Educators are leading!", librarian: "Librarians are leading!" };
+  const STAN_DATA = [].concat(above75 >= 3 ? [`${above75} states above 75%.`] : [], topMover ? [`${topMover.state} added the most schools this week.`] : [], bySvLead && SV_LINE[bySvLead[0]] ? [SV_LINE[bySvLead[0]]] : []);
+  const stanPool = STAN_DAY.concat(STAN_LEAD, STAN_DATE, (P || d.test_mode) ? STAN_PRE : STAN_GENERAL.concat(STAN_DATA,
     (H.pct || 0) >= 75 ? ["Three quarters there!", "Last stretch!"] : (H.pct || 0) >= 50 ? ["Past halfway!", "More than half the map!"] : [],
     (H.covered || 0) >= 20000 ? ["Twenty thousand schools and counting."] : (H.covered || 0) >= 10000 ? ["Ten thousand schools and counting."] : [],
     (H.pct || 0) >= 100 ? ["Every MS/HS has a report. Class dismissed!"] : [],
@@ -346,7 +361,7 @@
     <div class="pace-stats">
       <div><div class="stat28">${fmt(v.rolling_avg_weekly_new)}</div><div class="sub12">4-week average</div></div>
       <div><div class="stat28">+${pace.pts_per_week == null ? "—" : pace.pts_per_week} pts</div><div class="sub12">coverage per week</div></div>
-      <div><div class="stat28" style="color:var(--study)">${pace.projected_full_date ? my(pace.projected_full_date) : "—"}</div><div class="sub12">projected 100%</div></div>
+      <div><div class="stat28" style="color:var(--study)">${pace.projected_full_date && +pace.projected_full_date.slice(0, 4) <= +d.target_date.slice(0, 4) + 5 ? my(pace.projected_full_date) : "—"}</div><div class="sub12">${pace.projected_full_date && +pace.projected_full_date.slice(0, 4) > +d.target_date.slice(0, 4) + 5 ? "not at this pace" : "projected 100%"}</div></div>
       ${pace.needed_per_week ? `<div><div class="stat28">${fmt(pace.needed_per_week)}</div><div class="sub12">needed / wk for ${my(pace.target_date)}</div></div>` : ""}
     </div>
     <div class="cols"><div class="bars">${last12.map((w) => `<i class="${w.partial ? "cur" : ""}" style="height:${Math.max(2, Math.round(100 * w.new / mx))}%" data-tip="<b>Week of ${mdy(w.week_start)}${w.partial ? " (partial)" : ""}</b><br>${fmt(w.new)} new schools · ${fmt(w.second_reports)} second reports"></i>`).join("")}</div>
