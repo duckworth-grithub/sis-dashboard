@@ -97,12 +97,17 @@
   .cols .bars i:hover { opacity: 0.85; }
   .xlab { display: flex; justify-content: space-between; font-size: 11px; color: var(--slate); margin-top: 6px; white-space: nowrap; }
 
-  .mapgrid { display: grid; grid-template-columns: 1fr 200px; gap: 24px; align-items: start; margin-top: 12px; }
+  .mapgrid { display: grid; grid-template-columns: 1fr 200px; gap: 28px; align-items: stretch; margin-top: 12px; }
+  .mapgrid .ranked { display: flex; flex-direction: column; }
+  .mapgrid .ranked .row { flex: 1; align-items: center; }
+  .mapgrid .ranked .foot { margin-top: auto; padding-top: 14px; }
   .roster4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   @media (max-width: 900px) { .roster4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 560px) { .roster4 { grid-template-columns: 1fr; } #rosterTiles.roster4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 760px) { .mapgrid { grid-template-columns: 1fr; } }
   svg.map path { stroke: #FFFFFF; stroke-width: 1.5; cursor: pointer; transition: opacity 120ms; }
+  #gapsMapBig { display: flex; flex-direction: column; }
+  #gapsMapBig .mapfill { flex: 1; min-height: 0; display: flex; align-items: center; margin-top: 12px; }
   svg.map path:hover { opacity: 0.8; }
   .ranked .row { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; padding: 9px 0; border-bottom: 1px solid var(--rule-in); gap: 10px; }
   .ranked .row .n { font-weight: 700; }
@@ -324,18 +329,18 @@
   $("#gapsCard").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">State leaderboard</div><div class="sec-note">% of MS/HS with at least one report</div></div>
     <div class="mapgrid"><div>${mapSvgMH()}<div style="margin-top:8px">${rampLegend}</div></div><div class="ranked"><div class="kicker" style="color:var(--slate);font-size:12px;letter-spacing:0.12em">Top 5</div>
       ${ranked.slice(0, 5).map((x, i) => `<div class="row" data-go="gaps?state=${x.st}"><span class="n">${i + 1}. ${esc(x.state)}</span><span class="v"><b>${pct(x.pct)}</b></span></div>`).join("")}
-      <div style="margin-top:12px"><span class="pill" data-go="gaps">All states →</span></div></div></div>`;
+      <div class="foot"><span class="pill" data-go="gaps">All states →</span></div></div></div>`;
   function renderGapsMap() {
     const lvl = lf.value;
     const src = lvl === "mshs" ? mhByCode : lvl ? Object.fromEntries(d.states.map((x) => { const b = x.by_level[lvl] || { eligible: 0, covered: 0 }; return [x.st, { ...x, eligible: b.eligible, covered: b.covered, pct: b.eligible ? +(100 * b.covered / b.eligible).toFixed(1) : null }]; })) : byCode;
     const label = lvl === "mshs" ? "MS/HS" : lvl ? LEVEL[lvl].toLowerCase() + " schools" : "all schools (every school in the NCES list)";
-    const svg = paths ? `<svg class="map big" viewBox="0 0 1180 660" style="width:100%;display:block" role="img" aria-label="Coverage by state"><use href="#x"/>${Object.keys(paths).map((k) => { const x = src[k]; return `<path d="${paths[k]}" fill="${ramp(x ? x.pct : null)}" data-go="gaps?state=${k}" data-tip="<b>${esc(x ? x.state : k)}</b><br>${x && x.eligible ? `${fmt(x.covered)} of ${fmt(x.eligible)} ${label} · ${pct(x.pct)}` : "no data"}"></path>`; }).join("")}</svg>` : `<div class="sec-note" style="padding:40px 0;text-align:center">Map needs assets/us-states-paths.json next to this page.</div>`;
-    $("#gapsMapBig").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Coverage by state · ${label}</div><div class="sec-note">${rampLegend}</div></div><div style="margin:8px auto 0">${svg}</div><div class="sec-note" style="margin-top:6px">click a state to filter the table</div>`;
+    const svg = paths ? `<svg class="map big" viewBox="0 0 1180 660" style="width:100%;height:100%;display:block" role="img" aria-label="Coverage by state"><use href="#x"/>${Object.keys(paths).map((k) => { const x = src[k]; return `<path d="${paths[k]}" fill="${ramp(x ? x.pct : null)}" data-go="gaps?state=${k}" data-tip="<b>${esc(x ? x.state : k)}</b><br>${x && x.eligible ? `${fmt(x.covered)} of ${fmt(x.eligible)} ${label} · ${pct(x.pct)}` : "no data"}"></path>`; }).join("")}</svg>` : `<div class="sec-note" style="padding:40px 0;text-align:center">Map needs assets/us-states-paths.json next to this page.</div>`;
+    $("#gapsMapBig").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Coverage by state · ${label}</div><div class="sec-note">${rampLegend}</div></div><div class="mapfill">${svg}</div><div class="sec-note" style="margin-top:8px;text-align:center">click a state to filter the table</div>`;
     const rowsB = Object.values(src).filter((x) => x && x.pct != null && x.eligible >= 50 && !TERR.has(x.st)).sort((a, b) => b.pct - a.pct || b.covered - a.covered);
     const maxB = Math.max(1, ...rowsB.map((x) => x.pct));
     const rowB = (x, i) => `<div class="row" data-go="gaps?state=${x.st}" style="gap:10px;align-items:center"><span style="width:20px;color:var(--muted);font-size:12px">${i}</span><span class="n" style="width:130px">${esc(x.state)}</span><span style="flex:1;height:8px;background:var(--track);border-radius:999px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(2, Math.round(100 * x.pct / maxB))}%;background:${ramp(x.pct)};border-radius:999px"></i></span><span class="v" style="width:118px;text-align:right"><b>${pct(x.pct)}</b> <small>· ${fmt(x.covered)}/${fmt(x.eligible)}</small></span></div>`;
     const top5 = rowsB.slice(0, 5), bottom5 = rowsB.slice(-5);
-    $("#gapsBoard").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">State leaderboard · ${label}</div><div class="sec-note">${rowsB.length} states</div></div>
+    $("#gapsBoard").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">State leaderboard · ${label}</div><div class="sec-note">${rowsB.some((x) => x.st === "DC") ? `${rowsB.length - 1} states + DC` : `${rowsB.length} states`}</div></div>
       <div class="kicker" style="color:var(--slate);font-size:12px;letter-spacing:0.12em;margin-top:10px">Top 5</div><div class="ranked">${top5.map((x, i) => rowB(x, i + 1)).join("")}</div>
       <div class="kicker" style="color:var(--slate);font-size:12px;letter-spacing:0.12em;margin-top:16px">Bottom 5</div><div class="ranked">${bottom5.map((x, i) => rowB(x, rowsB.length - 4 + i)).join("")}</div>`;
   }
@@ -389,10 +394,15 @@
       <td class="num barcell"><span class="track"><i style="width:${Math.max(2, 100 * (s.pct || 0) / maxPct)}%"></i></span>${pct(s.pct)}</td><td class="num">${fmt(s.remaining)}</td><td class="num">${fmt(s.one)}</td><td class="num">${fmt(s.two_plus)}</td>${P ? "" : `<td class="num">${fmt(s.new_this_week)}</td><td class="num">${fmt(s.new_last_week)}</td>`}</tr>`).join("");
   }
   $("#states thead").addEventListener("click", (e) => { const th = e.target.closest("th"); if (!th || th.dataset.k === "dl") return; const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = k === "state" ? 1 : -1; } renderStates(); });
-  lf.addEventListener("change", () => { renderStates(); renderGapsMap(); }); $("#stateSearch").addEventListener("input", renderStates);
+  lf.addEventListener("change", () => { renderStates(); renderGapsMap(); renderListLine(); }); $("#stateSearch").addEventListener("input", renderStates);
   renderStates();
   renderGapsMap();
-  $("#listLinks").innerHTML = `${fmt(d.lists["remaining_all.csv"])} schools remaining · ${fmt(d.lists["stale_elementary.csv"])} elementary reported in an earlier wave · ${fmt(d.lists["one_report.csv"])} with exactly one report`;
+  function renderListLine() {
+    const rows = stateRows(), lvl = lf.value, what = lvl === "mshs" ? "MS/HS" : lvl ? LEVEL[lvl].toLowerCase() + " schools" : "schools";
+    const t = rows.reduce((a, r) => ({ e: a.e + r.eligible, c: a.c + r.covered, one: a.one + r.one, two: a.two + r.two_plus, st: a.st + (r.stale || 0) }), { e: 0, c: 0, one: 0, two: 0, st: 0 });
+    $("#listLinks").innerHTML = `${fmt(t.e - t.c)} of ${fmt(t.e)} ${what} remaining · ${fmt(t.one)} with exactly one report · ${fmt(t.two)} with 2+${lvl === "elementary" && t.st ? ` · ${fmt(t.st)} reported in an earlier wave, not counted` : ""}`;
+  }
+  renderListLine();
   let remainingCsv = null;
   $("#states tbody").addEventListener("click", async (e) => {
     const btn = e.target.closest("button[data-st]"); if (!btn) return;
