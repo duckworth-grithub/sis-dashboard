@@ -276,7 +276,17 @@
   const mshsRemainingRate = (v.rolling_avg_weekly_new || 0) * ((((cur.by_level.middle || 0) + (cur.by_level.high || 0)) || 1) / Math.max(1, cur.by_level.elementary + cur.by_level.middle + cur.by_level.high + (cur.by_level.other || 0) + (cur.by_level.unknown || 0)));
   const wkNewH = (c.mshs && c.mshs.eligible) ? ((cur.by_level.middle || 0) + (cur.by_level.high || 0)) : v.this_week.new;
   const weeksLeftH = (c.mshs && c.mshs.eligible) ? (mshsRemainingRate > 0 ? Math.round(H.remaining / mshsRemainingRate) : null) : (v.weeks_to_full && v.weeks_to_full.overall != null ? Math.round(v.weeks_to_full.overall) : null);
-  const stanSays = (P || d.test_mode) ? "Launch day is coming!" : (H.pct || 0) >= 75 ? "Three quarters there!" : (H.pct || 0) >= 50 ? "Past halfway!" : "Every report counts!";
+  // Stan's line: a fresh pick from the pool on every load; data-tied lines join the pool only when they are true
+  const STAN_PRE = ["Launch day is coming!", "Fall 2026, here we come.", "Getting ready for the first report.", "Counting down to launch.", "Almost launch time!", "The surveys open soon.", "Big fall ahead!", "Warming up for Fall 2026."];
+  const STAN_GENERAL = ["Every report counts!", "One school at a time.", "Keep them coming!", "Filling in the map.", "Another school on the board.", "More schools, more data.", "Small steps, big map.", "Steady as we go.", "Still growing, week by week.", "Every week adds to the map.", "Thanks for reporting!", "Every school has a story.", "Look at that map!", "Reports make the map.", "This is how it gets done.", "On our way!", "Growing every day."];
+  const stanPool = (P || d.test_mode) ? STAN_PRE : STAN_GENERAL.concat(
+    (H.pct || 0) >= 75 ? ["Three quarters there!", "Last stretch!"] : (H.pct || 0) >= 50 ? ["Past halfway!", "More than half the map!"] : [],
+    (H.covered || 0) >= 20000 ? ["Twenty thousand schools and counting."] : (H.covered || 0) >= 10000 ? ["Ten thousand schools and counting."] : [],
+    (H.pct || 0) >= 100 ? ["Every MS/HS has a report. Class dismissed!"] : [],
+    (cur.second_reports || 0) > 0 ? ["Second reports are rolling in."] : [],
+    wk.length > 1 && !cur.partial && cur.new > Math.max(...wk.slice(0, -1).map((w) => w.new || 0)) ? ["Best week yet!"] : [],
+    (c.by_level && c.by_level.elementary && c.by_level.elementary.covered_this_cycle > 0) ? ["Elementary is on the board!"] : []);
+  const stanSays = stanPool[Math.floor(Math.random() * stanPool.length)];
   $("#band").innerHTML = `
     <div>
       <div class="hero">${pct(H.pct)}</div>
