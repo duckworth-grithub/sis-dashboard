@@ -27,6 +27,18 @@
   .brand .s { color: var(--study); } .brand .i { color: var(--chalk); }
   .brand svg { position: absolute; top: -7.8px; left: -5.7px; }
   nav.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  @media (max-width: 760px) {
+    header.app .in { flex-direction: column; align-items: stretch; gap: 8px; }
+    header.app .in > * { min-width: 0; max-width: 100%; }
+    .hdr-right { display: block; width: 100%; }
+    nav.tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; min-width: 0; width: 100%; box-sizing: border-box; margin: 0; padding: 0 0 4px; scrollbar-width: none; }
+    nav.tabs::-webkit-scrollbar { display: none; }
+    .stat40 { font-size: 30px; }
+    .hero { font-size: 64px; }
+    .band { padding: 24px 20px; }
+    .card { padding: 18px 18px; }
+    .strip .legend .l { flex-wrap: wrap; }
+  }
   nav.tabs button { border: 0; background: transparent; color: var(--slate); font-weight: 700; font-size: 14px; padding: 8px 14px; border-radius: 999px; white-space: nowrap; }
   nav.tabs button[aria-selected="true"] { background: var(--ground); color: var(--ink); }
   .pill { display: inline-block; background: var(--ground); color: var(--chalk); padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 700; border: 0; white-space: nowrap; }
@@ -60,6 +72,16 @@
   .stan img { height: 165px; width: auto; display: block; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.25)); }
   .stan .bubble { position: relative; background: #FFFFFF; color: var(--chalk); border-radius: 16px; padding: 10px 14px; font-size: 14px; font-weight: 700; line-height: 1.3; max-width: 150px; box-shadow: 0 1px 3px rgba(28,28,26,0.10); }
   .stan .bubble::after { content: ""; position: absolute; right: -9px; top: 50%; margin-top: -8px; border-width: 8px 0 8px 10px; border-style: solid; border-color: transparent transparent transparent #FFFFFF; }
+  /* phones: Stan floats bottom-right like a chat widget; tap him to show or hide his line */
+  .stan.float { display: none; }
+  @media (max-width: 760px) {
+    .band .stan { display: none; }
+    .stan.float { display: flex; position: fixed; right: 12px; bottom: 12px; z-index: 50; gap: 8px; pointer-events: auto; cursor: pointer; }
+    .stan.float img { height: 72px; }
+    .stan.float .bubble { font-size: 13px; padding: 8px 12px; max-width: 170px; box-shadow: 0 6px 18px rgba(28,28,26,0.18); }
+    .stan.float.quiet .bubble { display: none; }
+    #states td:first-child { min-width: 170px; }
+  }
   @media (max-width: 760px) { .band { grid-template-columns: 1fr; } }
   @media (max-width: 1180px) { .band { grid-template-columns: 1fr; padding: 28px 24px; } }
   .band .kicker { color: var(--seed); }
@@ -213,6 +235,7 @@
 
 
   <footer class="foot" id="foot"></footer>
+  <div class="stan float" id="stanFloat" role="button" aria-label="Stan's message"></div>
 </main>
 <div class="tip" id="tip"></div>
 
@@ -287,6 +310,7 @@
     wk.length > 1 && !cur.partial && cur.new > Math.max(...wk.slice(0, -1).map((w) => w.new || 0)) ? ["Best week yet!"] : [],
     (c.by_level && c.by_level.elementary && c.by_level.elementary.covered_this_cycle > 0) ? ["Elementary is on the board!"] : []);
   const stanSays = stanPool[Math.floor(Math.random() * stanPool.length)];
+  const sf = $("#stanFloat"); sf.innerHTML = `<div class="bubble">${stanSays}</div><img src="assets/stan.png?v=${encodeURIComponent(d.generated_at)}" alt="Stan, the Screens in Schools mascot">`; sf.addEventListener("click", () => sf.classList.toggle("quiet"));
   $("#band").innerHTML = `
     <div>
       <div class="hero">${pct(H.pct)}</div>
@@ -528,7 +552,7 @@
     <div><div class="stat28">${fmt(d.depth.median_days_first_to_second)}</div><div class="sub12">median days first → second</div></div></div>
     <div class="sub12" style="margin-top:12px">Out of scope (not in the denominator): ${Object.entries(c.out_of_scope).map(([k, n2]) => `${nice(k)} ${fmt(n2)}`).join(" · ") || "none"}.</div>`;
 
-  $("#foot").textContent = `Data as of ${d.as_of.slice(0, 10)} · generated ${d.generated_at.replace("T", " ").slice(0, 16)} UTC by coverage_export.py · definitions in COVERAGE-DESIGN.md · eligible = 50 states + DC${d.ccd_loaded ? ", open regular schools per the NCES panel" : ""}.`;
+  $("#foot").textContent = `Data as of ${d.as_of.slice(0, 10)} · generated ${d.generated_at.replace("T", " ").slice(0, 16)} UTC · eligible = every school in the NCES list (${fmt(c.overall.eligible)}), all states and territories.`;
 
   // ---- tooltips + routing
   const tip = $("#tip");
