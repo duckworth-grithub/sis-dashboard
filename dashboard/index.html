@@ -119,6 +119,7 @@
   .tag.good { background: #E4EDE6; color: #1C5E3D; }
   .filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 16px 0 12px; }
   .filters select, .filters input { font: inherit; font-weight: 700; font-size: 13px; padding: 8px 14px; border: 0; border-radius: 999px; background: var(--card); color: var(--chalk); box-shadow: var(--shadow); }
+  .filters select { appearance: none; -webkit-appearance: none; padding-right: 30px; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%231E4034' stroke-width='1.6'/></svg>"); background-repeat: no-repeat; background-position: right 12px center; }
   .page { display: none; } .page.on { display: block; }
   .tip { position: fixed; pointer-events: none; display: none; background: var(--card); color: var(--ink); border-radius: 12px; padding: 8px 12px; font-size: 13px; box-shadow: 0 8px 24px rgba(28,28,26,0.18); z-index: 10; }
   footer.foot { margin-top: 28px; font-size: 12px; color: var(--muted); }
@@ -148,6 +149,7 @@
       <div class="card" style="display:flex;flex-direction:column" id="pace"></div>
       <div class="card" id="gapsCard"></div>
     </div>
+    <div class="card strip" id="review" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap"></div>
   </div>
 
   <div class="page" id="page-gaps">
@@ -168,7 +170,7 @@
 
   <div class="page" id="page-elementary">
     <h2 class="ph">Elementary</h2><p class="pd">The elementary survey is new this year, so elementary coverage restarts at zero. Schools that reported in earlier waves are listed as "reported before" and count once they take the new survey. Elementary is not part of the headline KPI. <span class="tag warn">qualifier under review</span> Elementary-only librarians currently never count because they answer no policy question; the team expects to change what counts for elementary.</p>
-    <div class="grid3" id="elemTiles"></div>
+    <div class="grid3" id="elemTiles" style="grid-template-columns:repeat(2,minmax(0,1fr))"></div>
     <div class="grid2" id="elemBody"></div>
   </div>
 
@@ -179,7 +181,7 @@
   </div>
 
   <div class="page" id="page-librarian">
-    <h2 class="ph">Librarians</h2><p class="pd">School librarians count for coverage only when they answer the phone-policy questions for a specific school. District-only librarians give circulation data and are kept apart. <span class="tag warn">qualifier under review</span> Elementary-only and district librarians never count today; the team expects to revisit this.</p>
+    <h2 class="ph">Librarians</h2><p class="pd">The librarian survey branches three ways: district (circulation only), elementary-only, and MS/HS (any librarian serving middle or high students, with or without elementary). Only the MS/HS branch answers the phone-policy questions, so only it counts for coverage. <span class="tag warn">qualifier under review</span></p>
     <div class="grid3" id="libTiles"></div>
     <div class="grid2" id="libBody"></div>
   </div>
@@ -251,7 +253,7 @@
   // ---- band: headline = middle + high schools with at least one report (elementary has its own tab)
   const wk = v.weekly || [], cur = wk[wk.length - 1] || { by_level: {} };
   const H = c.mshs && c.mshs.eligible ? c.mshs : o;
-  const hLabel = c.mshs && c.mshs.eligible ? "Every U.S. middle and high school represented" : "Every U.S. public school represented";
+  const hLabel = c.mshs && c.mshs.eligible ? "Every U.S. MS/HS represented" : "Every U.S. public school represented";
   const mshsRemainingRate = (v.rolling_avg_weekly_new || 0) * ((((cur.by_level.middle || 0) + (cur.by_level.high || 0)) || 1) / Math.max(1, cur.by_level.elementary + cur.by_level.middle + cur.by_level.high + (cur.by_level.other || 0) + (cur.by_level.unknown || 0)));
   const wkNewH = (c.mshs && c.mshs.eligible) ? ((cur.by_level.middle || 0) + (cur.by_level.high || 0)) : v.this_week.new;
   const weeksLeftH = (c.mshs && c.mshs.eligible) ? (mshsRemainingRate > 0 ? Math.round(H.remaining / mshsRemainingRate) : null) : (v.weeks_to_full && v.weeks_to_full.overall != null ? Math.round(v.weeks_to_full.overall) : null);
@@ -294,7 +296,7 @@
     if (!paths) return `<div class="sec-note" style="padding:40px 0;text-align:center">Map needs assets/us-states-paths.json next to this page.</div>`;
     return `<svg class="map ${cls}" viewBox="0 0 1180 660" style="width:100%;display:block" role="img" aria-label="Coverage by state">${Object.keys(paths).map((k) => { const s = byCode[k]; return `<path d="${paths[k]}" fill="${ramp(s ? s.pct : null)}" data-go="gaps?state=${k}" data-tip="<b>${esc(s ? s.state : k)}</b><br>${s ? `${fmt(s.covered)} of ${fmt(s.eligible)} covered · ${pct(s.pct)}` : "no data"}"></path>`; }).join("")}</svg>`;
   }
-  const rampLegend = `<span class="ramp">${["#C3E5CB", "#8FC49B", "#5C9F6F", "#2C7A4B", "#1C5E3D", "#1E4034"].map((h) => `<i style="background:${h}"></i>`).join("")}&nbsp;&lt;25% → 65%+</span>`;
+  const rampLegend = `<span class="ramp" style="gap:10px;padding:6px 12px">${[["#C3E5CB", "<25%"], ["#8FC49B", "25–35"], ["#5C9F6F", "35–45"], ["#2C7A4B", "45–55"], ["#1C5E3D", "55–65"], ["#1E4034", "65%+"]].map(([h, l]) => `<span style="display:inline-flex;align-items:center;gap:4px"><i style="background:${h}"></i>${l}</span>`).join("")}</span>`;
   // leaderboard and gaps on the same basis as the headline: middle + high schools
   const mh = d.states.map((x) => { const m = x.by_level.middle || { eligible: 0, covered: 0, two_plus: 0 }, h = x.by_level.high || { eligible: 0, covered: 0, two_plus: 0 }; const e = m.eligible + h.eligible, cv = m.covered + h.covered, tp = (m.two_plus || 0) + (h.two_plus || 0); return { ...x, eligible: e, covered: cv, remaining: e - cv, pct: e ? +(100 * cv / e).toFixed(1) : null, one: cv - tp, two_plus: tp }; });
   const topGaps = mh.filter((x) => x.eligible > 0).sort((a, b) => b.remaining - a.remaining).slice(0, 5);
@@ -304,16 +306,16 @@
   const rankOf = {}; ranked.forEach((x, i) => (rankOf[x.st] = i + 1));
   function mapSvgMH() {
     if (!paths) return `<div class="sec-note" style="padding:40px 0;text-align:center">Map needs assets/us-states-paths.json next to this page.</div>`;
-    return `<svg class="map" viewBox="0 0 1180 660" style="width:100%;display:block" role="img" aria-label="Middle and high school coverage by state">${Object.keys(paths).map((k) => { const x = mhByCode[k]; return `<path d="${paths[k]}" fill="${ramp(x ? x.pct : null)}" data-go="gaps?state=${k}" data-tip="<b>${esc(x ? x.state : k)}</b>${rankOf[k] ? ` · #${rankOf[k]} of ${ranked.length}` : ""}<br>${x ? `${fmt(x.covered)} of ${fmt(x.eligible)} middle/high schools · ${pct(x.pct)}` : "no data"}"></path>`; }).join("")}</svg>`;
+    return `<svg class="map" viewBox="0 0 1180 660" style="width:100%;display:block" role="img" aria-label="MS/HS coverage by state">${Object.keys(paths).map((k) => { const x = mhByCode[k]; return `<path d="${paths[k]}" fill="${ramp(x ? x.pct : null)}" data-go="gaps?state=${k}" data-tip="<b>${esc(x ? x.state : k)}</b>${rankOf[k] ? ` · #${rankOf[k]} of ${ranked.length}` : ""}<br>${x ? `${fmt(x.covered)} of ${fmt(x.eligible)} MS/HS · ${pct(x.pct)}` : "no data"}"></path>`; }).join("")}</svg>`;
   }
-  $("#gapsCard").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">State leaderboard</div><div class="sec-note">% of middle and high schools with at least one report</div></div>
+  $("#gapsCard").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">State leaderboard</div><div class="sec-note">% of MS/HS with at least one report</div></div>
     <div class="mapgrid"><div>${mapSvgMH()}<div style="margin-top:8px">${rampLegend}</div></div><div class="ranked"><div class="kicker" style="color:var(--slate);font-size:12px;letter-spacing:0.12em">Top 5</div>
       ${ranked.slice(0, 5).map((x, i) => `<div class="row" data-go="gaps?state=${x.st}"><span class="n">${i + 1}. ${esc(x.state)}</span><span class="v"><b>${pct(x.pct)}</b></span></div>`).join("")}
       <div style="margin-top:12px"><span class="pill" data-go="gaps">All states →</span></div></div></div>`;
   function renderGapsMap() {
     const lvl = lf.value;
     const src = lvl === "mshs" ? mhByCode : lvl ? Object.fromEntries(d.states.map((x) => { const b = x.by_level[lvl] || { eligible: 0, covered: 0 }; return [x.st, { ...x, eligible: b.eligible, covered: b.covered, pct: b.eligible ? +(100 * b.covered / b.eligible).toFixed(1) : null }]; })) : byCode;
-    const label = lvl === "mshs" ? "middle and high schools" : lvl ? LEVEL[lvl].toLowerCase() + " schools" : "all schools (every school in the NCES list)";
+    const label = lvl === "mshs" ? "MS/HS" : lvl ? LEVEL[lvl].toLowerCase() + " schools" : "all schools (every school in the NCES list)";
     const svg = paths ? `<svg class="map big" viewBox="0 0 1180 660" style="width:100%;display:block" role="img" aria-label="Coverage by state"><use href="#x"/>${Object.keys(paths).map((k) => { const x = src[k]; return `<path d="${paths[k]}" fill="${ramp(x ? x.pct : null)}" data-go="gaps?state=${k}" data-tip="<b>${esc(x ? x.state : k)}</b><br>${x && x.eligible ? `${fmt(x.covered)} of ${fmt(x.eligible)} ${label} · ${pct(x.pct)}` : "no data"}"></path>`; }).join("")}</svg>` : `<div class="sec-note" style="padding:40px 0;text-align:center">Map needs assets/us-states-paths.json next to this page.</div>`;
     $("#gapsMapBig").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Coverage by state · ${label}</div><div class="sec-note">${rampLegend}</div></div><div style="margin:8px auto 0">${svg}</div><div class="sec-note" style="margin-top:6px">click a state to filter the table</div>`;
     const rowsB = Object.values(src).filter((x) => x && x.pct != null && x.eligible >= 50 && !TERR.has(x.st)).sort((a, b) => b.pct - a.pct || b.covered - a.covered);
@@ -325,15 +327,23 @@
       <div class="kicker" style="color:var(--slate);font-size:12px;letter-spacing:0.12em;margin-top:16px">Bottom 5</div><div class="ranked">${bottom5.map((x, i) => rowB(x, rowsB.length - 4 + i)).join("")}</div>`;
   }
 
-  // ---- strip: funnel (4 weeks) + needs review
+  // ---- strip: funnel (4 weeks) + total responses; needs review sits at the bottom of the overview
   const fn = (d.funnel && d.funnel.last_4w) || {};
-  const stages = [["Website visits", fn.visits, "#C3E5CB"], ["Survey starts", fn.starts, "#8FC49B"], ["Completions", fn.completes, "#5C9F6F"], ["Valid reports", fn.valid, "#2C7A4B"], ["New schools", fn.new_schools, "#1E4034"]].filter((x) => x[1] != null);
+  const fc = (d.funnel && d.funnel.cycle) || {};
+  const stages = [["Survey starts", fn.starts, "#8FC49B"], ["Completions", fn.completes, "#5C9F6F"], ["Valid reports", fn.valid, "#2C7A4B"], ["New schools", fn.new_schools, "#1E4034"]].filter((x) => x[1] != null);
   const fmax = Math.max(1, ...stages.map((x) => x[1]));
-  $("#strip").innerHTML = P ? `<div><span style="font-size:13px;font-weight:700">Funnel, last 4 weeks</span><div class="sub12">${PEND}.</div></div><div class="review"><div><div style="font-size:13px;font-weight:700">Needs review</div><div class="sub12">${PEND}.</div></div></div>` : `<div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;font-weight:700">Funnel, last 4 weeks</span></div>
-      <div class="srcs" style="gap:6px">${stages.map(([l, n2, col]) => `<div style="align-items:center;gap:10px"><span style="color:var(--slate);width:110px;flex-shrink:0">${l}</span><span style="flex:1;height:8px;background:var(--track);border-radius:999px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(2, Math.round(100 * n2 / fmax))}%;background:${col};border-radius:999px"></i></span><b style="width:64px;text-align:right">${fmt(n2)}</b></div>`).join("")}
-      ${fn.visits == null ? `<div class="sec-note" style="margin-top:4px">Website visits appear once analytics are pasted into inputs/traffic.csv.</div>` : ""}</div></div>
-    <div class="review"><div><div style="font-size:13px;font-weight:700">Needs review</div><div class="sub12 pretty"><b style="color:var(--ink)">${fmt(dq.needs_review)}</b> responses unmatched, ambiguous or too fast. Match rate ${pct(dq.match_rate)}. Queue ${fmt(dq.queue.size)}${dq.queue.oldest_days != null ? `, oldest ${dq.queue.oldest_days} d` : ""}.</div></div>
-      <span class="pill primary" data-go="quality">Review →</span></div>`;
+  $("#strip").innerHTML = P ? `<div><span style="font-size:13px;font-weight:700">Funnel, last 4 weeks</span><div class="sub12">${PEND}.</div></div><div class="review"><div><div style="font-size:13px;font-weight:700">Total responses this cycle</div><div class="sub12">${PEND}.</div></div></div>`
+    : `<div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;font-weight:700">Funnel, last 4 weeks</span></div>
+      <div class="srcs" style="gap:6px">${stages.map(([l, n2, col]) => `<div style="align-items:center;gap:10px"><span style="color:var(--slate);width:110px;flex-shrink:0">${l}</span><span style="flex:1;height:8px;background:var(--track);border-radius:999px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(2, Math.round(100 * n2 / fmax))}%;background:${col};border-radius:999px"></i></span><b style="width:64px;text-align:right">${fmt(n2)}</b></div>`).join("")}</div></div>
+    <div class="review"><div style="width:100%"><div style="font-size:13px;font-weight:700">Total responses this cycle</div>
+      <div style="display:flex;gap:28px;margin-top:10px;flex-wrap:wrap">
+        <div><div class="stat28">${fmt(fc.starts)}</div><div class="sub12">started</div></div>
+        <div><div class="stat28">${fmt(fc.completes)}</div><div class="sub12">completed</div></div>
+        <div><div class="stat28">${fmt(fc.valid)}</div><div class="sub12">valid</div></div>
+        <div><div class="stat28">${fmt(fc.new_schools)}</div><div class="sub12">new schools</div></div></div>
+      <div class="sub12" style="margin-top:8px">${Object.entries(dq.by_survey || {}).map(([sv, x]) => `${sv} ${fmt(x.valid)} valid`).join(" · ")}</div></div></div>`;
+  $("#review").innerHTML = P ? `<div><div style="font-size:13px;font-weight:700">Needs review</div><div class="sub12">${PEND}.</div></div>`
+    : `<div><div style="font-size:13px;font-weight:700">Needs review</div><div class="sub12 pretty"><b style="color:var(--ink)">${fmt(dq.needs_review)}</b> responses unmatched, ambiguous or too fast. Match rate ${pct(dq.match_rate)}. Queue ${fmt(dq.queue.size)}${dq.queue.oldest_days != null ? `, oldest ${dq.queue.oldest_days} d` : ""}.</div></div><span class="pill primary" data-go="quality">Review →</span>`;
 
   // ---- gaps tab table
   $("#gapPts").textContent = d.config.lagging_state_gap_points;
@@ -422,7 +432,6 @@
   const E = c.by_level.elementary || {};
   const elemWeekly = wk.map((w) => ({ ...w, n: w.by_level.elementary || 0 })), emx = Math.max(1, ...elemWeekly.map((w) => w.n));
   $("#elemTiles").innerHTML = tile("Elementary schools with a " + esc(d.cycle.name) + " report", P ? PEND : pct(E.pct), P ? `${fmt(E.eligible)} elementary schools in scope` : `${fmt(E.covered)} of ${fmt(E.eligible)} · ${fmt(E.remaining)} remaining`) +
-    tile("Reported in an earlier wave, need the new survey", fmt(E.stale), "count once they take the new survey") +
     tile("New elementary schools this week", P ? PEND : fmt(cur.by_level.elementary || 0), P ? "" : `last week ${fmt((wk[wk.length - 2] || { by_level: {} }).by_level.elementary || 0)}`);
   const elemStates = [...d.states].map((s2) => ({ st: s2.st, state: s2.state, ...(s2.by_level.elementary || { eligible: 0, covered: 0 }) })).filter((x) => x.eligible > 0).map((x) => ({ ...x, remaining: x.eligible - x.covered, pct: +(100 * x.covered / x.eligible).toFixed(1) })).sort((a, b) => b.remaining - a.remaining).slice(0, 8);
   $("#elemBody").innerHTML = `<div class="card" style="display:flex;flex-direction:column"><div class="card-title">Elementary schools newly represented per week</div>
@@ -434,16 +443,17 @@
 
   function rolePage(key, tilesId, bodyId, noun) {
     const R = (c.by_role || {})[key] || {};
-    if (P) { $("#" + tilesId).innerHTML = tile(`Schools with a ${noun} report this cycle`, PEND, "") ; $("#" + bodyId).innerHTML = pendCard(key === "student" ? "Reports" : "By school level") + pendCard(`States with the most ${noun}-reported schools`); return; }
+    if (P) { $("#" + tilesId).innerHTML = tile(`Schools with a ${noun} report this cycle`, PEND, "") ; $("#" + bodyId).innerHTML = pendCard(`${noun[0].toUpperCase() + noun.slice(1)} reports per week`) + pendCard(`States with the most ${noun}-reported schools`); return; }
     const tiles = tile(`Schools with a ${noun} report this cycle`, fmt(R.schools), `${fmt(R.valid_reports)} valid ${noun} reports`) +
       tile(`Schools ${noun}s put on the map`, fmt(R.new_schools), "first-ever report came from a " + noun) +
       tile(`${noun[0].toUpperCase() + noun.slice(1)} reports this week`, fmt(R.this_week), `last week ${fmt(R.last_week)}`);
     const lvls = Object.entries(R.by_level || {}).filter(([l, n2]) => n2 > 0);
-    const levelCard = key === "student" ? `<div class="card"><div class="card-title">Reports</div><div class="sub12" style="margin-top:6px">Students must be 13 or older, so student reports are middle and high school by definition.</div>
-        <div class="sub12" style="margin-top:10px">Source surveys: ${Object.entries(R.by_survey || {}).map(([sv, n2]) => `${sv} ${fmt(n2)}`).join(" · ") || "—"}</div></div>`
-      : `<div class="card"><div class="card-title">By school level</div><div class="ranked" style="margin-top:6px">${lvls.map(([l, n2]) => `<div class="row"><span class="n">${LEVEL[l]}</span><span class="v">${fmt(n2)} <small>schools</small></span></div>`).join("") || `<div class="sec-note">No ${noun} reports yet.</div>`}</div>
-        <div class="sub12" style="margin-top:10px">Source surveys: ${Object.entries(R.by_survey || {}).map(([sv, n2]) => `${sv} ${fmt(n2)}`).join(" · ") || "—"}</div></div>`;
-    const body = levelCard + `<div class="card"><div class="card-title">States with the most ${noun}-reported schools</div><div class="ranked" style="margin-top:6px">${(R.top_states || []).map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc((byCode[g.st] || {}).state || g.st)}</span><span class="v">${fmt(g.schools)} <small>schools</small></span></div>`).join("") || `<div class="sec-note">—</div>`}</div></div>`;
+    const wkR = R.weekly || [], rmx = Math.max(1, ...wkR.map((w) => w.reports));
+    const weeklyCard = `<div class="card" style="display:flex;flex-direction:column"><div class="card-title">${noun[0].toUpperCase() + noun.slice(1)} reports per week</div>
+        <div class="cols"><div class="bars">${wkR.map((w) => `<i class="${w.partial ? "cur" : ""}" style="height:${Math.max(2, Math.round(100 * w.reports / rmx))}%" data-tip="<b>Week of ${mdy(w.week_start)}${w.partial ? " (partial)" : ""}</b><br>${fmt(w.reports)} valid ${noun} reports"></i>`).join("")}</div></div>
+        <div class="xlab"><span>${wkR.length ? mdy(wkR[0].week_start) : ""}</span><span></span><span>${wkR.length ? mdy(wkR[wkR.length - 1].week_start) : ""}</span></div>
+        <div class="sub12" style="margin-top:10px">${key === "student" ? "Students must be 13 or older, so student reports are MS/HS by definition." : key === "librarian" ? `Branches: district ${fmt((R.by_branch || {}).district)} · elementary-only ${fmt((R.by_branch || {}).elementary_only)} · MS/HS ${fmt((R.by_branch || {}).mshs)}. Only MS/HS school librarians answer the policy questions, so only they count.` : ""}</div></div>`;
+    const body = weeklyCard + `<div class="card"><div class="card-title">States with the most ${noun}-reported schools</div><div class="ranked" style="margin-top:6px">${(R.top_states || []).map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc((byCode[g.st] || {}).state || g.st)}</span><span class="v">${fmt(g.schools)} <small>schools</small></span></div>`).join("") || `<div class="sec-note">—</div>`}</div></div>`;
     $("#" + tilesId).innerHTML = tiles; $("#" + bodyId).innerHTML = body;
   }
   rolePage("student", "studentTiles", "studentBody", "student");

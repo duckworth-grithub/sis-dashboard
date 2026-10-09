@@ -513,6 +513,14 @@ def main():
                          "by_survey": dict(collections.Counter(r["survey"] for r in rs)),
                          "top_states": [{"st": st, "schools": n} for st, n in collections.Counter(by_id[sid]["st"] for sid in ids if sid in by_id).most_common(8)]}
     by_role["district_librarian"] = {"reports": sum(1 for r in responses if r["role"] == "district_librarian" and r["finished"] and r["distribution_channel"] != "preview")}
+    lib_rows = [r for r in responses if r["survey"] == "librarian" and r["distribution_channel"] != "preview"
+                and not (r["recorded_at"] and r["recorded_at"] < cycle_start) and (r["school_string"] or r["typed_name_present"] or r["role"] == "district_librarian")]
+    by_role["librarian"]["by_branch"] = {
+        "district": sum(1 for r in lib_rows if r["role"] == "district_librarian"),
+        "elementary_only": sum(1 for r in lib_rows if r["role"] == "librarian" and r["respondent_level"] == "elementary"),
+        "mshs": sum(1 for r in lib_rows if r["role"] == "librarian" and r["respondent_level"] in ("middle", "high", "mixed")),
+        "valid_mshs": sum(1 for r in lib_rows if r["valid"]),
+    }
     coverage["by_role"] = by_role
 
     # new schools (first report) by week / day / level / state / channel
@@ -627,6 +635,9 @@ def main():
             alerts.append(f"partner {slug} activated {p['activated_on']} has produced 0 new schools")
     partner_rows.sort(key=lambda x: (-x["new_schools"], x["partner"]))
 
+    for role in ("student", "educator", "librarian"):
+        by_role[role]["weekly"] = [{"week_start": w["week_start"], "partial": w["partial"],
+                                    "reports": sum(1 for r in responses if r["valid"] and r["role"] == role and r["week"] == w["week_start"])} for w in weekly]
     # ---- overview extras: pace detail, 4-week sources, callouts (rule engine, COVERAGE-DESIGN.md §7)
     pace["pts_per_week"] = round(100.0 * rolling / coverage["overall"]["eligible"], 2) if coverage["overall"]["eligible"] else None
     pace["projected_full_date"] = (now + timedelta(weeks=coverage["overall"]["remaining"] / rolling)).strftime("%Y-%m-%d") if rolling else None
