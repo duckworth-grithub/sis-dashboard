@@ -96,6 +96,17 @@
   .cbar .f1 { background: var(--seed); } .cbar .f2 { background: #FFFFFF; }
   .legend { display: flex; justify-content: space-between; font-size: 13px; color: var(--light); margin-top: 10px; gap: 16px; flex-wrap: wrap; }
   .legend .l { display: flex; gap: 18px; flex-wrap: wrap; }
+  .band .legend .li .k::after { content: " · "; }
+  @media (max-width: 760px) {
+    .band .hero { font-size: 58px; }
+    .band .ctx { font-size: 15px; margin-top: 6px; }
+    .band .legend { display: block; margin-top: 14px; }
+    .band .legend .l { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .band .legend .li { display: flex; flex-direction: column; gap: 2px; font-size: 12px; line-height: 1.3; min-width: 0; }
+    .band .legend .li .k::after { content: none; }
+    .band .legend .li .v { font-size: 13px; white-space: nowrap; }
+    .band .legend .wk { display: block; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.14); font-size: 13px; }
+  }
   .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
   .lvl { background: rgba(255,255,255,0.08); border-radius: 20px; padding: 18px 22px; }
   .lvl + .lvl { margin-top: 14px; }
@@ -343,10 +354,10 @@
       <div class="cbar with-stan" aria-label="Coverage: ${pct(H.pct)} with at least one report, ${pct(H.depth_pct["2plus"])} with two or more"><i class="f1" style="width:${Math.max(H.pct || 0, 0.4)}%"></i><i class="f2" style="width:${Math.max(H.depth_pct["2plus"] || 0, 0.25)}%"></i>
         <div class="stan"><div class="bubble">${stanSays}</div><img src="assets/stan.png?v=${encodeURIComponent(d.generated_at)}" alt="Stan, the Screens in Schools mascot"></div></div>
       <div class="legend"><span class="l">
-        <span><span class="dot" style="background:#FFFFFF"></span>2+ reports · <b>${fmt(H.depth["2plus"])}</b> · ${pct(H.depth_pct["2plus"])}</span>
-        <span><span class="dot" style="background:#8FC49B"></span>1 report · <b>${fmt(H.depth["1"])}</b> · ${pct(H.depth_pct["1"])}</span>
-        <span><span class="dot" style="background:rgba(255,255,255,0.16)"></span>none · <b>${fmt(H.depth["0"])}</b> · ${pct(H.depth_pct["0"])}</span></span>
-        <span>${P ? PEND : `<b>+${fmt(wkNewH)}</b> this week`}</span></div>
+        <span class="li"><span class="k"><span class="dot" style="background:#FFFFFF"></span>2+ reports</span><span class="v"><b>${fmt(H.depth["2plus"])}</b> · ${pct(H.depth_pct["2plus"])}</span></span>
+        <span class="li"><span class="k"><span class="dot" style="background:#8FC49B"></span>1 report</span><span class="v"><b>${fmt(H.depth["1"])}</b> · ${pct(H.depth_pct["1"])}</span></span>
+        <span class="li"><span class="k"><span class="dot" style="background:rgba(255,255,255,0.16)"></span>none</span><span class="v"><b>${fmt(H.depth["0"])}</b> · ${pct(H.depth_pct["0"])}</span></span></span>
+        <span class="wk">${P ? PEND : `<b>+${fmt(wkNewH)}</b> this week`}</span></div>
     </div>`;
 
   // ---- callouts
