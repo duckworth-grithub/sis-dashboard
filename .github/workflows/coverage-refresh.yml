@@ -8,6 +8,9 @@ on:
   schedule:
     - cron: "30 6 * * *"        # 06:30 UTC daily (about 2:30am Eastern)
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["dashboard/**", "coverage_export.py", "common.py", "config.json", "data/**", "inputs/**"]   # code or data change: republish
 permissions:
   contents: write
 jobs:
@@ -15,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with: { ref: main }
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: pip install requests
