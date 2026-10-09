@@ -806,11 +806,14 @@ def main():
             _sh.rmtree(pub)
         os.makedirs(os.path.join(pub, "lists"), exist_ok=True)
         _sh.copy(os.path.join(a.out, "coverage-data.json"), pub)
-        if os.path.exists(os.path.join(a.out, "index.html")):
-            _sh.copy(os.path.join(a.out, "index.html"), pub)
-        if os.path.isdir(os.path.join(a.out, "assets")):
-            _sh.copytree(os.path.join(a.out, "assets"), os.path.join(pub, "assets"))
+        # the page and its assets come straight from dashboard/, so a clean checkout publishes them too
+        _sh.copy(os.path.join(HERE, "dashboard", "index.html"), pub)
+        if os.path.isdir(os.path.join(HERE, "dashboard", "assets")):
+            _sh.copytree(os.path.join(HERE, "dashboard", "assets"), os.path.join(pub, "assets"))
         _sh.copytree(os.path.join(a.out, "lists", "state"), os.path.join(pub, "lists", "state"))
+        for must in ("index.html", "coverage-data.json", os.path.join("assets", "us-states-paths.json")):
+            if not os.path.exists(os.path.join(pub, must)):
+                sys.exit(f"publish failed: {must} missing from {pub}")
         print("publishable copy:", pub, "(page, aggregates, per-state school rosters; no response-level file)")
     import shutil
     dash = os.path.join(HERE, "dashboard", "index.html")
