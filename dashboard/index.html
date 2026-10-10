@@ -379,11 +379,12 @@
     "New week, new reports.": "coffee", "Happy Monday!": "coffee", "Steady as we go.": "coffee", "Still here, still counting.": "coffee",
     "Happy Saturday!": "sleep", "Happy Sunday!": "sleep", "Summer break, map still open.": "sleep",
     "Educators are leading!": "apple", "Happy new school year!": "apple", "Happy fall!": "apple",
-    "Librarians are leading!": "books", "One percentage. So many NCES files.": "books", "QSF and Google Doc: finally agree.": "books", "Tested, retested, cross-reviewed.": "books", "Median 4.3 minutes. We say five.": "books",
+    "Librarians are leading!": "books", "One percentage. So many NCES files.": "books",
+    "QSF and Google Doc: finally agree.": "checklist", "Tested, retested, cross-reviewed.": "checklist", "Median 4.3 minutes. We say five.": "checklist", "So many branches. Still no tree.": "checklist",
     "Filling in the map.": "map", "Look at that map!": "map", "The map thanks you.": "map", "Reports make the map.": "map", "Small steps, big map.": "map", "Every week adds to the map.": "map",
     "Qualtrics and I are in talks.": "laptop", "Spreadsheets, CSVs, and me.": "laptop", "Can we do a Prolific?": "laptop", "Data day is every day.": "laptop", "Still growing, week by week.": "laptop",
     "Keep them coming!": "megaphone", "It's a giveaway, NOT a raffle!": "megaphone", "Students are showing up!": "megaphone", "Thanks for reporting!": "megaphone", "Getting #SITUATED": "situated",
-    "Best week yet!": "finger", "Past halfway!": "finger", "Three quarters there!": "finger", "Twenty thousand schools and counting.": "finger", "Every MS/HS has a report. Class dismissed!": "finger" };
+    "Best week yet!": "party", "Past halfway!": "party", "More than half the map!": "party", "Three quarters there!": "party", "Last stretch!": "party", "Ten thousand schools and counting.": "party", "Twenty thousand schools and counting.": "party", "Every MS/HS has a report. Class dismissed!": "party", "Happy new year!": "party", "Launch day is coming!": "party" };
   const stanMood = STAN_MOOD[stanSays] || (/ is in the lead!$/.test(stanSays) ? "finger" : / states above 75%\.$/.test(stanSays) || / added the most schools this week\.$/.test(stanSays) ? "map" : "");
   const stanSrc = `assets/stan${stanMood ? "-" + stanMood : ""}.png?v=${encodeURIComponent(d.generated_at)}`;
   const sf = $("#stanFloat"); sf.innerHTML = `<div class="bubble">${stanSays}</div><img src="${stanSrc}" alt="Stan, the Screens in Schools mascot">`; sf.addEventListener("click", () => sf.classList.toggle("quiet"));
