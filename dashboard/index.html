@@ -389,10 +389,22 @@
   const sf = $("#stanFloat"); sf.innerHTML = `<div class="bubble">${stanSays}</div><img src="${stanSrc}" alt="Stan, the Screens in Schools mascot">`; sf.addEventListener("click", () => sf.classList.toggle("quiet"));
   function fitBubble(el) {
     if (!el || !el.offsetParent) return;
-    el.style.width = "";
+    if (el.dataset.text == null) el.dataset.text = el.textContent;
+    const text = el.dataset.text;
+    el.style.width = ""; el.textContent = text;
     const cs = getComputedStyle(el), lh = parseFloat(cs.lineHeight), padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
-    const maxW = el.getBoundingClientRect().width, lines = Math.round((el.getBoundingClientRect().height - padY) / lh);
+    const nLines = () => Math.round((el.getBoundingClientRect().height - padY) / lh);
+    const maxW = el.getBoundingClientRect().width, lines = nLines();
     if (lines <= 1) return;
+    // prefer one sentence per line when the message has 2–3 sentences that each fit on a line
+    const parts = text.match(/[^.!?]+(?:\.\.\.|[.!?])+\s*|[^.!?]+$/g);
+    if (parts && parts.length > 1 && parts.length <= 3) {
+      const trimmed = parts.map((x) => x.trim());
+      el.style.width = "";
+      const fits = trimmed.every((x) => { el.textContent = x; return nLines() === 1; });
+      if (fits) { el.innerHTML = trimmed.map((x) => x.replace(/&/g, "&amp;").replace(/</g, "&lt;")).join("<br>"); el.style.width = ""; el.style.width = Math.ceil(el.getBoundingClientRect().width) + "px"; return; }
+      el.textContent = text;
+    }
     let lo = 40, hi = maxW;
     while (hi - lo > 1) { const mid = (lo + hi) / 2; el.style.width = mid + "px"; const n = Math.round((el.getBoundingClientRect().height - padY) / lh); if (n > lines) lo = mid; else hi = mid; }
     el.style.width = Math.ceil(hi) + "px";
