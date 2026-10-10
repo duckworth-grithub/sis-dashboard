@@ -86,7 +86,7 @@
   @media (max-width: 760px) {
     .band .stan { display: none; }
     .stan.float { display: flex; position: fixed; right: 22px; bottom: 18px; z-index: 50; gap: 10px; pointer-events: auto; cursor: pointer; }
-    .stan.float img { height: 96px; filter: none; }
+    .stan.float img { height: 112px; filter: none; }
     .stan.float .bubble { background: var(--study); color: #FFFFFF; font-size: 13px; padding: 9px 13px; width: max-content; max-width: 210px; text-wrap: balance; box-shadow: 0 10px 24px rgba(28,28,26,0.26), 0 2px 6px rgba(28,28,26,0.12); }
     .stan.float .bubble::after { border-color: transparent transparent transparent var(--study); }
     .stan.float.quiet .bubble { display: none; }
@@ -379,7 +379,7 @@
     "Happy Saturday!": "sleep", "Happy Sunday!": "sleep", "Summer break, map still open.": "sleep",
     "Educators are leading!": "apple", "Happy new school year!": "apple", "Happy fall!": "apple",
     "Librarians are leading!": "books", "One percentage. So many NCES files.": "books", "QSF and Google Doc: finally agree.": "books", "Tested, retested, cross-reviewed.": "books", "Median 4.3 minutes. We say five.": "books",
-    "Keep them coming!": "megaphone", "It's a giveaway, NOT a raffle!": "megaphone", "Students are showing up!": "megaphone", "Thanks for reporting!": "megaphone", "Getting #SITUATED": "megaphone",
+    "Keep them coming!": "megaphone", "It's a giveaway, NOT a raffle!": "megaphone", "Students are showing up!": "megaphone", "Thanks for reporting!": "megaphone", "Getting #SITUATED": "situated",
     "Best week yet!": "finger", "Past halfway!": "finger", "Three quarters there!": "finger", "Twenty thousand schools and counting.": "finger", "Every MS/HS has a report. Class dismissed!": "finger" };
   const stanMood = STAN_MOOD[stanSays] || (/ is in the lead!$/.test(stanSays) || / states above 75%\.$/.test(stanSays) ? "finger" : / added the most schools this week\.$/.test(stanSays) ? "megaphone" : "");
   const stanSrc = `assets/stan${stanMood ? "-" + stanMood : ""}.png?v=${encodeURIComponent(d.generated_at)}`;
