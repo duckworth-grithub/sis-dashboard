@@ -85,7 +85,7 @@
   .stan.float { display: none; }
   @media (max-width: 760px) {
     .band .stan { display: none; }
-    .stan.float { display: flex; position: fixed; right: 22px; bottom: 18px; z-index: 50; gap: 10px; pointer-events: auto; cursor: pointer; }
+    .stan.float { display: flex; position: fixed; right: 22px; bottom: 10px; z-index: 50; gap: 10px; pointer-events: auto; cursor: pointer; }
     .stan.float img { height: 112px; filter: none; }
     .stan.float .bubble { background: var(--study); color: #FFFFFF; font-size: 13px; padding: 9px 13px; width: max-content; max-width: 228px; box-shadow: 0 10px 24px rgba(28,28,26,0.26), 0 2px 6px rgba(28,28,26,0.12); }
     .stan.float .bubble::after { border-color: transparent transparent transparent var(--study); }
@@ -358,7 +358,7 @@
   const STAN_DATE = [].concat(
     (mo === 8 || mo === 9) ? ["Happy new school year!"] : [], (mo >= 9 && mo <= 11) ? ["Happy fall!"] : [], mo === 1 ? ["Happy new year!"] : [], (mo >= 3 && mo <= 5) ? ["Spring is here!"] : [], (mo === 6 || mo === 7) ? ["Summer break, map still open."] : [],
     dom === 1 ? ["First of the month!"] : [], dom === lastDom ? ["Last day of the month!"] : [],
-    weeksLeft > 1 && weeksLeft <= 52 ? [`${weeksLeft} weeks to July 1.`] : [], cycFrac != null && cycFrac >= 0.45 && cycFrac <= 0.55 ? ["Halfway to the deadline."] : []);
+    cycFrac != null && cycFrac >= 0.45 && cycFrac <= 0.55 ? ["Halfway to the deadline."] : []);
   // state and survey lines from the data
   const above75 = leadRows.filter((x) => x.pct >= 0.75).length;
   const topMover = d.states.filter((x) => (x.new_this_week || 0) > 0 && x.st !== "DC" && !["PR", "GU", "VI", "AS", "MP", "DA", "BI"].includes(x.st)).sort((a, b) => b.new_this_week - a.new_this_week)[0];
