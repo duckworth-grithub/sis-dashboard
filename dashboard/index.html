@@ -79,7 +79,7 @@
   .cbar.with-stan { margin-top: 24px; overflow: visible; }
   .stan { position: absolute; right: 0; bottom: 6px; display: flex; align-items: center; gap: 14px; pointer-events: none; }
   .stan img { height: 165px; width: auto; display: block; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.25)); }
-  .stan .bubble { position: relative; background: #FFFFFF; color: var(--chalk); border-radius: 16px; padding: 10px 14px; font-size: 14px; font-weight: 700; line-height: 1.3; max-width: 150px; box-shadow: 0 1px 3px rgba(28,28,26,0.10); }
+  .stan .bubble { position: relative; background: #FFFFFF; color: var(--chalk); border-radius: 16px; padding: 10px 14px; font-size: 14px; font-weight: 700; line-height: 1.3; width: max-content; max-width: 250px; text-wrap: balance; box-shadow: 0 1px 3px rgba(28,28,26,0.10); }
   .stan .bubble::after { content: ""; position: absolute; right: -9px; top: 50%; margin-top: -8px; border-width: 8px 0 8px 10px; border-style: solid; border-color: transparent transparent transparent #FFFFFF; }
   /* phones: Stan floats bottom-right like a chat widget; tap him to show or hide his line */
   .stan.float { display: none; }
@@ -87,7 +87,7 @@
     .band .stan { display: none; }
     .stan.float { display: flex; position: fixed; right: 22px; bottom: 18px; z-index: 50; gap: 10px; pointer-events: auto; cursor: pointer; }
     .stan.float img { height: 96px; filter: none; }
-    .stan.float .bubble { background: var(--study); color: #FFFFFF; font-size: 13px; padding: 9px 13px; max-width: 170px; box-shadow: 0 10px 24px rgba(28,28,26,0.26), 0 2px 6px rgba(28,28,26,0.12); }
+    .stan.float .bubble { background: var(--study); color: #FFFFFF; font-size: 13px; padding: 9px 13px; width: max-content; max-width: 210px; text-wrap: balance; box-shadow: 0 10px 24px rgba(28,28,26,0.26), 0 2px 6px rgba(28,28,26,0.12); }
     .stan.float .bubble::after { border-color: transparent transparent transparent var(--study); }
     .stan.float.quiet .bubble { display: none; }
     #states td:first-child { min-width: 170px; }
@@ -346,7 +346,7 @@
   const STAN_PRE = ["Launch day is coming!", "Fall 2026, here we come.", "Getting ready for the first report.", "Counting down to launch.", "Almost launch time!", "The surveys open soon.", "Big fall ahead!", "Warming up for Fall 2026.", "Median 4.3 minutes. We say five.", "So many branches. Still no tree.", "Tested, retested, cross-reviewed.", "QSF and Google Doc: finally agree.", "Passion and perseverance... and branch testing."];
   const STAN_GENERAL = ["Every report counts!", "One school at a time.", "Keep them coming!", "Filling in the map.", "Another school on the board.", "More schools, more data.", "Small steps, big map.", "Steady as we go.", "Still growing, week by week.", "Every week adds to the map.", "Thanks for reporting!", "Every school has a story.", "Look at that map!", "Reports make the map.", "This is how it gets done.", "On our way!", "Growing every day.", "Still here, still counting.", "The map thanks you.", "Data day is every day.", "Good things take reports.", "Two per school is the dream.", "Effort counts twice. So does a second report."];
   const DAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][new Date().getDay()];
-  const STAN_TEAM = ["Qualtrics and I are in talks.", "Spreadsheets, CSVs, and me.", "K/L/S met. I took notes.", "Stanford ran the numbers.", "Does this count as deliberate practice?", "Is that on the Penn PIF agenda?", "Getting #SITUATED", "One percentage. So many NCES files.", "It's a giveaway, NOT a raffle!"];
+  const STAN_TEAM = ["Qualtrics and I are in talks.", "Spreadsheets, CSVs, and me.", "K/L/S met. I took notes.", "Stanford ran the numbers.", "Does this count as deliberate practice?", "Is that on the Penn PIF agenda?", "Getting #SITUATED", "One percentage. So many NCES files.", "It's a giveaway, NOT a raffle!", "Can we do a Prolific?"];
   const STAN_DAY = [`Happy ${DAY}!`, "You got this!"].concat(STAN_TEAM).concat(DAY === "Wednesday" ? ["Happy hump day!"] : [], DAY === "Friday" ? ["TGIF!"] : [], DAY === "Monday" ? ["New week, new reports."] : []);
   const leadRows = d.states.map((x) => { const m = x.by_level.middle || {}, h = x.by_level.high || {}; const e = (m.eligible || 0) + (h.eligible || 0), cv = (m.covered || 0) + (h.covered || 0); return { st: x.st, state: x.state, e, cv, pct: e ? cv / e : null }; }).filter((x) => x.pct != null && x.e >= 50 && x.st !== "DC" && !["PR", "GU", "VI", "AS", "MP", "DA", "BI"].includes(x.st)).sort((a, b) => b.pct - a.pct || b.cv - a.cv);
   const STAN_LEAD = leadRows.length ? [`${leadRows[0].state} is in the lead!`] : [];
