@@ -346,7 +346,7 @@
   const STAN_PRE = ["Launch day is coming!", "Fall 2026, here we come.", "Getting ready for the first report.", "Counting down to launch.", "Almost launch time!", "The surveys open soon.", "Big fall ahead!", "Warming up for Fall 2026.", "Median 4.3 minutes. We say five.", "So many branches. Still no tree.", "Tested, retested, cross-reviewed.", "QSF and Google Doc: finally agree.", "Passion and perseverance... and branch testing."];
   const STAN_GENERAL = ["Every report counts!", "One school at a time.", "Keep them coming!", "Filling in the map.", "Another school on the board.", "More schools, more data.", "Small steps, big map.", "Steady as we go.", "Still growing, week by week.", "Every week adds to the map.", "Thanks for reporting!", "Every school has a story.", "Look at that map!", "Reports make the map.", "This is how it gets done.", "On our way!", "Growing every day.", "Still here, still counting.", "The map thanks you.", "Data day is every day.", "Good things take reports.", "Two per school is the dream.", "Effort counts twice. So does a second report."];
   const DAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][new Date().getDay()];
-  const STAN_TEAM = ["Qualtrics and I are in talks.", "Spreadsheets, CSVs, and me.", "K/L/S met. I took notes.", "Stanford ran the numbers.", "Does this count as deliberate practice?", "Is that on the Penn PIF agenda?"];
+  const STAN_TEAM = ["Qualtrics and I are in talks.", "Spreadsheets, CSVs, and me.", "K/L/S met. I took notes.", "Stanford ran the numbers.", "Does this count as deliberate practice?", "Is that on the Penn PIF agenda?", "Getting #SITUATED", "One percentage. So many NCES files.", "It's a giveaway, NOT a raffle!"];
   const STAN_DAY = [`Happy ${DAY}!`, "You got this!"].concat(STAN_TEAM).concat(DAY === "Wednesday" ? ["Happy hump day!"] : [], DAY === "Friday" ? ["TGIF!"] : [], DAY === "Monday" ? ["New week, new reports."] : []);
   const leadRows = d.states.map((x) => { const m = x.by_level.middle || {}, h = x.by_level.high || {}; const e = (m.eligible || 0) + (h.eligible || 0), cv = (m.covered || 0) + (h.covered || 0); return { st: x.st, state: x.state, e, cv, pct: e ? cv / e : null }; }).filter((x) => x.pct != null && x.e >= 50 && x.st !== "DC" && !["PR", "GU", "VI", "AS", "MP", "DA", "BI"].includes(x.st)).sort((a, b) => b.pct - a.pct || b.cv - a.cv);
   const STAN_LEAD = leadRows.length ? [`${leadRows[0].state} is in the lead!`] : [];
@@ -373,14 +373,24 @@
     wk.length > 1 && !cur.partial && cur.new > Math.max(...wk.slice(0, -1).map((w) => w.new || 0)) ? ["Best week yet!"] : [],
     (c.by_level && c.by_level.elementary && c.by_level.elementary.covered_this_cycle > 0) ? ["Elementary is on the board!"] : []));
   const stanSays = stanPool[Math.floor(Math.random() * stanPool.length)];
-  const sf = $("#stanFloat"); sf.innerHTML = `<div class="bubble">${stanSays}</div><img src="assets/stan.png?v=${encodeURIComponent(d.generated_at)}" alt="Stan, the Screens in Schools mascot">`; sf.addEventListener("click", () => sf.classList.toggle("quiet"));
+  // Stan variants: plain Stan by default; a prop only when the line calls for one
+  const STAN_MOOD = { "Passion and perseverance... and branch testing.": "grit", "Effort counts twice. So does a second report.": "grit", "Does this count as deliberate practice?": "grit",
+    "New week, new reports.": "coffee", "Happy Monday!": "coffee", "Steady as we go.": "coffee", "Still here, still counting.": "coffee",
+    "Happy Saturday!": "sleep", "Happy Sunday!": "sleep", "Summer break, map still open.": "sleep",
+    "Educators are leading!": "apple", "Happy new school year!": "apple", "Happy fall!": "apple",
+    "Librarians are leading!": "books", "One percentage. So many NCES files.": "books", "QSF and Google Doc: finally agree.": "books", "Tested, retested, cross-reviewed.": "books", "Median 4.3 minutes. We say five.": "books",
+    "Keep them coming!": "megaphone", "It's a giveaway, NOT a raffle!": "megaphone", "Students are showing up!": "megaphone", "Thanks for reporting!": "megaphone", "Getting #SITUATED": "megaphone",
+    "Best week yet!": "finger", "Past halfway!": "finger", "Three quarters there!": "finger", "Twenty thousand schools and counting.": "finger", "Every MS/HS has a report. Class dismissed!": "finger" };
+  const stanMood = STAN_MOOD[stanSays] || (/ is in the lead!$/.test(stanSays) || / states above 75%\.$/.test(stanSays) ? "finger" : / added the most schools this week\.$/.test(stanSays) ? "megaphone" : "");
+  const stanSrc = `assets/stan${stanMood ? "-" + stanMood : ""}.png?v=${encodeURIComponent(d.generated_at)}`;
+  const sf = $("#stanFloat"); sf.innerHTML = `<div class="bubble">${stanSays}</div><img src="${stanSrc}" alt="Stan, the Screens in Schools mascot">`; sf.addEventListener("click", () => sf.classList.toggle("quiet"));
   $("#band").innerHTML = `
     <div>
       <div class="band-top"><span class="band-kicker">MS/HS with a report</span></div>
       <div class="headrow"><div class="hero">${pct(H.pct)}</div>
       <div class="ctx" style="margin-top:10px;max-width:none"><b>${fmt(H.covered)}</b> of ${fmt(H.eligible)} <span class="ctx-long">MS/HS have at least one report.</span></div></div>
       <div class="cbar with-stan" aria-label="Coverage: ${pct(H.pct)} with at least one report, ${pct(H.depth_pct["2plus"])} with two or more"><i class="f1" style="width:${Math.max(H.pct || 0, 0.4)}%"></i><i class="f2" style="width:${Math.max(H.depth_pct["2plus"] || 0, 0.25)}%"></i>
-        <div class="stan"><div class="bubble">${stanSays}</div><img src="assets/stan.png?v=${encodeURIComponent(d.generated_at)}" alt="Stan, the Screens in Schools mascot"></div></div>
+        <div class="stan"><div class="bubble">${stanSays}</div><img src="${stanSrc}" alt="Stan, the Screens in Schools mascot"></div></div>
       <div class="legend"><span class="l">
         <span class="li"><span class="k"><span class="dot" style="background:#FFFFFF"></span>2+ reports</span><span class="c"><b>${fmt(H.depth["2plus"])}</b></span><span class="p">${pct(H.depth_pct["2plus"])}</span></span>
         <span class="li"><span class="k"><span class="dot" style="background:#8FC49B"></span>1 report</span><span class="c"><b>${fmt(H.depth["1"])}</b></span><span class="p">${pct(H.depth_pct["1"])}</span></span>
