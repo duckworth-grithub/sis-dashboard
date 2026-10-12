@@ -144,7 +144,8 @@ def main():
     ap.add_argument("--ccd-geo")
     ap.add_argument("--nces-panel-csv", help="NCES directory or panel reduced to one latest-year row per school (preferred over the CCD files)")
     ap.add_argument("--nces-overlay-csv", help="optional second file (the panel) supplying locale and enrollment where the master lacks them")
-    ap.add_argument("--grades-csv", help="per-school grade span from the NCES panel (ncessch, grade_lo, grade_hi, grade_level); any grade 6-12 makes a school MS/HS")
+    ap.add_argument("--grades-csv", help="per-school grade span from the NCES panel (ncessch, grade_lo, grade_hi, grade_level); informational only")
+    ap.add_argument("--team-level-csv", help="the analysis team's school_level_clean per NCES id (High/Middle/ElemComb); used only where NCES gives no usable level")
     ap.add_argument("--historical")
     ap.add_argument("--qsf", action="append", default=[], help="survey=path.qsf")
     ap.add_argument("--config", default=os.path.join(HERE, "config.json"))
@@ -193,6 +194,9 @@ def main():
                 hist_waves[sid].add(r["wave"])
 
     grades = {r["ncessch"].zfill(12): r for r in read_csv(a.grades_csv)} if a.grades_csv else {}
+    TEAM_LEVEL = {"High": "high", "Middle": "middle", "ElemComb": "elementary"}
+    team_level = {r["ncessch"].zfill(12): TEAM_LEVEL.get(r["team_level"], "") for r in read_csv(a.team_level_csv)} if a.team_level_csv else {}
+    fallback_used = 0
     eligible_states = set(STATES_50_DC) if cfg.get("eligible_states", "50_plus_dc") == "50_plus_dc" else None
     out = []
     for r in rows:
@@ -202,10 +206,12 @@ def main():
         for k in ("leaid", "district", "city", "grade_lo", "grade_hi", "urbanicity", "enrollment", "charter", "ccd_status", "ccd_type"):
             row[k] = c.get(k, "")
         row["level"] = c.get("level", "unknown")
+        # decided Oct 12, 2026: the analysis team's rule. NCES level first (High+Secondary -> high, Middle -> middle, Elementary -> elementary);
+        # where NCES gives Other / Not reported / etc., the level the respondents reported for that school (team school_level_clean) fills in.
+        if row["level"] in ("other", "unknown") and team_level.get(r["ncessch"]):
+            row["level"] = team_level[r["ncessch"]]; fallback_used += 1
         g = grades.get(r["ncessch"])
-        if g and g.get("grade_level"):
-            # decided Oct 12, 2026: level follows the grades actually enrolled; any grade 6-12 makes a school MS/HS (K-8 -> middle, K-12 -> high)
-            row["level"] = g["grade_level"]
+        if g:
             row["grade_lo"], row["grade_hi"] = g["grade_lo"], g["grade_hi"]
         row["in_ccd"] = "true" if c else ""
         reason = ""
@@ -224,6 +230,8 @@ def main():
         row["hist_represented"] = "true" if hist.get(r["ncessch"], 0) > 0 else ""
         row["hist_waves"] = ";".join(sorted(hist_waves.get(r["ncessch"], ())))
         out.append(row)
+    if team_level:
+        print(f"team level fallback filled {fallback_used} schools whose NCES level was other/unknown")
     out.sort(key=lambda x: (x["state_name"], x["school_name"], x["ncessch"]))
     os.makedirs(a.out, exist_ok=True)
     write_csv(os.path.join(a.out, "schools.csv"), out, BASE_COLUMNS)
