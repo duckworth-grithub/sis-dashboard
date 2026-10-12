@@ -160,6 +160,16 @@ def main():
                 continue
             rows.append({"ncessch": sid.zfill(12), "st": r.get("st", "").strip(),
                          "state_name": norm_state(r["state_name"]), "school_name": r["school_name"]})
+    # BIE and stateside DoDEA schools live in the state they sit in (inputs/agency_state_overrides.csv); overseas DoDEA stay as DoDEA
+    ov_path = os.path.join(HERE, "inputs", "agency_state_overrides.csv")
+    overrides = {r["ncessch"].zfill(12): r for r in read_csv(ov_path)} if os.path.exists(ov_path) else {}
+    moved = 0
+    for r in rows:
+        o = overrides.get(r["ncessch"])
+        if o:
+            r["st"], r["state_name"] = o["st"], norm_state(o["state_name"]); moved += 1
+    if overrides:
+        print(f"agency overrides: {moved} of {len(overrides)} BIE/DoDEA schools placed in their physical state")
     ids = collections.Counter(r["ncessch"] for r in rows)
     dupes = [k for k, v in ids.items() if v > 1]
     if dupes:

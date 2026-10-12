@@ -292,6 +292,12 @@ def main():
     by_key = collections.defaultdict(set)
     for s in schools:
         by_key[(s["state_name"], fold(s["school_name"]))].add(s["ncessch"])
+    ov_path = os.path.join(a.inputs, "agency_state_overrides.csv")   # BIE/DoDEA schools moved into states: keep matching under the agency name too
+    if os.path.exists(ov_path):
+        for r in read_csv(ov_path):
+            sid = r["ncessch"].zfill(12)
+            if sid in by_id:
+                by_key[(norm_state(r["agency"]), fold(by_id[sid]["school_name"]))].add(sid)
     dd25 = os.path.join(a.inputs, "phonebans", "nces_dropdown_cities.csv")   # last year's dropdown strings (summer survey still uses them)
     if os.path.exists(dd25):
         from common import STATE_CODE_NAMES
