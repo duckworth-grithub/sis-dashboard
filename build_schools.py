@@ -144,6 +144,7 @@ def main():
     ap.add_argument("--ccd-geo")
     ap.add_argument("--nces-panel-csv", help="NCES directory or panel reduced to one latest-year row per school (preferred over the CCD files)")
     ap.add_argument("--nces-overlay-csv", help="optional second file (the panel) supplying locale and enrollment where the master lacks them")
+    ap.add_argument("--grades-csv", help="per-school grade span from the NCES panel (ncessch, grade_lo, grade_hi, grade_level); any grade 6-12 makes a school MS/HS")
     ap.add_argument("--historical")
     ap.add_argument("--qsf", action="append", default=[], help="survey=path.qsf")
     ap.add_argument("--config", default=os.path.join(HERE, "config.json"))
@@ -191,6 +192,7 @@ def main():
             if r.get("wave"):
                 hist_waves[sid].add(r["wave"])
 
+    grades = {r["ncessch"].zfill(12): r for r in read_csv(a.grades_csv)} if a.grades_csv else {}
     eligible_states = set(STATES_50_DC) if cfg.get("eligible_states", "50_plus_dc") == "50_plus_dc" else None
     out = []
     for r in rows:
@@ -200,6 +202,11 @@ def main():
         for k in ("leaid", "district", "city", "grade_lo", "grade_hi", "urbanicity", "enrollment", "charter", "ccd_status", "ccd_type"):
             row[k] = c.get(k, "")
         row["level"] = c.get("level", "unknown")
+        g = grades.get(r["ncessch"])
+        if g and g.get("grade_level"):
+            # decided Oct 12, 2026: level follows the grades actually enrolled; any grade 6-12 makes a school MS/HS (K-8 -> middle, K-12 -> high)
+            row["level"] = g["grade_level"]
+            row["grade_lo"], row["grade_hi"] = g["grade_lo"], g["grade_hi"]
         row["in_ccd"] = "true" if c else ""
         reason = ""
         if eligible_states is not None and r["state_name"] not in eligible_states:
