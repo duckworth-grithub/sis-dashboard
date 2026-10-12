@@ -194,6 +194,14 @@ def main():
                 hist_waves[sid].add(r["wave"])
 
     grades = {r["ncessch"].zfill(12): r for r in read_csv(a.grades_csv)} if a.grades_csv else {}
+    # states that sent their own eligible-school list (inputs/state_lists/<ST>.csv): NCES schools not on it are out of scope
+    state_lists = {}
+    sl_dir = os.path.join(HERE, "inputs", "state_lists")
+    if os.path.isdir(sl_dir):
+        for fn in sorted(os.listdir(sl_dir)):
+            if fn.endswith(".csv") and len(fn) == 6:
+                state_lists[fn[:2]] = {r["ncessch"].zfill(12) for r in read_csv(os.path.join(sl_dir, fn))}
+    dropped_by_list = collections.Counter()
     TEAM_LEVEL = {"High": "high", "Middle": "middle", "ElemComb": "elementary"}
     team_level = {r["ncessch"].zfill(12): TEAM_LEVEL.get(r["team_level"], "") for r in read_csv(a.team_level_csv)} if a.team_level_csv else {}
     fallback_used = 0
@@ -224,6 +232,8 @@ def main():
                 reason = "closed"
             elif c and cfg.get("require_regular_school", False) and c.get("ccd_type") and c["ccd_type"] != "1":
                 reason = "not_regular_school"
+        if not reason and r["st"] in state_lists and r["ncessch"] not in state_lists[r["st"]]:
+            reason = "not_on_state_list"; dropped_by_list[r["st"]] += 1
         row["eligible"] = "" if reason else "true"
         row["ineligible_reason"] = reason
         row["hist_reports_2025"] = str(hist.get(r["ncessch"], 0))
@@ -232,6 +242,8 @@ def main():
         out.append(row)
     if team_level:
         print(f"team level fallback filled {fallback_used} schools whose NCES level was other/unknown")
+    if state_lists:
+        print(f"state lists: {', '.join(f'{k} ({len(v)} on list, {dropped_by_list[k]} NCES schools set out of scope)' for k, v in sorted(state_lists.items()))}")
     out.sort(key=lambda x: (x["state_name"], x["school_name"], x["ncessch"]))
     os.makedirs(a.out, exist_ok=True)
     write_csv(os.path.join(a.out, "schools.csv"), out, BASE_COLUMNS)
