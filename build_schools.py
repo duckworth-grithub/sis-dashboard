@@ -214,13 +214,17 @@ def main():
         for k in ("leaid", "district", "city", "grade_lo", "grade_hi", "urbanicity", "enrollment", "charter", "ccd_status", "ccd_type"):
             row[k] = c.get(k, "")
         row["level"] = c.get("level", "unknown")
-        # decided Oct 12, 2026: the analysis team's rule. NCES level first (High+Secondary -> high, Middle -> middle, Elementary -> elementary);
-        # where NCES gives Other / Not reported / etc., the level the respondents reported for that school (team school_level_clean) fills in.
-        if row["level"] in ("other", "unknown") and team_level.get(r["ncessch"]):
-            row["level"] = team_level[r["ncessch"]]; fallback_used += 1
+        # The team's official coding (Stanford, Oct 12, 2026), from NCES enrollment by grade:
+        #   1. elementary-only = every grade 6-12 reported and zero -> elementary
+        #   2. high = any enrollment in grades 9-12
+        #   3. middle = everything else with grade 6-12 data (so K-8 -> middle, K-12 -> high)
+        #   schools with no grade 6-12 enrollment reported cannot be coded -> unknown (never MS/HS, never elementary)
         g = grades.get(r["ncessch"])
         if g:
             row["grade_lo"], row["grade_hi"] = g["grade_lo"], g["grade_hi"]
+        row["level"] = (g or {}).get("grade_level") or "unknown"
+        if g and g.get("grade_level"):
+            fallback_used += 1
         row["in_ccd"] = "true" if c else ""
         reason = ""
         if eligible_states is not None and r["state_name"] not in eligible_states:
@@ -241,7 +245,7 @@ def main():
         row["hist_waves"] = ";".join(sorted(hist_waves.get(r["ncessch"], ())))
         out.append(row)
     if team_level:
-        print(f"team level fallback filled {fallback_used} schools whose NCES level was other/unknown")
+        print(f"grade-based coding applied to {fallback_used} schools; the rest are uncoded (unknown)")
     if state_lists:
         print(f"state lists: {', '.join(f'{k} ({len(v)} on list, {dropped_by_list[k]} NCES schools set out of scope)' for k, v in sorted(state_lists.items()))}")
     out.sort(key=lambda x: (x["state_name"], x["school_name"], x["ncessch"]))
