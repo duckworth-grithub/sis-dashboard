@@ -246,7 +246,7 @@
   </div>
 
   <div class="page" id="page-gaps">
-    <h2 class="ph">Coverage gaps</h2><p class="pd">Schools with no report yet, by state. MS/HS by default, the same schools the headline counts (any school with NCES enrollment in grades 6–12: grades 9–12 make it high, otherwise middle, so K–8 and K–12 count); Elementary is the new survey only; All is every school in the NCES list. "Lagging" = more than <span id="gapPts"></span> points below the national rate.</p>
+    <h2 class="ph">Coverage gaps</h2><p class="pd">Schools with no report yet, by state. MS/HS by default, the same schools the headline counts (any school with NCES enrollment in grades 6–12: grades 9–12 make it high, otherwise middle, so K–8 and K–12 count); Elementary is the new survey only; All is every NCES school in the 50 states and DC. "Lagging" = more than <span id="gapPts"></span> points below the national rate.</p>
     <div class="grid2eq" style="align-items:stretch;margin-top:12px"><div class="card" id="gapsMapBig"></div><div class="card" id="gapsBoard"></div></div>
     <div class="filters"><select id="levelFilter"></select><input id="stateSearch" placeholder="Find state" size="12"><span class="sec-note" id="listLinks"></span></div>
     <div class="card tablewrap"><table id="states"><thead></thead><tbody></tbody></table></div>
@@ -669,7 +669,7 @@
     <div><div class="stat28">${fmt(d.depth.median_days_first_to_second)}</div><div class="sub12">median days first → second</div></div></div>
     <div class="sub12" style="margin-top:12px">Out of scope (not in the denominator): ${Object.entries(c.out_of_scope).map(([k, n2]) => `${nice(k)} ${fmt(n2)}`).join(" · ") || "none"}.</div>`;
 
-  $("#foot").textContent = `Data as of ${d.as_of.slice(0, 10)} · generated ${d.generated_at.replace("T", " ").slice(0, 16)} UTC · eligible = every school in the NCES list (${fmt(c.overall.eligible)}), all states and territories.`;
+  $("#foot").textContent = `Data as of ${d.as_of.slice(0, 10)} · generated ${d.generated_at.replace("T", " ").slice(0, 16)} UTC · eligible = every NCES school in the 50 states and DC (${fmt(c.overall.eligible)}); territories and overseas DoDEA are out of scope.`;
 
   // ---- tooltips + routing
   const tip = $("#tip");
