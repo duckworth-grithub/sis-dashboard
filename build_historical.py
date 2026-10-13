@@ -67,6 +67,9 @@ def main():
     ap.add_argument("--illinois")
     ap.add_argument("--summer2026", help="PIF Summer 2026 survey export: its own cycle, carried forward like the 2025-26 waves")
     ap.add_argument("--matches", help="the team's pif_nces_matches.dta (response_id, nces_pif_id): first pass for the spring/summer 2025 wave")
+    ap.add_argument("--analysis", help="the team's PIF_analysis_ready_current.dta: replaces --fall/--spring/--illinois. Every row the team kept "
+                                       "with nces_match=1 is one report for school_id; spring_june+summer_october -> spring_summer_2025, "
+                                       "fall+illinois_survey -> fall2025_spring2026")
     ap.add_argument("--dropdown-ids", default=os.path.join(HERE, "inputs", "phonebans", "nces_dropdown_cities.csv"))
     ap.add_argument("--directory", default=os.path.join(HERE, "inputs", "phonebans", "nces_directory_latest.csv"))
     ap.add_argument("--out", default=os.path.join(HERE, "data"))
@@ -102,6 +105,36 @@ def main():
             cand[(wave, state, string, zip5)] = "|".join(sorted(ids)) if ids else ""
 
     stats = {}
+    analysis_ids = set()
+    if a.analysis:
+        if a.fall or a.spring or a.illinois:
+            raise SystemExit("--analysis replaces --fall/--spring/--illinois; pass one or the other")
+        import pandas as pd
+        WAVE = {"spring_june": "spring_summer_2025", "summer_october": "spring_summer_2025",
+                "fall": "fall2025_spring2026", "illinois_survey": "fall2025_spring2026"}
+        SRC = {"spring_june": "team_spring_2025", "summer_october": "team_summer_2025", "fall": "team_fall_2025", "illinois_survey": "team_illinois"}
+        df = pd.read_stata(a.analysis, columns=["response_id", "survey_file_version", "nces_match", "school_id"], convert_categoricals=True)
+        n_rows = len(df)
+        skipped = collections.Counter()
+        for rid, ver, ok, sid in zip(df["response_id"].astype(str), df["survey_file_version"].astype(str),
+                                     df["nces_match"].astype(str), df["school_id"].astype(str)):
+            analysis_ids.add(rid.strip())
+            if ver not in WAVE:
+                skipped["unknown version " + ver] += 1
+                continue
+            sid = sid.strip().split(".")[0]
+            if ok.split(".")[0] != "1" or not re.fullmatch(r"\d{1,12}", sid):
+                skipped["no NCES match"] += 1
+                continue
+            sid = sid.zfill(12)
+            key = (sid, WAVE[ver], SRC[ver])
+            reports[key] += 1
+            method[key] = "team_analysis_file"
+        for ver in WAVE:
+            m_resp = sum(v for k, v in reports.items() if k[2] == SRC[ver])
+            m_sch = len({k[0] for k in reports if k[2] == SRC[ver]})
+            print(f"analysis file {ver}: {m_resp} reports -> {m_sch} schools")
+        print(f"analysis file: {n_rows} rows; skipped {dict(skipped)}")
     if a.fall:
         S = ["Q23StatePol", "Q183StateNew", "Q34StateEnf", "Q45StateNon"]
         n_fin = n_sch = 0
@@ -186,6 +219,8 @@ def main():
         for r in read_qualtrics_csv(a.summer2026):
             if r.get("Status") == "Survey Preview" or any("tktk" in str(v).lower() for v in r.values() if v):
                 continue
+            if (r.get("ResponseId") or "").strip() in analysis_ids:
+                continue                                   # already counted from the team's analysis file
             if "district-wide" in (r.get("Q240LibType") or "").lower():
                 continue                                   # district-path librarians: circulation only, no school
             if not any((r.get(c) or "").strip() for c in POL):
