@@ -246,7 +246,7 @@
   </div>
 
   <div class="page" id="page-gaps">
-    <h2 class="ph">Coverage gaps</h2><p class="pd">Schools with no report yet, by state. MS/HS by default, the same schools the headline counts (any school with NCES enrollment in grades 6–12: grades 9–12 make it high, otherwise middle, so K–8 and K–12 count); Elementary is the new survey only; All is every NCES school in the 50 states and DC. "Lagging" = more than <span id="gapPts"></span> points below the national rate.</p>
+    <h2 class="ph">Coverage gaps</h2><p class="pd">Schools with no report yet, by state. MS/HS by default, the same schools the headline counts (any school with NCES enrollment in grades 6–12: grades 9–12 make it high, otherwise middle, so K–8 and K–12 count); Elementary is the new survey only; All is every school in the NCES list. "Lagging" = more than <span id="gapPts"></span> points below the national rate.</p>
     <div class="grid2eq" style="align-items:stretch;margin-top:12px"><div class="card" id="gapsMapBig"></div><div class="card" id="gapsBoard"></div></div>
     <div class="filters"><select id="levelFilter"></select><input id="stateSearch" placeholder="Find state" size="12"><span class="sec-note" id="listLinks"></span></div>
     <div class="card tablewrap"><table id="states"><thead></thead><tbody></tbody></table></div>
@@ -535,7 +535,7 @@
       const b = s.by_level[lvl] || { eligible: 0, covered: 0, two_plus: 0 };
       return { ...s, eligible: b.eligible, covered: b.covered, remaining: b.eligible - b.covered, pct: b.eligible ? +(100 * b.covered / b.eligible).toFixed(1) : null, stale: b.stale, one: b.covered - (b.two_plus || 0), two_plus: b.two_plus || 0, new_this_week: null, new_last_week: null };
     };
-    let rows = d.states.map(pick).filter((s) => s.eligible > 0);
+    let rows = d.states.map(pick).filter((s) => s.eligible > 0 && !TERR.has(s.st));
     if (q) rows = rows.filter((s) => s.state.toLowerCase().includes(q) || s.st.toLowerCase() === q);
     rows.sort((a, b) => { const x = a[sortKey], y = b[sortKey]; if (x == null) return 1; if (y == null) return -1; return (x < y ? -1 : x > y ? 1 : 0) * sortDir * (sortKey === "state" ? -1 : 1); });
     return rows;
@@ -551,9 +551,10 @@
   renderStates();
   renderGapsMap();
   function renderListLine() {
-    const rows = stateRows(), lvl = lf.value, what = lvl === "mshs" ? "MS/HS" : lvl ? LEVEL[lvl].toLowerCase() + " schools" : "schools";
-    const t = rows.reduce((a, r) => ({ e: a.e + r.eligible, c: a.c + r.covered, one: a.one + r.one, two: a.two + r.two_plus, st: a.st + (r.stale || 0) }), { e: 0, c: 0, one: 0, two: 0, st: 0 });
-    $("#listLinks").innerHTML = `${fmt(t.e - t.c)} of ${fmt(t.e)} ${what} remaining · ${fmt(t.one)} with exactly one report · ${fmt(t.two)} with 2+${lvl === "elementary" && t.st ? ` · ${fmt(t.st)} reported in an earlier wave, not counted` : ""}`;
+    const lvl = lf.value, what = lvl === "mshs" ? "MS/HS" : lvl ? LEVEL[lvl].toLowerCase() + " schools" : "schools";
+    const b = lvl === "mshs" ? c.mshs : lvl ? (c.by_level[lvl] || {}) : c.overall;
+    const t = { e: b.eligible || 0, c: b.covered || 0, one: (b.depth || {})["1"] || 0, two: (b.depth || {})["2plus"] || 0, st: b.stale || 0 };
+    $("#listLinks").innerHTML = `${fmt(t.e - t.c)} of ${fmt(t.e)} ${what} remaining nationally · ${fmt(t.one)} with exactly one report · ${fmt(t.two)} with 2+${lvl === "elementary" && t.st ? ` · ${fmt(t.st)} reported in an earlier wave, not counted` : ""}`;
   }
   renderListLine();
   let remainingCsv = null;
@@ -590,7 +591,7 @@
   const rosterCounts = d.rosters || {};
   const stateNames = {}; d.states.forEach((x) => (stateNames[x.st] = x.state));
   const rsel = $("#rosterState");
-  rsel.innerHTML = Object.keys(rosterCounts).sort((a, b) => (stateNames[a] || a).localeCompare(stateNames[b] || b)).map((st) => `<option value="${st}">${esc(stateNames[st] || st)}</option>`).join("");
+  rsel.innerHTML = Object.keys(rosterCounts).filter((st) => !TERR.has(st)).sort((a, b) => (stateNames[a] || a).localeCompare(stateNames[b] || b)).map((st) => `<option value="${st}">${esc(stateNames[st] || st)}</option>`).join("");
   const dlCsv = (name, rows) => { const a2 = document.createElement("a"); a2.href = URL.createObjectURL(new Blob([rows.map((r) => '"' + String(r).replace(/"/g, '""') + '"').join("\n")], { type: "text/csv" })); a2.download = name; a2.click(); };
   async function loadRoster(st) {
     if (!st) return;
@@ -669,7 +670,7 @@
     <div><div class="stat28">${fmt(d.depth.median_days_first_to_second)}</div><div class="sub12">median days first → second</div></div></div>
     <div class="sub12" style="margin-top:12px">Out of scope (not in the denominator): ${Object.entries(c.out_of_scope).map(([k, n2]) => `${nice(k)} ${fmt(n2)}`).join(" · ") || "none"}.</div>`;
 
-  $("#foot").textContent = `Data as of ${d.as_of.slice(0, 10)} · generated ${d.generated_at.replace("T", " ").slice(0, 16)} UTC · eligible = every NCES school in the 50 states and DC (${fmt(c.overall.eligible)}); territories and overseas DoDEA are out of scope.`;
+  $("#foot").textContent = `Data as of ${d.as_of.slice(0, 10)} · generated ${d.generated_at.replace("T", " ").slice(0, 16)} UTC · eligible = every NCES school (${fmt(c.overall.eligible)}) including the territories; the state table lists the 50 states and DC.`;
 
   // ---- tooltips + routing
   const tip = $("#tip");
