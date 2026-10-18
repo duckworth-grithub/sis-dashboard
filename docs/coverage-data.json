@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-17T11:05:15Z",
- "as_of": "2026-10-17T11:04:30Z",
+ "generated_at": "2026-10-18T11:36:12Z",
+ "as_of": "2026-10-18T11:35:19Z",
  "synthetic": false,
  "test_mode": true,
  "pending_launch": false,
@@ -298,7 +298,7 @@
       "schools": 1
      },
      {
-      "st": "TX",
+      "st": "AL",
       "schools": 1
      },
      {
@@ -306,7 +306,7 @@
       "schools": 1
      },
      {
-      "st": "AL",
+      "st": "TX",
       "schools": 1
      },
      {
@@ -493,21 +493,21 @@
  "velocity": {
   "pace": {
    "target_date": "2027-07-01",
-   "weeks_left": 36.6,
-   "needed_per_week": 2424,
+   "weeks_left": 36.5,
+   "needed_per_week": 2434,
    "current_per_week": 0,
    "pct_of_needed": 0.0,
    "by_level": {
     "elementary": {
-     "needed_per_week": 1199,
+     "needed_per_week": 1204,
      "current_per_week": 0
     },
     "middle": {
-     "needed_per_week": 621,
+     "needed_per_week": 623,
      "current_per_week": 0
     },
     "high": {
-     "needed_per_week": 395,
+     "needed_per_week": 396,
      "current_per_week": 0
     },
     "other": {
@@ -515,7 +515,7 @@
      "current_per_week": 0
     },
     "unknown": {
-     "needed_per_week": 209,
+     "needed_per_week": 210,
      "current_per_week": 0
     }
    },
@@ -525,7 +525,7 @@
   "this_week": {
    "week_start": "2026-10-12",
    "new": 0,
-   "days_elapsed": 6
+   "days_elapsed": 7
   },
   "last_week": {
    "week_start": "2026-10-05",
@@ -729,11 +729,6 @@
   ],
   "daily": [
    {
-    "date": "2026-09-18",
-    "new": 0,
-    "valid_responses": 0
-   },
-   {
     "date": "2026-09-19",
     "new": 0,
     "valid_responses": 0
@@ -875,6 +870,11 @@
    },
    {
     "date": "2026-10-17",
+    "new": 0,
+    "valid_responses": 0
+   },
+   {
+    "date": "2026-10-18",
     "new": 0,
     "valid_responses": 0
    }
@@ -3507,14 +3507,14 @@
  "channels": [
   {
    "channel": "unknown",
-   "starts": 38,
+   "starts": 40,
    "completes": 7,
    "valid": 5,
    "matched": 5,
    "new_schools": 2,
    "second_reports": 1,
    "redundant": 2,
-   "conv_start_complete": 18.4,
+   "conv_start_complete": 17.5,
    "conv_complete_valid": 71.4,
    "conv_valid_new": 40.0,
    "by_level_new": {
@@ -3529,14 +3529,14 @@
   },
   {
    "channel": "website_organic",
-   "starts": 15,
+   "starts": 17,
    "completes": 3,
    "valid": 3,
    "matched": 3,
    "new_schools": 2,
    "second_reports": 1,
    "redundant": 0,
-   "conv_start_complete": 20.0,
+   "conv_start_complete": 17.6,
    "conv_complete_valid": 100.0,
    "conv_valid_new": 66.7,
    "by_level_new": {
@@ -3551,14 +3551,14 @@
   },
   {
    "channel": "redirect_from_educator",
-   "starts": 8,
+   "starts": 9,
    "completes": 1,
    "valid": 1,
    "matched": 1,
    "new_schools": 1,
    "second_reports": 0,
    "redundant": 0,
-   "conv_start_complete": 12.5,
+   "conv_start_complete": 11.1,
    "conv_complete_valid": 100.0,
    "conv_valid_new": 100.0,
    "by_level_new": {
@@ -3595,20 +3595,20 @@
  "funnel": {
   "cycle": {
    "visits": null,
-   "starts": 61,
+   "starts": 66,
    "completes": 11,
    "valid": 9,
    "matched": 9,
    "new_schools": 5,
    "second_reports": 2,
    "conv_visit_start": null,
-   "conv_start_complete": 18.0,
+   "conv_start_complete": 16.7,
    "conv_complete_valid": 81.8,
    "conv_valid_new": 55.6
   },
   "last_4w": {
    "visits": null,
-   "starts": 3,
+   "starts": 5,
    "completes": 0,
    "valid": 0,
    "matched": 0,
@@ -3624,7 +3624,7 @@
  "callouts": [],
  "partners": [],
  "dq": {
-  "submissions": 61,
+  "submissions": 66,
   "completes": 11,
   "valid": 9,
   "by_survey": {
@@ -3634,18 +3634,18 @@
     "valid": 1
    },
    "educator": {
-    "submissions": 29,
+    "submissions": 33,
     "completes": 7,
     "valid": 7
    },
    "librarian": {
-    "submissions": 18,
+    "submissions": 19,
     "completes": 2,
     "valid": 1
    }
   },
   "excluded": {
-   "unfinished": 50,
+   "unfinished": 55,
    "unmatched": 1,
    "speeder": 1
   },
