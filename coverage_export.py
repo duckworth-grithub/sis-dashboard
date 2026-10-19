@@ -117,7 +117,8 @@ def normalize_csv(survey, rows):
     out = []
     for r in rows:
         meta = {
-            "response_id": r.get("ResponseId", ""), "start_at": parse_dt(r.get("StartDate")), "recorded_at": parse_dt(r.get("RecordedDate")),
+            "response_id": r.get("ResponseId", ""), "start_at": parse_dt(r.get("StartDate")),
+            "recorded_at": parse_dt(r.get("RecordedDate")) or parse_dt(r.get("EndDate")) or parse_dt(r.get("StartDate")),
             "finished": truthy(r.get("Finished")), "progress": to_int(r.get("Progress")),
             "duration_s": to_int(r.get("Duration (in seconds)", r.get("Duration"))),
             "distribution_channel": (r.get("DistributionChannel") or "").lower() or ("preview" if r.get("Status") == "Survey Preview" else ""),
@@ -133,7 +134,8 @@ def normalize_api(survey, responses):
     for x in responses:
         v = x.get("values", {})
         meta = {
-            "response_id": x.get("responseId", ""), "start_at": parse_dt(v.get("startDate")), "recorded_at": parse_dt(v.get("recordedDate")),
+            "response_id": x.get("responseId", ""), "start_at": parse_dt(v.get("startDate")),
+            "recorded_at": parse_dt(v.get("recordedDate")) or parse_dt(v.get("endDate")) or parse_dt(v.get("startDate")),
             "finished": truthy(v.get("finished")), "progress": to_int(v.get("progress")), "duration_s": to_int(v.get("duration")),
             "distribution_channel": (v.get("distributionChannel") or "").lower(),
         }
