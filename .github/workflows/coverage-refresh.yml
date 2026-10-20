@@ -6,7 +6,7 @@
 name: Refresh coverage dashboard
 on:
   schedule:
-    - cron: "30 6 * * *"        # 06:30 UTC daily (about 2:30am Eastern)
+    - cron: "15 * * * *"   # hourly, at :15 past the hour (UTC)
   workflow_dispatch:
   push:
     branches: [main]
