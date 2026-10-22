@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-21T21:47:24Z",
- "as_of": "2026-10-21T21:46:27Z",
+ "generated_at": "2026-10-22T00:43:27Z",
+ "as_of": "2026-10-22T00:42:25Z",
  "synthetic": false,
  "test_mode": false,
  "pending_launch": false,
@@ -204,7 +204,7 @@
       "schools": 2
      },
      {
-      "st": "DC",
+      "st": "GA",
       "schools": 1
      },
      {
@@ -212,7 +212,7 @@
       "schools": 1
      },
      {
-      "st": "GA",
+      "st": "DC",
       "schools": 1
      }
     ],
@@ -251,12 +251,20 @@
       "schools": 209
      },
      {
+      "st": "AZ",
+      "schools": 2
+     },
+     {
       "st": "CA",
       "schools": 2
      },
      {
-      "st": "AZ",
-      "schools": 2
+      "st": "AL",
+      "schools": 1
+     },
+     {
+      "st": "TX",
+      "schools": 1
      },
      {
       "st": "AK",
@@ -267,15 +275,7 @@
       "schools": 1
      },
      {
-      "st": "TX",
-      "schools": 1
-     },
-     {
       "st": "GU",
-      "schools": 1
-     },
-     {
-      "st": "AL",
       "schools": 1
      }
     ],
@@ -310,11 +310,11 @@
     },
     "top_states": [
      {
-      "st": "AZ",
+      "st": "SC",
       "schools": 1
      },
      {
-      "st": "SC",
+      "st": "AZ",
       "schools": 1
      }
     ],
@@ -353,12 +353,12 @@
   "pace": {
    "target_date": "2027-07-01",
    "weeks_left": 36.0,
-   "needed_per_week": 2464,
+   "needed_per_week": 2465,
    "current_per_week": 2,
    "pct_of_needed": 0.1,
    "by_level": {
     "elementary": {
-     "needed_per_week": 1218,
+     "needed_per_week": 1219,
      "current_per_week": 1
     },
     "middle": {
@@ -384,7 +384,7 @@
   "this_week": {
    "week_start": "2026-10-19",
    "new": 93,
-   "days_elapsed": 3
+   "days_elapsed": 4
   },
   "last_week": {
    "week_start": "2026-10-12",
@@ -433,11 +433,6 @@
    }
   ],
   "daily": [
-   {
-    "date": "2026-09-22",
-    "new": 0,
-    "valid_responses": 0
-   },
    {
     "date": "2026-09-23",
     "new": 0,
@@ -582,6 +577,11 @@
     "date": "2026-10-21",
     "new": 9,
     "valid_responses": 30
+   },
+   {
+    "date": "2026-10-22",
+    "new": 0,
+    "valid_responses": 0
    }
   ]
  },
@@ -3212,14 +3212,14 @@
  "channels": [
   {
    "channel": "website_organic",
-   "starts": 407,
+   "starts": 410,
    "completes": 273,
    "valid": 258,
    "matched": 258,
    "new_schools": 89,
    "second_reports": 21,
    "redundant": 148,
-   "conv_start_complete": 67.1,
+   "conv_start_complete": 66.6,
    "conv_complete_valid": 94.5,
    "conv_valid_new": 34.5,
    "by_level_new": {
@@ -3300,27 +3300,27 @@
  "funnel": {
   "cycle": {
    "visits": null,
-   "starts": 494,
+   "starts": 497,
    "completes": 296,
    "valid": 277,
    "matched": 277,
    "new_schools": 95,
    "second_reports": 24,
    "conv_visit_start": null,
-   "conv_start_complete": 59.9,
+   "conv_start_complete": 59.6,
    "conv_complete_valid": 93.6,
    "conv_valid_new": 34.3
   },
   "last_4w": {
    "visits": null,
-   "starts": 494,
+   "starts": 497,
    "completes": 296,
    "valid": 277,
    "matched": 277,
    "new_schools": 95,
    "second_reports": 24,
    "conv_visit_start": null,
-   "conv_start_complete": 59.9,
+   "conv_start_complete": 59.6,
    "conv_complete_valid": 93.6,
    "conv_valid_new": 34.3
   },
@@ -3330,9 +3330,9 @@
   {
    "rule": "avg_daily_responses",
    "at_stake": 0,
-   "stat": "40",
+   "stat": "39",
    "title": "valid reports per day, last 7 days.",
-   "body": "277 valid reports in the last 7 days (first week of responses).",
+   "body": "273 valid reports in the last 7 days, up 6725% on the 7 days before.",
    "action": "Data quality",
    "target": "quality"
   },
@@ -3350,14 +3350,14 @@
    "at_stake": 0,
    "stat": "+93",
    "title": "new schools this week so far.",
-   "body": "Last week 2. The target date needs about 2,464 per week; 4-week average is 2.",
+   "body": "Last week 2. The target date needs about 2,465 per week; 4-week average is 2.",
    "action": "Gaps",
    "target": "gaps"
   }
  ],
  "partners": [],
  "dq": {
-  "submissions": 494,
+  "submissions": 497,
   "completes": 296,
   "valid": 277,
   "by_survey": {
@@ -3367,7 +3367,7 @@
     "valid": 5
    },
    "educator": {
-    "submissions": 443,
+    "submissions": 446,
     "completes": 285,
     "valid": 270
    },
@@ -3378,7 +3378,7 @@
    }
   },
   "excluded": {
-   "unfinished": 198,
+   "unfinished": 201,
    "unmatched": 12,
    "ambiguous": 6,
    "speeder": 1
