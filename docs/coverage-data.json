@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-22T00:43:27Z",
- "as_of": "2026-10-22T00:42:25Z",
+ "generated_at": "2026-10-22T12:18:16Z",
+ "as_of": "2026-10-22T12:17:24Z",
  "synthetic": false,
  "test_mode": false,
  "pending_launch": false,
@@ -204,7 +204,7 @@
       "schools": 2
      },
      {
-      "st": "GA",
+      "st": "DC",
       "schools": 1
      },
      {
@@ -212,7 +212,7 @@
       "schools": 1
      },
      {
-      "st": "DC",
+      "st": "GA",
       "schools": 1
      }
     ],
@@ -251,23 +251,19 @@
       "schools": 209
      },
      {
-      "st": "AZ",
-      "schools": 2
-     },
-     {
       "st": "CA",
       "schools": 2
      },
      {
+      "st": "AZ",
+      "schools": 2
+     },
+     {
+      "st": "GU",
+      "schools": 1
+     },
+     {
       "st": "AL",
-      "schools": 1
-     },
-     {
-      "st": "TX",
-      "schools": 1
-     },
-     {
-      "st": "AK",
       "schools": 1
      },
      {
@@ -275,7 +271,11 @@
       "schools": 1
      },
      {
-      "st": "GU",
+      "st": "AK",
+      "schools": 1
+     },
+     {
+      "st": "TX",
       "schools": 1
      }
     ],
@@ -352,21 +352,21 @@
  "velocity": {
   "pace": {
    "target_date": "2027-07-01",
-   "weeks_left": 36.0,
-   "needed_per_week": 2465,
+   "weeks_left": 35.9,
+   "needed_per_week": 2470,
    "current_per_week": 2,
    "pct_of_needed": 0.1,
    "by_level": {
     "elementary": {
-     "needed_per_week": 1219,
+     "needed_per_week": 1221,
      "current_per_week": 1
     },
     "middle": {
-     "needed_per_week": 632,
+     "needed_per_week": 633,
      "current_per_week": 0
     },
     "high": {
-     "needed_per_week": 402,
+     "needed_per_week": 403,
      "current_per_week": 1
     },
     "other": {
@@ -379,7 +379,7 @@
     }
    },
    "pts_per_week": 0.0,
-   "projected_full_date": "2877-02-28"
+   "projected_full_date": "2877-03-01"
   },
   "this_week": {
    "week_start": "2026-10-19",
@@ -3212,14 +3212,14 @@
  "channels": [
   {
    "channel": "website_organic",
-   "starts": 410,
+   "starts": 413,
    "completes": 273,
    "valid": 258,
    "matched": 258,
    "new_schools": 89,
    "second_reports": 21,
    "redundant": 148,
-   "conv_start_complete": 66.6,
+   "conv_start_complete": 66.1,
    "conv_complete_valid": 94.5,
    "conv_valid_new": 34.5,
    "by_level_new": {
@@ -3300,27 +3300,27 @@
  "funnel": {
   "cycle": {
    "visits": null,
-   "starts": 497,
+   "starts": 500,
    "completes": 296,
    "valid": 277,
    "matched": 277,
    "new_schools": 95,
    "second_reports": 24,
    "conv_visit_start": null,
-   "conv_start_complete": 59.6,
+   "conv_start_complete": 59.2,
    "conv_complete_valid": 93.6,
    "conv_valid_new": 34.3
   },
   "last_4w": {
    "visits": null,
-   "starts": 497,
+   "starts": 500,
    "completes": 296,
    "valid": 277,
    "matched": 277,
    "new_schools": 95,
    "second_reports": 24,
    "conv_visit_start": null,
-   "conv_start_complete": 59.6,
+   "conv_start_complete": 59.2,
    "conv_complete_valid": 93.6,
    "conv_valid_new": 34.3
   },
@@ -3350,14 +3350,14 @@
    "at_stake": 0,
    "stat": "+93",
    "title": "new schools this week so far.",
-   "body": "Last week 2. The target date needs about 2,465 per week; 4-week average is 2.",
+   "body": "Last week 2. The target date needs about 2,470 per week; 4-week average is 2.",
    "action": "Gaps",
    "target": "gaps"
   }
  ],
  "partners": [],
  "dq": {
-  "submissions": 497,
+  "submissions": 500,
   "completes": 296,
   "valid": 277,
   "by_survey": {
@@ -3367,7 +3367,7 @@
     "valid": 5
    },
    "educator": {
-    "submissions": 446,
+    "submissions": 449,
     "completes": 285,
     "valid": 270
    },
@@ -3378,7 +3378,7 @@
    }
   },
   "excluded": {
-   "unfinished": 201,
+   "unfinished": 204,
    "unmatched": 12,
    "ambiguous": 6,
    "speeder": 1
