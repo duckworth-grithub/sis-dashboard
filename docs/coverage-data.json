@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-23T21:28:56Z",
- "as_of": "2026-10-23T21:27:58Z",
+ "generated_at": "2026-10-24T00:46:55Z",
+ "as_of": "2026-10-24T00:45:52Z",
  "synthetic": false,
  "test_mode": false,
  "pending_launch": false,
@@ -204,7 +204,19 @@
       "schools": 2
      },
      {
+      "st": "NJ",
+      "schools": 1
+     },
+     {
       "st": "DC",
+      "schools": 1
+     },
+     {
+      "st": "CA",
+      "schools": 1
+     },
+     {
+      "st": "SC",
       "schools": 1
      },
      {
@@ -213,18 +225,6 @@
      },
      {
       "st": "AK",
-      "schools": 1
-     },
-     {
-      "st": "SC",
-      "schools": 1
-     },
-     {
-      "st": "NJ",
-      "schools": 1
-     },
-     {
-      "st": "CA",
       "schools": 1
      },
      {
@@ -267,11 +267,11 @@
       "schools": 249
      },
      {
-      "st": "CA",
+      "st": "AZ",
       "schools": 2
      },
      {
-      "st": "AZ",
+      "st": "CA",
       "schools": 2
      },
      {
@@ -279,7 +279,7 @@
       "schools": 2
      },
      {
-      "st": "AK",
+      "st": "AL",
       "schools": 1
      },
      {
@@ -287,11 +287,11 @@
       "schools": 1
      },
      {
-      "st": "TX",
+      "st": "AK",
       "schools": 1
      },
      {
-      "st": "AL",
+      "st": "TX",
       "schools": 1
      }
     ],
@@ -326,11 +326,11 @@
     },
     "top_states": [
      {
-      "st": "AZ",
+      "st": "SC",
       "schools": 1
      },
      {
-      "st": "SC",
+      "st": "AZ",
       "schools": 1
      }
     ],
@@ -369,7 +369,7 @@
   "pace": {
    "target_date": "2027-07-01",
    "weeks_left": 35.7,
-   "needed_per_week": 2483,
+   "needed_per_week": 2484,
    "current_per_week": 1,
    "pct_of_needed": 0.0,
    "by_level": {
@@ -378,7 +378,7 @@
      "current_per_week": 0
     },
     "middle": {
-     "needed_per_week": 636,
+     "needed_per_week": 637,
      "current_per_week": 0
     },
     "high": {
@@ -395,12 +395,12 @@
     }
    },
    "pts_per_week": 0.0,
-   "projected_full_date": "3727-02-28"
+   "projected_full_date": "3727-03-01"
   },
   "this_week": {
    "week_start": "2026-10-19",
    "new": 113,
-   "days_elapsed": 5
+   "days_elapsed": 6
   },
   "last_week": {
    "week_start": "2026-10-12",
@@ -449,11 +449,6 @@
    }
   ],
   "daily": [
-   {
-    "date": "2026-09-24",
-    "new": 0,
-    "valid_responses": 0
-   },
    {
     "date": "2026-09-25",
     "new": 0,
@@ -598,6 +593,11 @@
     "date": "2026-10-23",
     "new": 8,
     "valid_responses": 23
+   },
+   {
+    "date": "2026-10-24",
+    "new": 0,
+    "valid_responses": 0
    }
   ]
  },
@@ -3228,14 +3228,14 @@
  "channels": [
   {
    "channel": "website_organic",
-   "starts": 512,
+   "starts": 513,
    "completes": 331,
    "valid": 311,
    "matched": 311,
    "new_schools": 107,
    "second_reports": 23,
    "redundant": 181,
-   "conv_start_complete": 64.6,
+   "conv_start_complete": 64.5,
    "conv_complete_valid": 94.0,
    "conv_valid_new": 34.4,
    "by_level_new": {
@@ -3316,27 +3316,27 @@
  "funnel": {
   "cycle": {
    "visits": null,
-   "starts": 616,
+   "starts": 617,
    "completes": 361,
    "valid": 335,
    "matched": 335,
    "new_schools": 114,
    "second_reports": 27,
    "conv_visit_start": null,
-   "conv_start_complete": 58.6,
+   "conv_start_complete": 58.5,
    "conv_complete_valid": 92.8,
    "conv_valid_new": 34.0
   },
   "last_4w": {
    "visits": null,
-   "starts": 616,
+   "starts": 617,
    "completes": 361,
    "valid": 335,
    "matched": 335,
    "new_schools": 114,
    "second_reports": 27,
    "conv_visit_start": null,
-   "conv_start_complete": 58.6,
+   "conv_start_complete": 58.5,
    "conv_complete_valid": 92.8,
    "conv_valid_new": 34.0
   },
@@ -3366,14 +3366,14 @@
    "at_stake": 0,
    "stat": "+113",
    "title": "new schools this week so far.",
-   "body": "Last week 1. The target date needs about 2,483 per week; 4-week average is 1.",
+   "body": "Last week 1. The target date needs about 2,484 per week; 4-week average is 1.",
    "action": "Gaps",
    "target": "gaps"
   }
  ],
  "partners": [],
  "dq": {
-  "submissions": 616,
+  "submissions": 617,
   "completes": 361,
   "valid": 335,
   "by_survey": {
@@ -3383,7 +3383,7 @@
     "valid": 9
    },
    "educator": {
-    "submissions": 557,
+    "submissions": 558,
     "completes": 345,
     "valid": 324
    },
@@ -3394,7 +3394,7 @@
    }
   },
   "excluded": {
-   "unfinished": 255,
+   "unfinished": 256,
    "test": 2,
    "unmatched": 14,
    "ambiguous": 9,
