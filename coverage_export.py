@@ -537,6 +537,9 @@ def main():
         "valid_district": sum(1 for r in lib_rows if r["valid"] and r["role"] == "district_librarian"),
         "valid_elementary": sum(1 for r in lib_rows if r["valid"] and r["role"] == "librarian" and r["respondent_level"] == "elementary"),
         "valid_mshs": sum(1 for r in lib_rows if r["valid"] and r["role"] == "librarian" and r["respondent_level"] in ("middle", "high", "mixed")),
+        "district_by_reason": dict(collections.Counter((r["invalid_reason"] or "valid") + ("" if r["finished_qualtrics"] else " (not submitted)") for r in lib_rows if r["role"] == "district_librarian")),
+        "elementary_by_reason": dict(collections.Counter(r["invalid_reason"] or "valid" for r in lib_rows if r["role"] == "librarian" and r["respondent_level"] == "elementary")),
+        "mshs_by_reason": dict(collections.Counter(r["invalid_reason"] or "valid" for r in lib_rows if r["role"] == "librarian" and r["respondent_level"] in ("middle", "high", "mixed"))),
     }
     coverage["by_role"] = by_role
 
