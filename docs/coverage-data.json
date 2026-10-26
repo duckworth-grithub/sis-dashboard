@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-26T14:18:01Z",
- "as_of": "2026-10-26T14:17:16Z",
+ "generated_at": "2026-10-26T14:30:16Z",
+ "as_of": "2026-10-26T14:29:18Z",
  "synthetic": false,
  "test_mode": false,
  "pending_launch": false,
@@ -204,15 +204,15 @@
       "schools": 2
      },
      {
-      "st": "NY",
-      "schools": 2
-     },
-     {
       "st": "NJ",
       "schools": 2
      },
      {
-      "st": "DC",
+      "st": "NY",
+      "schools": 2
+     },
+     {
+      "st": "SC",
       "schools": 1
      },
      {
@@ -224,11 +224,11 @@
       "schools": 1
      },
      {
-      "st": "WA",
+      "st": "DC",
       "schools": 1
      },
      {
-      "st": "SC",
+      "st": "WA",
       "schools": 1
      }
     ],
@@ -276,19 +276,19 @@
       "schools": 5
      },
      {
-      "st": "CA",
-      "schools": 2
-     },
-     {
       "st": "AZ",
       "schools": 2
      },
      {
-      "st": "TX",
+      "st": "CA",
+      "schools": 2
+     },
+     {
+      "st": "AK",
       "schools": 1
      },
      {
-      "st": "OH",
+      "st": "TX",
       "schools": 1
      },
      {
@@ -296,7 +296,7 @@
       "schools": 1
      },
      {
-      "st": "GU",
+      "st": "OH",
       "schools": 1
      }
     ],
@@ -340,15 +340,15 @@
       "schools": 1
      },
      {
-      "st": "AZ",
-      "schools": 1
-     },
-     {
       "st": "PA",
       "schools": 1
      },
      {
       "st": "SC",
+      "schools": 1
+     },
+     {
+      "st": "AZ",
       "schools": 1
      }
     ],
@@ -3443,6 +3443,199 @@
     "submissions": 30,
     "completes": 12,
     "valid": 11
+   }
+  },
+  "by_survey_state": {
+   "student": {
+    "Alaska": {
+     "started": 9,
+     "completed": 1,
+     "valid": 1
+    },
+    "Arizona": {
+     "started": 1,
+     "completed": 0,
+     "valid": 0
+    },
+    "California": {
+     "started": 2,
+     "completed": 1,
+     "valid": 1
+    },
+    "Colorado": {
+     "started": 1,
+     "completed": 1,
+     "valid": 0
+    },
+    "Connecticut": {
+     "started": 1,
+     "completed": 1,
+     "valid": 0
+    },
+    "District of Columbia": {
+     "started": 1,
+     "completed": 1,
+     "valid": 1
+    },
+    "Georgia": {
+     "started": 1,
+     "completed": 1,
+     "valid": 1
+    },
+    "New Jersey": {
+     "started": 4,
+     "completed": 3,
+     "valid": 2
+    },
+    "New York": {
+     "started": 3,
+     "completed": 2,
+     "valid": 2
+    },
+    "Ohio": {
+     "started": 1,
+     "completed": 0,
+     "valid": 0
+    },
+    "Pennsylvania": {
+     "started": 5,
+     "completed": 5,
+     "valid": 4
+    },
+    "South Carolina": {
+     "started": 1,
+     "completed": 1,
+     "valid": 1
+    },
+    "Texas": {
+     "started": 1,
+     "completed": 0,
+     "valid": 0
+    },
+    "Virginia": {
+     "started": 1,
+     "completed": 1,
+     "valid": 0
+    },
+    "Washington": {
+     "started": 1,
+     "completed": 1,
+     "valid": 1
+    }
+   },
+   "educator": {
+    "Alabama": {
+     "started": 7,
+     "completed": 1,
+     "valid": 1
+    },
+    "Alaska": {
+     "started": 2,
+     "completed": 1,
+     "valid": 1
+    },
+    "American Samoa": {
+     "started": 2,
+     "completed": 0,
+     "valid": 0
+    },
+    "Arizona": {
+     "started": 2,
+     "completed": 2,
+     "valid": 2
+    },
+    "Arkansas": {
+     "started": 1,
+     "completed": 0,
+     "valid": 0
+    },
+    "California": {
+     "started": 4,
+     "completed": 2,
+     "valid": 2
+    },
+    "Georgia": {
+     "started": 5,
+     "completed": 5,
+     "valid": 5
+    },
+    "Guam": {
+     "started": 1,
+     "completed": 1,
+     "valid": 1
+    },
+    "Kansas": {
+     "started": 1,
+     "completed": 0,
+     "valid": 0
+    },
+    "New Jersey": {
+     "started": 1,
+     "completed": 1,
+     "valid": 0
+    },
+    "New York": {
+     "started": 1,
+     "completed": 0,
+     "valid": 0
+    },
+    "Ohio": {
+     "started": 4,
+     "completed": 1,
+     "valid": 1
+    },
+    "Pennsylvania": {
+     "started": 2,
+     "completed": 1,
+     "valid": 0
+    },
+    "South Carolina": {
+     "started": 412,
+     "completed": 337,
+     "valid": 315
+    },
+    "Texas": {
+     "started": 1,
+     "completed": 1,
+     "valid": 1
+    },
+    "U.S. Virgin Islands": {
+     "started": 1,
+     "completed": 0,
+     "valid": 0
+    }
+   },
+   "librarian": {
+    "Alaska": {
+     "started": 10,
+     "completed": 6,
+     "valid": 6
+    },
+    "American Samoa": {
+     "started": 2,
+     "completed": 2,
+     "valid": 1
+    },
+    "Arizona": {
+     "started": 3,
+     "completed": 2,
+     "valid": 2
+    },
+    "Delaware": {
+     "started": 1,
+     "completed": 0,
+     "valid": 0
+    },
+    "Pennsylvania": {
+     "started": 2,
+     "completed": 1,
+     "valid": 1
+    },
+    "South Carolina": {
+     "started": 9,
+     "completed": 1,
+     "valid": 1
+    }
    }
   },
   "excluded": {
