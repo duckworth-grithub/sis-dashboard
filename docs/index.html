@@ -271,7 +271,7 @@
   </div>
 
   <div class="page" id="page-elementary">
-    <h2 class="ph">Elementary</h2><p class="pd">The elementary survey is new this year, so elementary coverage restarts at zero. Schools that reported in earlier waves are listed as "reported before" and count once they take the new survey. Elementary is not part of the headline KPI. <span class="tag warn">qualifier under review</span> Elementary-only librarians currently never count because they answer no policy question; the team expects to change what counts for elementary.</p>
+    <h2 class="ph">Elementary</h2><p class="pd">The elementary survey is new this year, so elementary coverage restarts at zero. Schools that reported in earlier waves are listed as "reported before" and count once they take the new survey. Elementary is not part of the headline KPI.</p>
     <div class="grid3" id="elemTiles" style="grid-template-columns:repeat(2,minmax(0,1fr))"></div>
     <div class="grid2" id="elemBody"></div>
   </div>
@@ -283,7 +283,7 @@
   </div>
 
   <div class="page" id="page-librarian">
-    <h2 class="ph">Librarians</h2><p class="pd">The librarian survey branches three ways: district (circulation only), elementary-only, and MS/HS (any librarian serving middle or high students, with or without elementary). Only the MS/HS branch answers the phone-policy questions, so only it counts for coverage. <span class="tag warn">qualifier under review</span></p>
+    <h2 class="ph">Librarians</h2><p class="pd">The librarian survey branches three ways. District-wide librarians have no school and no policy question: a submitted response is a valid report but attaches to no school, so it never adds coverage. Elementary-only librarians have no policy question on their path, so naming a school is enough, the same as an elementary educator. MS/HS librarians (serving middle or high students, with or without elementary) answer the phone-policy questions.</p>
     <div class="grid3" id="libTiles"></div>
     <div class="grid2" id="libBody"></div>
   </div>
@@ -669,7 +669,7 @@
     const weeklyCard = `<div class="card" style="display:flex;flex-direction:column"><div class="card-title">${noun[0].toUpperCase() + noun.slice(1)} reports per week</div>
         <div class="cols"><div class="bars">${wkR.map((w) => `<i class="${w.partial ? "cur" : ""}" style="height:${Math.max(2, Math.round(100 * w.reports / rmx))}%" data-tip="<b>Week of ${mdy(w.week_start)}${w.partial ? " (partial)" : ""}</b><br>${fmt(w.reports)} valid ${noun} reports"></i>`).join("")}</div></div>
         <div class="xlab"><span>${wkR.length ? mdy(wkR[0].week_start) : ""}</span><span></span><span>${wkR.length ? mdy(wkR[wkR.length - 1].week_start) : ""}</span></div>
-        <div class="sub12" style="margin-top:10px">${key === "student" ? "Students must be 13 or older, so student reports are MS/HS by definition." : key === "librarian" ? `Branches: district ${fmt((R.by_branch || {}).district)} · elementary-only ${fmt((R.by_branch || {}).elementary_only)} · MS/HS ${fmt((R.by_branch || {}).mshs)}. Only MS/HS school librarians answer the policy questions, so only they count.` : ""}</div></div>`;
+        <div class="sub12" style="margin-top:10px">${key === "student" ? "Students must be 13 or older, so student reports are MS/HS by definition." : key === "librarian" ? `Valid reports by branch: district ${fmt((R.by_branch || {}).valid_district)} (no school) · elementary-only ${fmt((R.by_branch || {}).valid_elementary)} · MS/HS ${fmt((R.by_branch || {}).valid_mshs)}. Responses on each path: ${fmt((R.by_branch || {}).district)} · ${fmt((R.by_branch || {}).elementary_only)} · ${fmt((R.by_branch || {}).mshs)}.` : ""}</div></div>`;
     const body = weeklyCard + `<div class="card"><div class="card-title">States with the most ${noun}-reported schools</div><div class="ranked" style="margin-top:6px">${(R.top_states || []).map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc((byCode[g.st] || {}).state || g.st)}</span><span class="v">${fmt(g.schools)} <small>schools</small></span></div>`).join("") || `<div class="sec-note">—</div>`}</div></div>`;
     $("#" + tilesId).innerHTML = tiles; $("#" + bodyId).innerHTML = body;
   }
