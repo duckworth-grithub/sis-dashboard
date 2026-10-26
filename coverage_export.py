@@ -749,6 +749,12 @@ def main():
     dq = {"submissions": len(cyc), "completes": len(completes), "valid": len(valid),
           "by_survey": {sv: {"submissions": sum(1 for r in cyc if r["survey"] == sv), "completes": sum(1 for r in completes if r["survey"] == sv),
                              "valid": sum(1 for r in valid if r["survey"] == sv)} for sv in FIELDS if any(r["survey"] == sv for r in cyc)},
+          # per state and survey: started / completed / valid this cycle (counts only; the state is the one the respondent picked)
+          "by_survey_state": {sv: {st: {"started": sum(1 for r in cyc if r["survey"] == sv and r["state_name"] == st),
+                                        "completed": sum(1 for r in completes if r["survey"] == sv and r["state_name"] == st),
+                                        "valid": sum(1 for r in valid if r["survey"] == sv and r["state_name"] == st)}
+                                   for st in sorted({r["state_name"] for r in cyc if r["survey"] == sv and r["state_name"]})}
+                              for sv in FIELDS if any(r["survey"] == sv for r in cyc)},
           "excluded": {k: sum(1 for r in cyc if r["invalid_reason"] == k) for k in INVALID_ORDER if any(r["invalid_reason"] == k for r in cyc)},
           "before_cycle_total": sum(1 for r in responses if r["invalid_reason"] == "before_cycle"),
           "match_rate": pct(sum(1 for r in reached_school if r["match_status"] == "matched"), len(reached_school)),
