@@ -170,15 +170,24 @@ def build(survey, meta, ans, emb):
     test_marker = any("tktk" in str(v).lower() for v in list(ans.values()) + list(emb.values()) if v not in (None, ""))
     policy_ok = any(str(ans.get(k) or "").strip() for k in ans if k.startswith("pol_"))
     meta["finished_qualtrics"] = meta["finished"]
+    named_school = bool(str(ans.get("nces1") or ans.get("nces2") or ans.get("typed") or "").strip())
     # Complete = named a school AND answered a phone-policy question. Qualtrics' Finished flag is recorded but not required.
-    meta["finished"] = policy_ok and bool(str(ans.get("nces1") or ans.get("nces2") or ans.get("typed") or "").strip())
+    # Librarian branches (decided Oct 26, 2026): district-wide librarians have no school and no policy question, so a submitted
+    # response is complete (a valid report that attaches to no school); elementary-only librarians have no policy question on
+    # their path, so naming a school is enough, like an elementary educator; MS/HS librarians answer the policy questions.
+    if survey == "librarian" and role == "district_librarian":
+        meta["finished"] = bool(meta["finished_qualtrics"])
+    elif survey == "librarian" and lvl == "elementary":
+        meta["finished"] = named_school
+    else:
+        meta["finished"] = policy_ok and named_school
     return {
         **meta, "survey": survey, "role": role, "respondent_level": lvl, "test_marker": test_marker,
         "state_code": str(ans.get("state") or ans.get("dist_state") or "").strip(),
         "school_string": str(ans.get("nces1") or ans.get("nces2") or "").strip(),
         "school_found": (1 if str(ans.get("in_nces") or "").lower().startswith("yes") else 0 if str(ans.get("in_nces") or "").lower().startswith("no")
                          else (1 if to_int(ans.get("in_nces")) == 6 and survey == "summer" else to_int(ans.get("in_nces")))),
-        "policy_answered": policy_ok,
+        "policy_answered": policy_ok or (survey == "librarian" and (role == "district_librarian" or lvl == "elementary")),   # those branches have no policy question
         "typed_name_present": bool(str(ans.get("typed") or "").strip()),
         "zip_present": bool(str(ans.get("zip") or "").strip()),
         "consent": bool(str(ans.get("consent") or "").strip()), "role_type": to_int(ans.get("role_type")),
@@ -396,8 +405,6 @@ def main():
             reason = "test"
         elif (r["survey"] == "educator" and r["role_type"] not in (1, None)) or (r["survey"] == "student" and not r["consent"]):
             reason = "ineligible_role"
-        elif r["match_status"] == "district_only":
-            reason = "district_only"
         elif not r.get("policy_answered", True):
             reason = "no_policy_data"   # unreachable once "complete" requires policy; kept for clarity
         elif r["match_status"] == "no_school":
@@ -423,7 +430,7 @@ def main():
     fresh_levels = set(cfg.get("fresh_start_levels", ["elementary"]))
     per_school = collections.defaultdict(list)
     for r in responses:
-        if r["valid"]:
+        if r["valid"] and r["ncessch"]:
             per_school[r["ncessch"]].append(r)
     base_of = {}
     for s in schools:
@@ -508,26 +515,28 @@ def main():
     coverage["out_of_scope"] = dict(collections.Counter(s["ineligible_reason"] for s in schools if not s["eligible"]))
     role_sch = collections.defaultdict(set)
     for r in responses:
-        if r["valid"]:
+        if r["valid"] and r["ncessch"]:
             role_sch[r["role"]].add(r["ncessch"])
     by_role = {}
     for role in ("student", "educator", "librarian"):
         ids = role_sch.get(role, set())
-        rs = [r for r in responses if r["valid"] and r["role"] == role]
+        rs = [r for r in responses if r["valid"] and (r["role"] == role or (role == "librarian" and r["role"] == "district_librarian"))]
         by_role[role] = {"valid_reports": len(rs), "schools": len(ids),
                          "by_level": {lv: sum(1 for sid in ids if by_id.get(sid, {}).get("level") == lv) for lv in LEVELS},
                          "new_schools": sum(1 for r in rs if r.get("coverage_rank") == 1),
                          "this_week": sum(1 for r in rs if r["week"] == str(this_wk)), "last_week": sum(1 for r in rs if r["week"] == str(last_wk)),
                          "by_survey": dict(collections.Counter(r["survey"] for r in rs)),
                          "top_states": [{"st": st, "schools": n} for st, n in collections.Counter(by_id[sid]["st"] for sid in ids if sid in by_id).most_common(8)]}
-    by_role["district_librarian"] = {"reports": sum(1 for r in responses if r["role"] == "district_librarian" and r["finished"] and r["distribution_channel"] != "preview")}
+    by_role["district_librarian"] = {"reports": sum(1 for r in responses if r["role"] == "district_librarian" and r["valid"])}
     lib_rows = [r for r in responses if r["survey"] == "librarian" and r["distribution_channel"] != "preview"
                 and not (r["recorded_at"] and r["recorded_at"] < cycle_start) and (r["school_string"] or r["typed_name_present"] or r["role"] == "district_librarian")]
     by_role["librarian"]["by_branch"] = {
         "district": sum(1 for r in lib_rows if r["role"] == "district_librarian"),
         "elementary_only": sum(1 for r in lib_rows if r["role"] == "librarian" and r["respondent_level"] == "elementary"),
         "mshs": sum(1 for r in lib_rows if r["role"] == "librarian" and r["respondent_level"] in ("middle", "high", "mixed")),
-        "valid_mshs": sum(1 for r in lib_rows if r["valid"]),
+        "valid_district": sum(1 for r in lib_rows if r["valid"] and r["role"] == "district_librarian"),
+        "valid_elementary": sum(1 for r in lib_rows if r["valid"] and r["role"] == "librarian" and r["respondent_level"] == "elementary"),
+        "valid_mshs": sum(1 for r in lib_rows if r["valid"] and r["role"] == "librarian" and r["respondent_level"] in ("middle", "high", "mixed")),
     }
     coverage["by_role"] = by_role
 
@@ -608,13 +617,13 @@ def main():
     def funnel(rs):
         comp = [r for r in rs if r["finished"] and r["distribution_channel"] != "preview" and (not r["recorded_at"] or r["recorded_at"] >= cycle_start)]
         val = [r for r in comp if r["valid"]]
-        new = sum(1 for r in val if r.get("coverage_rank") == 1 and by_id[r["ncessch"]]["eligible"])
-        sec = sum(1 for r in val if r.get("coverage_rank") == 2 and by_id[r["ncessch"]]["eligible"])
+        new = sum(1 for r in val if r.get("coverage_rank") == 1 and r["ncessch"] and by_id[r["ncessch"]]["eligible"])
+        sec = sum(1 for r in val if r.get("coverage_rank") == 2 and r["ncessch"] and by_id[r["ncessch"]]["eligible"])
         red = sum(1 for r in val if (r.get("coverage_rank") or 0) >= 3)
         return {"starts": len(rs), "completes": len(comp), "valid": len(val), "matched": sum(1 for r in val if r["ncessch"]),
                 "new_schools": new, "second_reports": sec, "redundant": red,
                 "conv_start_complete": pct(len(comp), len(rs)), "conv_complete_valid": pct(len(val), len(comp)), "conv_valid_new": pct(new, len(val)),
-                "by_level_new": {lv: sum(1 for r in val if r.get("coverage_rank") == 1 and by_id[r["ncessch"]]["level"] == lv) for lv in LEVELS}}
+                "by_level_new": {lv: sum(1 for r in val if r.get("coverage_rank") == 1 and r["ncessch"] and by_id[r["ncessch"]]["level"] == lv) for lv in LEVELS}}
     in_cycle = [r for r in responses if not (r["recorded_at"] and r["recorded_at"] < cycle_start) and r["distribution_channel"] != "preview"]
     channels = []
     for ch in sorted({r["channel"] for r in in_cycle}):
@@ -643,7 +652,7 @@ def main():
 
     for role in ("student", "educator", "librarian"):
         by_role[role]["weekly"] = [{"week_start": w["week_start"], "partial": w["partial"],
-                                    "reports": sum(1 for r in responses if r["valid"] and r["role"] == role and r["week"] == w["week_start"])} for w in weekly]
+                                    "reports": sum(1 for r in responses if r["valid"] and (r["role"] == role or (role == "librarian" and r["role"] == "district_librarian")) and r["week"] == w["week_start"])} for w in weekly]
     # ---- overview extras: pace detail, 4-week sources, callouts (rule engine, COVERAGE-DESIGN.md §7)
     pace["pts_per_week"] = round(100.0 * rolling / coverage["overall"]["eligible"], 2) if coverage["overall"]["eligible"] else None
     pace["projected_full_date"] = (now + timedelta(weeks=coverage["overall"]["remaining"] / rolling)).strftime("%Y-%m-%d") if rolling else None
