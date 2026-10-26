@@ -392,6 +392,14 @@ def main():
         alerts.append(f"{unmatched_strings} completes picked a dropdown school whose string is not in schools.csv: the dropdown CSV on disk is stale")
 
     # ---- validity
+    def speeder_floor(r):
+        # the district-librarian path is two or three questions and the elementary-librarian path has no policy block,
+        # so the 60-second floor would throw out genuine responses there
+        if r["role"] == "district_librarian":
+            return 0
+        if r["survey"] == "librarian" and r["respondent_level"] == "elementary":
+            return cfg.get("speeder_seconds_short", 25)
+        return cfg.get("speeder_seconds", 60)
     responses.sort(key=lambda r: (r["recorded_at"] or datetime.max.replace(tzinfo=timezone.utc), r["response_id"]))
     for r in responses:
         reason, flags = "", []
@@ -413,7 +421,7 @@ def main():
             reason = "unmatched"
         elif r["match_status"] == "ambiguous":
             reason = "ambiguous"
-        elif r["duration_s"] is not None and r["duration_s"] < cfg.get("speeder_seconds", 60):
+        elif r["duration_s"] is not None and r["duration_s"] < speeder_floor(r):
             reason = "speeder"
         # Duplicate detection is by Qualtrics response id only (each row is one response); email and IP are never pulled.
         sch = by_id.get(r["ncessch"])
