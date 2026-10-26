@@ -176,7 +176,7 @@ def build(survey, meta, ans, emb):
     # response is complete (a valid report that attaches to no school); elementary-only librarians have no policy question on
     # their path, so naming a school is enough, like an elementary educator; MS/HS librarians answer the policy questions.
     if survey == "librarian" and role == "district_librarian":
-        meta["finished"] = bool(meta["finished_qualtrics"])
+        meta["finished"] = bool(meta["finished_qualtrics"]) or bool(str(ans.get("dist_state") or "").strip())
     elif survey == "librarian" and lvl == "elementary":
         meta["finished"] = named_school
     else:
@@ -538,8 +538,8 @@ def main():
         "valid_elementary": sum(1 for r in lib_rows if r["valid"] and r["role"] == "librarian" and r["respondent_level"] == "elementary"),
         "valid_mshs": sum(1 for r in lib_rows if r["valid"] and r["role"] == "librarian" and r["respondent_level"] in ("middle", "high", "mixed")),
         "district_by_reason": dict(collections.Counter((r["invalid_reason"] or "valid") + ("" if r["finished_qualtrics"] else " (not submitted)") for r in lib_rows if r["role"] == "district_librarian")),
-        "elementary_by_reason": dict(collections.Counter(r["invalid_reason"] or "valid" for r in lib_rows if r["role"] == "librarian" and r["respondent_level"] == "elementary")),
-        "mshs_by_reason": dict(collections.Counter(r["invalid_reason"] or "valid" for r in lib_rows if r["role"] == "librarian" and r["respondent_level"] in ("middle", "high", "mixed"))),
+        "elementary_by_reason": dict(collections.Counter((r["invalid_reason"] or "valid") + ("" if r["finished_qualtrics"] else " (not submitted)") for r in lib_rows if r["role"] == "librarian" and r["respondent_level"] == "elementary")),
+        "mshs_by_reason": dict(collections.Counter((r["invalid_reason"] or "valid") + ("" if r["finished_qualtrics"] else " (not submitted)") for r in lib_rows if r["role"] == "librarian" and r["respondent_level"] in ("middle", "high", "mixed"))),
     }
     coverage["by_role"] = by_role
 
