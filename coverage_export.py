@@ -57,6 +57,9 @@ FIELDS = {
         "nces2": ("QID286", "l_school_name_nces2"), "in_nces": ("QID282", "l_school_in_nces"), "typed": ("QID284", "l_school_name_typed"),
         "zip": ("QID285", "l_school_zip"), "serves": ("QID411", "l_serves"), "dist_state": ("QID259", "l_dist_state"),
         "pol_when": ("QID295", "l_policy_when"), "pol_where": ("QID296", "l_policy_where"),  # middle/high school librarians only
+        # elementary-only librarians skip the phone-policy block and get the "Your View" device questions instead (QSF v28):
+        "pol_view_screentime": ("QID414", "l_view_screentime"), "pol_view_hardcopy": ("QID416", "l_view_hardcopy"),
+        "pol_view_ban_hw": ("QID417", "l_view_ban_hw"), "pol_view_ban_laptops": ("QID418", "l_view_ban_laptops"),
     },
 }
 FIELDS["summer"] = {
@@ -174,20 +177,19 @@ def build(survey, meta, ans, emb):
     # Complete = named a school AND answered a phone-policy question. Qualtrics' Finished flag is recorded but not required.
     # Librarian branches (decided Oct 26, 2026): district-wide librarians have no school and no policy question, so a submitted
     # response is complete (a valid report that attaches to no school); elementary-only librarians have no policy question on
-    # their path, so naming a school is enough, like an elementary educator; MS/HS librarians answer the policy questions.
+    # their path but get the device questions (Your View block), which count as their policy block like an elementary educator's
+    # device-access question; MS/HS librarians answer the phone-policy questions.
     if survey == "librarian" and role == "district_librarian":
         meta["finished"] = bool(meta["finished_qualtrics"]) or bool(str(ans.get("dist_state") or "").strip())
-    elif survey == "librarian" and lvl == "elementary":
-        meta["finished"] = named_school
     else:
-        meta["finished"] = policy_ok and named_school
+        meta["finished"] = policy_ok and named_school   # for elementary-only librarians the policy block is the device "Your View" questions
     return {
         **meta, "survey": survey, "role": role, "respondent_level": lvl, "test_marker": test_marker,
         "state_code": str(ans.get("state") or ans.get("dist_state") or "").strip(),
         "school_string": str(ans.get("nces1") or ans.get("nces2") or "").strip(),
         "school_found": (1 if str(ans.get("in_nces") or "").lower().startswith("yes") else 0 if str(ans.get("in_nces") or "").lower().startswith("no")
                          else (1 if to_int(ans.get("in_nces")) == 6 and survey == "summer" else to_int(ans.get("in_nces")))),
-        "policy_answered": policy_ok or (survey == "librarian" and (role == "district_librarian" or lvl == "elementary")),   # those branches have no policy question
+        "policy_answered": policy_ok or (survey == "librarian" and role == "district_librarian"),   # the district path has no policy question
         "typed_name_present": bool(str(ans.get("typed") or "").strip()),
         "zip_present": bool(str(ans.get("zip") or "").strip()),
         "consent": bool(str(ans.get("consent") or "").strip()), "role_type": to_int(ans.get("role_type")),
