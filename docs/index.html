@@ -164,6 +164,8 @@
   .spark .hit:hover { fill: rgba(44,122,75,0.12); }
   .spark .lab { font-size: 12px; font-weight: 700; fill: var(--ink); }
   .spark .xl { font-size: 10px; fill: var(--slate); }
+  .spark .mark { stroke: var(--chalk); stroke-width: 1.5; stroke-dasharray: 2 3; opacity: 0.6; cursor: default; }
+  .spark .mark:hover { opacity: 1; stroke-width: 3; }
 
   .pace-stats { display: flex; gap: 28px; margin-top: 16px; flex-wrap: wrap; }
   .cols { position: relative; flex: 1; min-height: 130px; margin-top: 18px; border-bottom: 1px solid var(--axis); }
@@ -251,6 +253,7 @@
       <div class="card" style="display:flex;flex-direction:column" id="pace"></div>
       <div class="card" id="gapsCard"></div>
     </div>
+    <div class="card" id="outreach" style="margin-top:16px"></div>
     <div class="card strip" id="review" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap"></div>
   </div>
 
@@ -469,6 +472,7 @@
       <line x1="${L}" y1="${(H - B).toFixed(1)}" x2="${W - R}" y2="${(H - B).toFixed(1)}" class="ax"/>
       <path d="${area}" class="area"/><path d="${line}" class="line"/>
       ${pts.map(([x, y], i) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9" class="hit" data-tip="<b>${mdy(days[i].date)}</b><br>${fmt(days[i].valid_responses)} valid reports · ${fmt(days[i].new)} new schools"/>`).join("")}
+      ${(d.outreach || []).filter((o) => days.some((x) => x.date === o.date)).map((o) => { const i = days.findIndex((x) => x.date === o.date); return `<line x1="${X(i).toFixed(1)}" y1="${T}" x2="${X(i).toFixed(1)}" y2="${(H - B).toFixed(1)}" class="mark" data-tip="<b>${mdy(o.date)} · outreach</b><br>${esc(o.label)}${o.state ? " · " + esc(o.state) : ""} · ${esc(o.audience)}"/>`; }).join("")}
       <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="3.5" class="dot"/>
       <text x="${(lx + 6).toFixed(1)}" y="${(ly + 4).toFixed(1)}" class="lab">${fmt(last.valid_responses)}</text>
       <text x="${L}" y="${H - 6}" class="xl">${mdy(days[0].date)}</text><text x="${X(mid).toFixed(1)}" y="${H - 6}" class="xl" text-anchor="middle">${mdy(days[mid].date)}</text><text x="${(W - R).toFixed(1)}" y="${H - 6}" class="xl" text-anchor="end">${mdy(last.date)}</text>
@@ -554,6 +558,8 @@
         <div><div class="stat28">${fmt(fc.new_schools)}</div><div class="sub12">new schools</div></div></div>
       <div style="display:flex;height:10px;gap:2px;border-radius:999px;overflow:hidden;margin-top:12px;background:var(--track)">${svOrder.map(([k, l, col]) => `<i style="display:block;height:100%;width:${(100 * (bySv[k].valid || 0) / svTotal).toFixed(1)}%;background:${col}" data-tip="<b>${l}</b><br>${fmt(bySv[k].valid)} valid reports"></i>`).join("")}</div>
       <div class="legend" style="color:var(--slate);margin-top:6px;font-size:12px"><span class="l">${svOrder.map(([k, l, col]) => `<span><span class="dot" style="background:${col}"></span>${l} <b style="color:var(--ink)">${fmt(bySv[k].valid)}</b></span>`).join("")}</span></div></div></div>`;
+  const OUT = (d.outreach || []).slice().sort((a, b) => b.date.localeCompare(a.date));
+  $("#outreach").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Outreach</div><div class="sec-note">from the team's tracker · valid reports in the 7 days after a send vs the 7 before, same state and audience</div></div>` + (OUT.length ? `<div class="tablewrap"><table style="margin-top:10px"><thead><tr><th>Sent</th><th>What</th><th>State</th><th>Audience</th><th class="num">7 days after</th><th class="num">7 days before</th><th class="num">Tagged</th></tr></thead><tbody>${OUT.map((o) => `<tr><td>${mdy(o.date)}</td><td>${esc(o.label)}</td><td>${esc(o.state || "national")}</td><td>${esc(o.audience)}</td><td class="num">${o.after_7d == null ? "—" : o.days_elapsed < 6 ? `${fmt(o.after_7d)} <small style="color:var(--muted)">(${o.days_elapsed + 1}d so far)</small>` : fmt(o.after_7d)}</td><td class="num">${o.before_7d == null ? "—" : fmt(o.before_7d)}</td><td class="num">${o.tagged_reports == null ? "<span style=\"color:var(--muted)\">no tag</span>" : fmt(o.tagged_reports)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="sec-note" style="margin-top:8px">No dated sends in the tracker yet.</div>`);
   $("#review").innerHTML = P ? `<div><div style="font-size:13px;font-weight:700">Needs review</div><div class="sub12">${PEND}.</div></div>`
     : `<div><div style="font-size:13px;font-weight:700">Needs review</div><div class="sub12 pretty"><b style="color:var(--ink)">${fmt(dq.needs_review)}</b> responses unmatched, ambiguous or too fast. Match rate ${pct(dq.match_rate)}. Queue ${fmt(dq.queue.size)}${dq.queue.oldest_days != null ? `, oldest ${dq.queue.oldest_days} d` : ""}.</div></div><span class="pill primary" data-go="quality">Review →</span>`;
 
