@@ -12,8 +12,6 @@ import re
 import sys
 from datetime import datetime
 
-import openpyxl
-
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from common import STATE_CODE_NAMES  # noqa: E402
@@ -35,6 +33,7 @@ def main():
         with open(src, newline="", encoding="utf-8-sig") as f:
             sheets = [[r for r in csv.reader(f) if any(c.strip() for c in r)]]
     else:
+        import openpyxl   # only needed for a local .xlsx snapshot; the Action fetches the sheet as CSV
         wb = openpyxl.load_workbook(src, read_only=True, data_only=True)
         sheets = [[r for r in ws.iter_rows(values_only=True) if any(c not in (None, "") for c in r)] for ws in wb.worksheets]
     out = []
