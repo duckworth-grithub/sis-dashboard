@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-27T14:22:44Z",
- "as_of": "2026-10-27T14:21:46Z",
+ "generated_at": "2026-10-27T14:25:28Z",
+ "as_of": "2026-10-27T14:24:34Z",
  "synthetic": false,
  "test_mode": false,
  "pending_launch": false,
@@ -200,10 +200,6 @@
     },
     "top_states": [
      {
-      "st": "NY",
-      "schools": 2
-     },
-     {
       "st": "PA",
       "schools": 2
      },
@@ -212,7 +208,11 @@
       "schools": 2
      },
      {
-      "st": "CA",
+      "st": "NY",
+      "schools": 2
+     },
+     {
+      "st": "DC",
       "schools": 1
      },
      {
@@ -220,15 +220,15 @@
       "schools": 1
      },
      {
-      "st": "GA",
-      "schools": 1
-     },
-     {
-      "st": "DC",
-      "schools": 1
-     },
-     {
       "st": "WA",
+      "schools": 1
+     },
+     {
+      "st": "SC",
+      "schools": 1
+     },
+     {
+      "st": "GA",
       "schools": 1
      }
     ],
@@ -276,19 +276,15 @@
       "schools": 5
      },
      {
-      "st": "AZ",
-      "schools": 2
-     },
-     {
       "st": "CA",
       "schools": 2
      },
      {
-      "st": "OH",
-      "schools": 1
+      "st": "AZ",
+      "schools": 2
      },
      {
-      "st": "AL",
+      "st": "TX",
       "schools": 1
      },
      {
@@ -296,7 +292,11 @@
       "schools": 1
      },
      {
-      "st": "GU",
+      "st": "OH",
+      "schools": 1
+     },
+     {
+      "st": "AL",
       "schools": 1
      }
     ],
@@ -348,11 +348,7 @@
       "schools": 2
      },
      {
-      "st": "OH",
-      "schools": 1
-     },
-     {
-      "st": "AK",
+      "st": "SC",
       "schools": 1
      },
      {
@@ -360,11 +356,15 @@
       "schools": 1
      },
      {
-      "st": "CT",
+      "st": "CA",
       "schools": 1
      },
      {
-      "st": "KS",
+      "st": "NY",
+      "schools": 1
+     },
+     {
+      "st": "IA",
       "schools": 1
      }
     ],
@@ -3298,14 +3298,14 @@
  "channels": [
   {
    "channel": "website_organic",
-   "starts": 595,
+   "starts": 596,
    "completes": 342,
    "valid": 319,
    "matched": 319,
    "new_schools": 108,
    "second_reports": 23,
    "redundant": 188,
-   "conv_start_complete": 57.5,
+   "conv_start_complete": 57.4,
    "conv_complete_valid": 93.3,
    "conv_valid_new": 33.9,
    "by_level_new": {
@@ -3386,27 +3386,27 @@
  "funnel": {
   "cycle": {
    "visits": null,
-   "starts": 763,
+   "starts": 764,
    "completes": 409,
    "valid": 375,
    "matched": 366,
    "new_schools": 120,
    "second_reports": 35,
    "conv_visit_start": null,
-   "conv_start_complete": 53.6,
+   "conv_start_complete": 53.5,
    "conv_complete_valid": 91.7,
    "conv_valid_new": 32.0
   },
   "last_4w": {
    "visits": null,
-   "starts": 763,
+   "starts": 764,
    "completes": 409,
    "valid": 375,
    "matched": 366,
    "new_schools": 120,
    "second_reports": 35,
    "conv_visit_start": null,
-   "conv_start_complete": 53.6,
+   "conv_start_complete": 53.5,
    "conv_complete_valid": 91.7,
    "conv_valid_new": 32.0
   },
@@ -3443,7 +3443,7 @@
  ],
  "partners": [],
  "dq": {
-  "submissions": 763,
+  "submissions": 764,
   "completes": 409,
   "valid": 375,
   "by_survey": {
@@ -3453,7 +3453,7 @@
     "valid": 14
    },
    "educator": {
-    "submissions": 648,
+    "submissions": 649,
     "completes": 357,
     "valid": 332
    },
@@ -3593,7 +3593,7 @@
      "valid": 0
     },
     "Georgia": {
-     "started": 6,
+     "started": 7,
      "completed": 5,
      "valid": 5
     },
@@ -3767,7 +3767,7 @@
    }
   },
   "excluded": {
-   "unfinished": 354,
+   "unfinished": 355,
    "test": 2,
    "unmatched": 21,
    "ambiguous": 10,
@@ -3801,7 +3801,73 @@
   "lagging_states_uncovered.csv": 5555,
   "pending_ambiguous.csv": 20
  },
- "outreach": [],
+ "outreach": [
+  {
+   "date": "2026-10-19",
+   "state": "SC",
+   "state_name": "South Carolina",
+   "type": "State Comms",
+   "audience": "educator",
+   "label": "State email",
+   "campaign": "",
+   "after_7d": 297,
+   "before_7d": 0,
+   "tagged_reports": null,
+   "days_elapsed": 8
+  },
+  {
+   "date": "2026-10-22",
+   "state": "",
+   "state_name": "",
+   "type": "Partner Comms",
+   "audience": "librarian",
+   "label": "Partner newsletter",
+   "campaign": "",
+   "after_7d": 25,
+   "before_7d": 4,
+   "tagged_reports": null,
+   "days_elapsed": 5
+  },
+  {
+   "date": "2026-10-26",
+   "state": "",
+   "state_name": "",
+   "type": "Partner Comms",
+   "audience": "librarian",
+   "label": "Partner comms",
+   "campaign": "",
+   "after_7d": 19,
+   "before_7d": 10,
+   "tagged_reports": null,
+   "days_elapsed": 1
+  },
+  {
+   "date": "2026-10-26",
+   "state": "",
+   "state_name": "",
+   "type": "Partner Comms",
+   "audience": "librarian",
+   "label": "Partner newsletter",
+   "campaign": "",
+   "after_7d": 19,
+   "before_7d": 10,
+   "tagged_reports": null,
+   "days_elapsed": 1
+  },
+  {
+   "date": "2026-10-26",
+   "state": "TN",
+   "state_name": "Tennessee",
+   "type": "State Comms",
+   "audience": "educator",
+   "label": "State email",
+   "campaign": "",
+   "after_7d": 0,
+   "before_7d": 0,
+   "tagged_reports": null,
+   "days_elapsed": 1
+  }
+ ],
  "report_path": "reports/week-2026-W44.md",
  "config": {
   "cycle_name": "Fall 2026\u2013Spring 2027",
