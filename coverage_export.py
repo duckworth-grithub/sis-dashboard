@@ -678,6 +678,26 @@ def main():
         channels_4w.append({"channel": ch, "valid": f["valid"], "new_schools": f["new_schools"], "conv_valid_new": f["conv_valid_new"]})
     channels_4w.sort(key=lambda c: (-c["new_schools"], -c["valid"]))
     callouts = []
+    outreach_path = os.path.join(a.inputs, "outreach.csv")
+    outreach = [r for r in read_csv(outreach_path)] if os.path.exists(outreach_path) else []
+    for o in outreach:
+        o["state_name"] = norm_state(STATE_CODE_NAMES.get(o.get("state", "").strip().upper(), "")) if o.get("state") else ""
+    def outreach_for(st_name, lo, hi, audience=None):
+        """Outreach sent in [lo, hi] that could explain responses in st_name: same-state sends first, then national ones."""
+        hits = []
+        for o in outreach:
+            try:
+                od = datetime.fromisoformat(o["date"]).date()
+            except ValueError:
+                continue
+            if not (lo <= od <= hi):
+                continue
+            if o["state_name"] and o["state_name"] != st_name:
+                continue
+            if audience and o.get("audience") not in (audience, "all", ""):
+                continue
+            hits.append((0 if o["state_name"] else 1, od, o))
+        return [o for _, _, o in sorted(hits, key=lambda x: (x[0], x[1]))]
     # (a) average daily valid responses, last 7 days vs the 7 before
     valid_by_day = {x["date"]: x["valid_responses"] for x in daily}
     last7 = [valid_by_day.get(str((now - timedelta(days=i)).date()), 0) for i in range(0, 7)]
@@ -706,13 +726,33 @@ def main():
         top_d = collections.Counter(by_id[r["ncessch"]].get("district") or "" for r in rs_st if r["ncessch"]).most_common(1)
         top_c = collections.Counter(by_id[r["ncessch"]].get("city") or "" for r in rs_st if r["ncessch"]).most_common(1)
         where = ", ".join(x for x in [top_d[0][0] if top_d and top_d[0][0] else "", top_c[0][0] if top_c and top_c[0][0] else ""] if x)
+        causes = outreach_for(st_name, (now - timedelta(days=13)).date(), now.date())
+        cause_txt = ("Likely: " + "; ".join(f"{o['label']} ({o['date'][5:]})" for o in causes[:2]) + ". ") if causes else "Nothing in the outreach tracker for this state in the last two weeks. "
         callouts.append({"rule": "response_spike", "at_stake": 0, "stat": f"{n:,}",
                          "title": f"reports from {st_name} in the last 7 days, {ratio:.0f}x the week before.",
-                         "body": (f"Most from {where}. " if where else "") + "Worth matching to that week's outreach so the source gets credit.",
+                         "body": (f"Most from {where}. " if where else "") + cause_txt,
                          "action": f"Gaps: {st_name}", "target": f"gaps?state={by_id[rs_st[0]['ncessch']]['st'] if rs_st and rs_st[0]['ncessch'] else ''}"})
     elif sum(by_state_now.values()) or sum(by_state_prev.values()):
         callouts.append({"rule": "response_spike", "at_stake": 0, "stat": "—", "title": "No state spiked this week.",
                          "body": "A spike is a state with at least 20 valid reports in 7 days and 3x the week before.", "action": "Gaps", "target": "gaps"})
+    # outreach sends with the valid reports in the matching state/audience in the 7 days after vs the 7 before
+    outreach_rows = []
+    for o in outreach:
+        try:
+            od = datetime.fromisoformat(o["date"]).date()
+        except ValueError:
+            continue
+        aud = o.get("audience") or ""
+        def cnt(lo, hi):
+            return sum(1 for r in responses if r["valid"] and in_window(r, lo, hi)
+                       and (not o["state_name"] or r["state_name"] == o["state_name"])
+                       and (aud in ("", "all") or r["survey"] == aud or (aud == "librarian" and r["survey"] == "librarian")))
+        after = cnt(od, od + timedelta(days=6)) if od <= now.date() else None
+        before = cnt(od - timedelta(days=7), od - timedelta(days=1)) if od <= now.date() else None
+        tagged = sum(1 for r in responses if r["valid"] and o.get("campaign") and r.get("utm_campaign") == o["campaign"])
+        outreach_rows.append({"date": o["date"], "state": o.get("state", ""), "state_name": o["state_name"], "type": o.get("type", ""), "audience": aud,
+                              "label": o.get("label", ""), "campaign": o.get("campaign", ""), "after_7d": after, "before_7d": before,
+                              "tagged_reports": tagged if o.get("campaign") else None, "days_elapsed": (now.date() - od).days})
     # (c) new schools this week vs the pace the target needs
     if pace.get("needed_per_week") and (new_this or new_last or rolling):
         callouts.append({"rule": "pace_vs_needed", "at_stake": 0, "stat": f"+{new_this:,}",
@@ -824,6 +864,7 @@ def main():
         "ccd_loaded": any(s["level"] != "unknown" for s in schools), "historical_loaded": any(s.get("hist_represented") == "true" for s in schools),
         "alerts": alerts, "levels": LEVELS, "coverage": coverage, "depth": depth, "velocity": velocity, "states": states,
         "channels": channels, "channels_4w": channels_4w, "funnel": funnel_data, "callouts": callouts, "partners": partner_rows, "dq": dq, "lists": lists,
+        "outreach": outreach_rows,
         "report_path": f"reports/week-{this_wk.isocalendar()[0]}-W{this_wk.isocalendar()[1]:02d}.md", "config": {k: v for k, v in cfg.items() if not k.startswith("_")},
     }
     with open(os.path.join(a.out, "coverage-data.json"), "w", encoding="utf-8") as fh:

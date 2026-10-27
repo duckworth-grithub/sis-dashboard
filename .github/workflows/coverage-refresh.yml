@@ -23,6 +23,15 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: pip install requests
+      - name: Pull the outreach tracker (published-CSV link kept as a secret; the file is never committed)
+        env:
+          OUTREACH_CSV_URL: ${{ secrets.OUTREACH_CSV_URL }}
+        run: |
+          if [ -n "$OUTREACH_CSV_URL" ]; then
+            curl -sSL "$OUTREACH_CSV_URL" -o /tmp/outreach_tracker.csv && python3 build_outreach.py /tmp/outreach_tracker.csv || echo "outreach tracker not read this run"
+          else
+            echo "No OUTREACH_CSV_URL secret: outreach context skipped"
+          fi
       - name: Pull Qualtrics (whitelisted fields only) and rebuild
         env:
           QUALTRICS_TOKEN: ${{ secrets.QUALTRICS_TOKEN }}
