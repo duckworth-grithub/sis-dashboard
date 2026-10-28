@@ -538,7 +538,8 @@ def main():
                          "new_schools": sum(1 for r in rs if r.get("coverage_rank") == 1),
                          "this_week": sum(1 for r in rs if r["week"] == str(this_wk)), "last_week": sum(1 for r in rs if r["week"] == str(last_wk)),
                          "by_survey": dict(collections.Counter(r["survey"] for r in rs)),
-                         "top_states": [{"st": st, "schools": n} for st, n in collections.Counter(by_id[sid]["st"] for sid in ids if sid in by_id).most_common(8)]}
+                         "top_states": [{"st": st, "schools": n} for st, n in collections.Counter(by_id[sid]["st"] for sid in ids if sid in by_id).most_common(8)],
+                         "states": sorted({by_id[sid]["st"] for sid in ids if sid in by_id})}   # every state/territory with at least one school reported by this role
     by_role["district_librarian"] = {"reports": sum(1 for r in responses if r["role"] == "district_librarian" and r["valid"])}
     lib_rows = [r for r in responses if r["survey"] == "librarian" and r["distribution_channel"] != "preview"
                 and not (r["recorded_at"] and r["recorded_at"] < cycle_start) and (r["school_string"] or r["typed_name_present"] or r["role"] == "district_librarian")]
