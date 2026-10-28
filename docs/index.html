@@ -555,7 +555,8 @@
         <div><div class="stat28">${fmt(fc.starts)}</div><div class="sub12">started</div></div>
         <div><div class="stat28">${fmt(fc.completes)}</div><div class="sub12">completed</div></div>
         <div><div class="stat28">${fmt(fc.valid)}</div><div class="sub12">valid</div></div>
-        <div><div class="stat28">${fmt(fc.new_schools)}</div><div class="sub12">new schools</div></div></div>
+        <div><div class="stat28">${fmt(fc.new_schools)}</div><div class="sub12">new schools</div></div>
+        <div><div class="stat28">${fmt(fc.new_mshs)}</div><div class="sub12">new MS/HS</div></div></div>
       <div style="display:flex;height:10px;gap:2px;border-radius:999px;overflow:hidden;margin-top:12px;background:var(--track)">${svOrder.map(([k, l, col]) => `<i style="display:block;height:100%;width:${(100 * (bySv[k].valid || 0) / svTotal).toFixed(1)}%;background:${col}" data-tip="<b>${l}</b><br>${fmt(bySv[k].valid)} valid reports"></i>`).join("")}</div>
       <div class="legend" style="color:var(--slate);margin-top:6px;font-size:12px"><span class="l">${svOrder.map(([k, l, col]) => `<span><span class="dot" style="background:${col}"></span>${l} <b style="color:var(--ink)">${fmt(bySv[k].valid)}</b></span>`).join("")}</span></div></div></div>`;
   const OUT = (d.outreach || []).slice().sort((a, b) => b.date.localeCompare(a.date));

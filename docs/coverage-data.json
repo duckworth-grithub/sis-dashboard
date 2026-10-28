@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-28T16:03:10Z",
- "as_of": "2026-10-28T16:02:23Z",
+ "generated_at": "2026-10-28T16:13:03Z",
+ "as_of": "2026-10-28T16:12:07Z",
  "synthetic": false,
  "test_mode": false,
  "pending_launch": false,
@@ -200,10 +200,6 @@
     },
     "top_states": [
      {
-      "st": "PA",
-      "schools": 2
-     },
-     {
       "st": "NJ",
       "schools": 2
      },
@@ -212,11 +208,19 @@
       "schools": 2
      },
      {
+      "st": "PA",
+      "schools": 2
+     },
+     {
+      "st": "CA",
+      "schools": 1
+     },
+     {
       "st": "SC",
       "schools": 1
      },
      {
-      "st": "GA",
+      "st": "DC",
       "schools": 1
      },
      {
@@ -224,11 +228,7 @@
       "schools": 1
      },
      {
-      "st": "CA",
-      "schools": 1
-     },
-     {
-      "st": "WA",
+      "st": "GA",
       "schools": 1
      }
     ],
@@ -276,27 +276,27 @@
       "schools": 6
      },
      {
+      "st": "CA",
+      "schools": 2
+     },
+     {
       "st": "AZ",
       "schools": 2
      },
      {
-      "st": "CA",
-      "schools": 2
+      "st": "TX",
+      "schools": 1
+     },
+     {
+      "st": "AL",
+      "schools": 1
      },
      {
       "st": "GU",
       "schools": 1
      },
      {
-      "st": "OH",
-      "schools": 1
-     },
-     {
       "st": "AK",
-      "schools": 1
-     },
-     {
-      "st": "TX",
       "schools": 1
      }
     ],
@@ -348,15 +348,15 @@
       "schools": 3
      },
      {
-      "st": "NJ",
-      "schools": 2
-     },
-     {
       "st": "PA",
       "schools": 2
      },
      {
-      "st": "AL",
+      "st": "NJ",
+      "schools": 2
+     },
+     {
+      "st": "IA",
       "schools": 1
      },
      {
@@ -364,14 +364,14 @@
       "schools": 1
      },
      {
-      "st": "KS",
+      "st": "NY",
       "schools": 1
      }
     ],
     "by_branch": {
      "district": 12,
      "elementary_only": 16,
-     "mshs": 52,
+     "mshs": 53,
      "valid_district": 12,
      "valid_elementary": 5,
      "valid_mshs": 21,
@@ -387,7 +387,7 @@
       "valid": 20,
       "valid (not submitted)": 1,
       "speeder (not submitted)": 1,
-      "unfinished (not submitted)": 28,
+      "unfinished (not submitted)": 29,
       "unmatched": 2
      }
     },
@@ -3342,14 +3342,14 @@
   },
   {
    "channel": "redirect_from_educator",
-   "starts": 93,
+   "starts": 94,
    "completes": 35,
    "valid": 33,
    "matched": 26,
    "new_schools": 7,
    "second_reports": 7,
    "redundant": 12,
-   "conv_start_complete": 37.6,
+   "conv_start_complete": 37.2,
    "conv_complete_valid": 94.3,
    "conv_valid_new": 21.2,
    "by_level_new": {
@@ -3386,27 +3386,29 @@
  "funnel": {
   "cycle": {
    "visits": null,
-   "starts": 887,
+   "starts": 888,
    "completes": 538,
    "valid": 485,
    "matched": 473,
    "new_schools": 143,
    "second_reports": 43,
+   "new_mshs": 21,
    "conv_visit_start": null,
-   "conv_start_complete": 60.7,
+   "conv_start_complete": 60.6,
    "conv_complete_valid": 90.1,
    "conv_valid_new": 29.5
   },
   "last_4w": {
    "visits": null,
-   "starts": 887,
+   "starts": 888,
    "completes": 538,
    "valid": 485,
    "matched": 473,
    "new_schools": 143,
    "second_reports": 43,
+   "new_mshs": 21,
    "conv_visit_start": null,
-   "conv_start_complete": 60.7,
+   "conv_start_complete": 60.6,
    "conv_complete_valid": 90.1,
    "conv_valid_new": 29.5
   },
@@ -3443,7 +3445,7 @@
  ],
  "partners": [],
  "dq": {
-  "submissions": 887,
+  "submissions": 888,
   "completes": 538,
   "valid": 485,
   "by_survey": {
@@ -3458,7 +3460,7 @@
     "valid": 433
    },
    "librarian": {
-    "submissions": 102,
+    "submissions": 103,
     "completes": 41,
     "valid": 38
    }
@@ -3680,7 +3682,7 @@
      "valid": 2
     },
     "California": {
-     "started": 12,
+     "started": 13,
      "completed": 7,
      "valid": 7
     },
@@ -3797,13 +3799,13 @@
    }
   },
   "excluded": {
-   "unfinished": 349,
+   "unfinished": 350,
    "test": 2,
    "unmatched": 31,
    "ambiguous": 17,
    "speeder": 3
   },
-  "redirected_to_other_survey": 152,
+  "redirected_to_other_survey": 153,
   "before_cycle_total": 0,
   "match_rate": 90.5,
   "queue": {
