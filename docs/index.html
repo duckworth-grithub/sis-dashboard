@@ -692,7 +692,7 @@
   // ---- data quality
   $("#alerts").innerHTML = (d.alerts && d.alerts.length) ? `<div class="notice warn" style="margin:0 0 16px"><b>Attention</b>${d.alerts.map((a) => `<span>${esc(a)}</span>`).join("")}</div>` : "";
   $("#dq1").innerHTML = P ? pendCard("Submissions this cycle") : `<div class="sec-note">Submissions this cycle</div><div class="stat40" style="margin-top:4px">${fmt(dq.submissions)}</div>
-    <div class="sub12">${fmt(dq.completes)} completes · <b style="color:var(--ink)">${fmt(dq.valid)} valid</b> · ${Object.entries(dq.by_survey).map(([s, x]) => `${s} ${fmt(x.valid)}`).join(" · ")}</div>
+    <div class="sub12">${fmt(dq.completes)} completes · <b style="color:var(--ink)">${fmt(dq.valid)} valid</b> · ${Object.entries(dq.by_survey).map(([s, x]) => `${s} ${fmt(x.valid)}`).join(" · ")}${dq.redirected_to_other_survey ? ` · ${fmt(dq.redirected_to_other_survey)} redirected from the educator survey to the student or librarian survey (not counted as starts)` : ""}</div>
     <table style="margin-top:12px"><thead><tr><th>Excluded because</th><th class="num">Responses</th><th class="num">Share</th></tr></thead><tbody>${Object.entries(dq.excluded).map(([k, n2]) => `<tr><td>${esc(nice(k))}</td><td class="num">${fmt(n2)}</td><td class="num">${pct(100 * n2 / Math.max(1, dq.submissions))}</td></tr>`).join("")}</tbody></table>
     <div class="sub12" style="margin-top:8px">${fmt(dq.before_cycle_total)} responses recorded before the cycle start are ignored entirely.</div>`;
   const q = dq.queue;
