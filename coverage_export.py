@@ -71,7 +71,7 @@ FIELDS["summer"] = {
     "pol_d": ("QID14", "Q14Known25When"), "pol_e": ("QID17", "Q17Known26When"), "pol_f": ("QID41", "Q41NewSchl25Policy"),
     "pol_g": ("QID22", "Q22Writein25Policy"), "pol_h": ("QID44", "Q44Known25Policy"), "pol_i": ("QID16", "Q16Known26Policy"),
 }
-INVALID_ORDER = ["preview", "before_cycle", "unfinished", "test", "ineligible_role", "district_only", "no_policy_data", "no_school",
+INVALID_ORDER = ["preview", "before_cycle", "redirected", "unfinished", "test", "ineligible_role", "district_only", "no_policy_data", "no_school",
                  "unmatched", "ambiguous", "speeder"]
 RESPONSE_COLUMNS = ["response_id", "survey", "start_at", "recorded_at", "finished", "finished_qualtrics", "progress", "duration_s",
                     "distribution_channel", "role", "respondent_level", "state_code", "state_name", "school_string",
@@ -409,11 +409,13 @@ def main():
             reason = "preview"
         elif r["recorded_at"] and r["recorded_at"] < cycle_start:
             reason = "before_cycle"
+        elif r["survey"] == "educator" and r["role_type"] not in (1, None):
+            reason = "redirected"   # picked student/librarian on the educator survey and was sent to that survey: counted there, not here
         elif not r["finished"]:
             reason = "unfinished"
         elif r["response_id"] in test_ids or (r.get("test_marker") and not test_mode):
             reason = "test"
-        elif (r["survey"] == "educator" and r["role_type"] not in (1, None)) or (r["survey"] == "student" and not r["consent"]):
+        elif r["survey"] == "student" and not r["consent"]:
             reason = "ineligible_role"
         elif not r.get("policy_answered", True):
             reason = "no_policy_data"   # unreachable once "complete" requires policy; kept for clarity
@@ -637,7 +639,7 @@ def main():
                 "new_schools": new, "second_reports": sec, "redundant": red,
                 "conv_start_complete": pct(len(comp), len(rs)), "conv_complete_valid": pct(len(val), len(comp)), "conv_valid_new": pct(new, len(val)),
                 "by_level_new": {lv: sum(1 for r in val if r.get("coverage_rank") == 1 and r["ncessch"] and by_id[r["ncessch"]]["level"] == lv) for lv in LEVELS}}
-    in_cycle = [r for r in responses if not (r["recorded_at"] and r["recorded_at"] < cycle_start) and r["distribution_channel"] != "preview"]
+    in_cycle = [r for r in responses if not (r["recorded_at"] and r["recorded_at"] < cycle_start) and r["distribution_channel"] != "preview" and r["invalid_reason"] != "redirected"]
     channels = []
     for ch in sorted({r["channel"] for r in in_cycle}):
         rs = [r for r in in_cycle if r["channel"] == ch]
@@ -780,7 +782,8 @@ def main():
     funnel_data = {"cycle": funnel_block(in_cycle), "last_4w": funnel_block(recent, four_wk_start), "visits_loaded": bool(traffic)}
 
     # data quality
-    cyc = [r for r in responses if not (r["recorded_at"] and r["recorded_at"] < cycle_start)]
+    cyc = [r for r in responses if not (r["recorded_at"] and r["recorded_at"] < cycle_start) and r["invalid_reason"] != "redirected"]
+    redirected = sum(1 for r in responses if r["invalid_reason"] == "redirected")
     completes = [r for r in cyc if r["finished"] and r["distribution_channel"] != "preview"]
     valid = [r for r in cyc if r["valid"]]
     reached_school = [r for r in completes if r["match_status"] not in ("no_school", "district_only")]
@@ -796,6 +799,7 @@ def main():
                                    for st in sorted({r["state_name"] for r in cyc if r["survey"] == sv and r["state_name"]})}
                               for sv in FIELDS if any(r["survey"] == sv for r in cyc)},
           "excluded": {k: sum(1 for r in cyc if r["invalid_reason"] == k) for k in INVALID_ORDER if any(r["invalid_reason"] == k for r in cyc)},
+          "redirected_to_other_survey": redirected,   # educator-survey responses that chose student/librarian: not a start here
           "before_cycle_total": sum(1 for r in responses if r["invalid_reason"] == "before_cycle"),
           "match_rate": pct(sum(1 for r in reached_school if r["match_status"] == "matched"), len(reached_school)),
           "queue": {"size": len(queue), "oldest_days": (now - oldest).days if oldest else None,
