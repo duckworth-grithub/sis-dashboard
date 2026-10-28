@@ -81,6 +81,12 @@
   .stat28 { font-weight: 700; font-size: 28px; letter-spacing: -0.02em; line-height: 1; }
   .stat40 { font-weight: 700; font-size: 40px; letter-spacing: -0.03em; line-height: 1; color: var(--chalk); }
   .sub12 { font-size: 12px; color: var(--slate); margin-top: 4px; }
+  .strow { display: flex; align-items: baseline; gap: 14px; margin-top: 6px; flex-wrap: wrap; }
+  .strow .of { font-size: 18px; font-weight: 700; color: var(--slate); letter-spacing: 0; }
+  .stbar { display: grid; grid-template-columns: repeat(50, 1fr); gap: 3px; margin-top: 14px; }
+  .stbar i { display: block; height: 22px; border-radius: 4px; background: var(--ground); cursor: default; }
+  .stbar i.on { background: var(--study); }
+  @media (max-width: 760px) { .stbar { grid-template-columns: repeat(25, 1fr); gap: 3px; } .stbar i { height: 16px; border-radius: 3px; } }
   .pretty { text-wrap: pretty; }
   section.block { margin-top: 28px; }
   .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 12px; }
@@ -699,7 +705,13 @@
         <div class="cols"><div class="bars">${wkR.map((w) => `<i class="${w.partial ? "cur" : ""}" style="height:${Math.max(2, Math.round(100 * w.reports / rmx))}%" data-tip="<b>Week of ${mdy(w.week_start)}${w.partial ? " (partial)" : ""}</b><br>${fmt(w.reports)} valid ${noun} reports"></i>`).join("")}</div></div>
         <div class="xlab"><span>${wkR.length ? mdy(wkR[0].week_start) : ""}</span><span></span><span>${wkR.length ? mdy(wkR[wkR.length - 1].week_start) : ""}</span></div>
         <div class="sub12" style="margin-top:10px">${key === "student" ? "Students must be 13 or older, so student reports are MS/HS by definition." : key === "librarian" ? `Valid reports by branch: district ${fmt((R.by_branch || {}).valid_district)} (no school) · elementary-only ${fmt((R.by_branch || {}).valid_elementary)} · MS/HS ${fmt((R.by_branch || {}).valid_mshs)}. Responses on each path: ${fmt((R.by_branch || {}).district)} · ${fmt((R.by_branch || {}).elementary_only)} · ${fmt((R.by_branch || {}).mshs)}.` : ""}</div></div>`;
-    const body = weeklyCard + `<div class="card"><div class="card-title">States with the most ${noun}-reported schools</div><div class="ranked" style="margin-top:6px">${(R.top_states || []).map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc((byCode[g.st] || {}).state || g.st)}</span><span class="v">${fmt(g.schools)} <small>schools</small></span></div>`).join("") || `<div class="sec-note">—</div>`}</div></div>`
+    const have = new Set((R.states || (R.top_states || []).map((g) => g.st)).filter((st) => st !== "DC" && !TERR.has(st)));
+    const fifty = d.states.map((s) => s.st).filter((st) => st !== "DC" && !TERR.has(st)).sort();
+    const stateTracker = `<div class="card" style="grid-column:1/-1"><div class="card-title">States with a ${noun}-reported school</div>
+        <div class="strow"><div class="stat40">${fmt(have.size)}<span class="of"> of 50</span></div><div class="sub12" style="margin-top:0">states have at least one school with a valid ${noun} report this cycle</div></div>
+        <div class="stbar">${fifty.map((st) => `<i class="${have.has(st) ? "on" : ""}" data-tip="<b>${esc((byCode[st] || {}).state || st)}</b><br>${have.has(st) ? `at least one school with a ${noun} report` : `no ${noun} reports yet`}"></i>`).join("")}</div>
+        <div class="sub12" style="margin-top:10px">${have.size ? `Reached: ${fifty.filter((st) => have.has(st)).map((st) => esc((byCode[st] || {}).state || st)).join(", ")}.` : `No states yet.`} DC and the territories count toward national totals but not toward the 50.</div></div>`;
+    const body = (key === "student" ? stateTracker : "") + weeklyCard + `<div class="card"><div class="card-title">States with the most ${noun}-reported schools</div><div class="ranked" style="margin-top:6px">${(R.top_states || []).map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc((byCode[g.st] || {}).state || g.st)}</span><span class="v">${fmt(g.schools)} <small>schools</small></span></div>`).join("") || `<div class="sec-note">—</div>`}</div></div>`
       + `<div style="grid-column:1/-1">${outreachCard(`Outreach to ${noun}s`, OUT.filter((o) => o.audience === key || o.audience === "all"), false)}</div>`;
     $("#" + tilesId).innerHTML = tiles; $("#" + bodyId).innerHTML = body;
   }
