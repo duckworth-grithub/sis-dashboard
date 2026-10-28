@@ -65,7 +65,8 @@ def main():
             camp = str(get(i_id) or "").strip() or (re.search(r"utm_campaign=([^&\s]+)", link).group(1) if "utm_campaign=" in link else "")
             # generic label only (the page is public): kind of send, never the sheet's own wording
             c = (content + " " + typ).lower()
-            kind = ("Partner newsletter" if "newsletter" in c else "Partner forums" if "forum" in c else "Social post" if "social" in c or "post" in c
+            kind = ("Online forum post" if "reddit" in c or ("forum" in c and "partner" not in typ.lower()) else
+                    "Partner newsletter" if "newsletter" in c else "Partner forums" if "forum" in c else "Social post" if "social" in c or "post" in c
                     else "Conference" if "conference" in c or "webinar" in c else "State email" if "state" in typ.lower() or "email" in c
                     else "Partner comms" if "partner" in typ.lower() else (typ or "Outreach"))
             out.append({"date": date, "state": state_of(content), "type": typ, "audience": audience, "label": kind, "campaign": camp})
