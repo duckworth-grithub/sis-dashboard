@@ -67,6 +67,10 @@ def main():
     ap.add_argument("--illinois")
     ap.add_argument("--summer2026", help="PIF Summer 2026 survey export: its own cycle, carried forward like the 2025-26 waves")
     ap.add_argument("--matches", help="the team's pif_nces_matches.dta (response_id, nces_pif_id): first pass for the spring/summer 2025 wave")
+    ap.add_argument("--analysis-final", help="the team's PIF_analysis_sample_final_v2.dta: the cleaned analysis sample. With it, a response "
+                                             "from --analysis counts only if it is in this sample, or if it is an elementary/unlevelled "
+                                             "response the sample set aside for level reasons that still passes the sample's cleaning "
+                                             "(finished, a school-staff role)")
     ap.add_argument("--analysis", help="the team's PIF_analysis_ready_current.dta: replaces --fall/--spring/--illinois. Every row the team kept "
                                        "with nces_match=1 is one report for school_id; spring_june+summer_october -> spring_summer_2025, "
                                        "fall+illinois_survey -> fall2025_spring2026")
@@ -113,15 +117,31 @@ def main():
         WAVE = {"spring_june": "spring_summer_2025", "summer_october": "spring_summer_2025",
                 "fall": "fall2025_spring2026", "illinois_survey": "fall2025_spring2026"}
         SRC = {"spring_june": "team_spring_2025", "summer_october": "team_summer_2025", "fall": "team_fall_2025", "illinois_survey": "team_illinois"}
-        df = pd.read_stata(a.analysis, columns=["response_id", "survey_file_version", "nces_match", "school_id"], convert_categoricals=True)
+        df = pd.read_stata(a.analysis, columns=["response_id", "survey_file_version", "nces_match", "school_id", "school_level_clean", "finished", "position_final"], convert_categoricals=True)
         n_rows = len(df)
         skipped = collections.Counter()
-        for rid, ver, ok, sid in zip(df["response_id"].astype(str), df["survey_file_version"].astype(str),
-                                     df["nces_match"].astype(str), df["school_id"].astype(str)):
-            analysis_ids.add(rid.strip())
+        keep_ids = None
+        if a.analysis_final:
+            fin = pd.read_stata(a.analysis_final, columns=["response_id"], convert_categoricals=True)
+            keep_ids = set(fin["response_id"].astype(str).str.strip())
+            print(f"analysis sample (final): {len(keep_ids)} responses kept by the team's cleaning")
+        NON_STAFF = {"", "other:", "student", "students", "parent", "parents", "n/a", "na", "none"}
+        for rid, ver, ok, sid, lvl, fin_flag, pos in zip(df["response_id"].astype(str), df["survey_file_version"].astype(str),
+                                                         df["nces_match"].astype(str), df["school_id"].astype(str),
+                                                         df["school_level_clean"].astype(str), df["finished"].astype(str),
+                                                         df["position_final"].astype(str)):
+            rid = rid.strip()
+            analysis_ids.add(rid)
             if ver not in WAVE:
                 skipped["unknown version " + ver] += 1
                 continue
+            if keep_ids is not None and rid not in keep_ids:
+                # set aside by the analysis sample: keep only elementary/unlevelled rows that pass the same cleaning
+                if lvl.strip() in ("ElemComb", "", "nan") and fin_flag.strip().lower() == "true" and pos.strip().lower() not in NON_STAFF:
+                    skipped["kept: elementary row outside the sample (finished, staff role)"] += 1
+                else:
+                    skipped["dropped by the team's cleaning"] += 1
+                    continue
             sid = sid.strip().split(".")[0]
             if ok.split(".")[0] != "1" or not re.fullmatch(r"\d{1,12}", sid):
                 skipped["no NCES match"] += 1
