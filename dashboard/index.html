@@ -211,6 +211,8 @@
   tbody td { padding: 9px 8px; border-bottom: 1px solid var(--rule-in); }
   tbody tr:hover td { background: #F7F7F5; }
   .tablewrap { overflow-x: auto; }
+  .defs { margin: 0; padding-left: 22px; font-size: 13px; line-height: 1.5; color: var(--slate); }
+  .defs li { margin: 4px 0; } .defs b { color: var(--ink); }
   .barcell { white-space: nowrap; }
   .barcell .track { display: inline-block; width: 80px; height: 8px; border-radius: 999px; background: var(--rule-in); vertical-align: middle; margin-right: 10px; overflow: hidden; }
   .barcell .track i { display: block; height: 100%; border-radius: 999px; background: var(--study); }
@@ -295,6 +297,21 @@
     <h2 class="ph">Data quality</h2><p class="pd">Coverage only counts valid reports. Everything excluded is listed so a rule that eats too much is visible the day it happens.</p>
     <div id="alerts"></div>
     <div class="grid2eq" style="align-items:stretch"><div class="card" id="dq1"></div><div class="card" id="dq2"></div></div>
+    <div class="card" style="margin-top:16px"><div class="card-title">What counts as a valid report</div>
+      <p class="sub12" style="margin:8px 0 10px;line-height:1.5">A response passes every check below, in this order. Anything that fails is listed on this tab by the step it failed.</p>
+      <ol class="defs">
+        <li><b>Not a preview.</b> Responses from Qualtrics preview links are dropped.</li>
+        <li><b>In the cycle.</b> Recorded on or after the cycle start. A response still in progress has no recorded date, so it is dated by its last activity.</li>
+        <li><b>On the right survey.</b> Someone who chose student or librarian on the educator survey was sent to that survey and is counted there, not here.</li>
+        <li><b>Complete.</b> Educators and students: named a school and answered a phone-policy question (for elementary educators, the device-access question). Middle/high librarians: named a school and answered a phone-policy question. Elementary-only librarians: named a school and answered a device question on the Your View page. District-wide librarians: reached the district questions; they have no school and no policy question. Qualtrics' own "finished" flag is recorded but never required.</li>
+        <li><b>Not a test.</b> No "tktk" in any field, and not on the test-response list.</li>
+        <li><b>Eligible role.</b> Students must have given consent.</li>
+        <li><b>School matched.</b> The school named matches exactly one school in the NCES list. No match, or two possible matches, goes to the review queue instead of counting. District-wide librarians skip this step.</li>
+        <li><b>Not a speeder.</b> At least 60 seconds, 25 for elementary-only librarians, no floor for district-wide librarians.</li>
+      </ol>
+      <p class="sub12" style="margin:10px 0 0;line-height:1.5">Duplicates are judged by Qualtrics response ID only, so several valid reports from one school all count. A valid report from a school that already has one is a second report, not a new school. A district-wide librarian's valid report counts in the totals but attaches to no school.</p>
+      <p class="sub12" style="margin:8px 0 0;line-height:1.5"><b>Earlier waves</b> (Spring and Summer 2025, Fall 2025–Spring 2026, Summer 2026) follow the research team's cleaning: a response counts if the team's analysis sample kept it, or if it is an elementary response the sample set aside for school level that is finished and from school staff. These carry forward for middle and high schools; elementary restarts at zero this cycle.</p>
+    </div>
   </div>
 
 
