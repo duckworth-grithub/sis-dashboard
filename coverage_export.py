@@ -777,6 +777,7 @@ def main():
         vis = sum(n_ for dt_, n_ in traffic if since is None or dt_.date() >= since) if traffic else None
         return {"visits": vis, "starts": f["starts"], "completes": f["completes"], "valid": f["valid"], "matched": f["matched"],
                 "new_schools": f["new_schools"], "second_reports": f["second_reports"],
+                "new_mshs": (f.get("by_level_new") or {}).get("middle", 0) + (f.get("by_level_new") or {}).get("high", 0),
                 "conv_visit_start": pct(f["starts"], vis) if vis else None, "conv_start_complete": f["conv_start_complete"],
                 "conv_complete_valid": f["conv_complete_valid"], "conv_valid_new": f["conv_valid_new"]}
     funnel_data = {"cycle": funnel_block(in_cycle), "last_4w": funnel_block(recent, four_wk_start), "visits_loaded": bool(traffic)}
