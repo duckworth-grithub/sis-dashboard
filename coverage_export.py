@@ -770,7 +770,8 @@ def main():
         where = ", ".join(x for x in [top_d[0][0] if top_d and top_d[0][0] else "", city.title() if city.isupper() else city] if x)
         causes = outreach_for(st_name, (now - timedelta(days=13)).date(), now.date())
         cause_txt = ("Likely: " + "; ".join(f"{o['label']} ({o['date'][5:]})" for o in causes[:2]) + ". ") if causes else "Nothing in the outreach tracker for this state in the last two weeks. "
-        callouts.append({"rule": "response_spike", "at_stake": 0, "stat": f"{n:,}", "state": st_name, "ratio": round(ratio, 1), "prev": prev,
+        mshs_new_7d = sum(1 for r in rs_st if r.get("coverage_rank") == 1 and r["ncessch"] and by_id[r["ncessch"]]["level"] in ("middle", "high"))
+        callouts.append({"rule": "response_spike", "at_stake": 0, "stat": f"{n:,}", "state": st_name, "ratio": round(ratio, 1), "prev": prev, "mshs_new_7d": mshs_new_7d,
                          "title": f"reports from {st_name} in the last 7 days, {ratio:.0f}x the week before.",
                          "body": (f"Most from {where}. " if where else "") + cause_txt,
                          "action": f"Gaps: {st_name}", "target": f"gaps?state={by_id[rs_st[0]['ncessch']]['st'] if rs_st and rs_st[0]['ncessch'] else ''}"})
