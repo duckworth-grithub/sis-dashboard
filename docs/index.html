@@ -759,6 +759,7 @@
       <tr><td>Schools with coverage earned but not countable</td><td class="num">${fmt(dq.pending_ambiguous_schools_uncounted)}</td></tr>
       <tr><td>Valid reports with no identifiable source</td><td class="num">${pct(dq.unknown_channel_share)} ${dq.unknown_channel_share > 20 ? '<span class="tag warn">&gt; 20%</span>' : ""}</td></tr>
       <tr><td>Students via the educator redirect (source lost)</td><td class="num">${fmt(dq.redirect_from_educator)}</td></tr>
+      <tr><td>Team test links (utm_source=test), dropped entirely</td><td class="num">${fmt(dq.test_links || 0)}</td></tr>
       <tr><td>District-only librarian reports (kept apart)</td><td class="num">${fmt(dq.district_reports)}</td></tr>
       <tr><td>Respondent level disagrees with school level</td><td class="num">${fmt(dq.respondent_level_mismatch)}</td></tr>
       <tr><td>Manual matches applied</td><td class="num">${fmt(dq.manual_matches_applied)}</td></tr>
@@ -770,7 +771,7 @@
     $("#dqSources").innerHTML = P ? `<div class="card-title">Top sources</div><div class="sub12" style="margin-top:6px">${PEND}.</div>` : `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Top sources, all surveys</div><div class="sec-note">utm_source on the link · ${pct(SRC.tagged_share)} of starts carried a tag</div></div>
       ${rows.length ? `<div class="tablewrap"><table style="margin-top:10px"><thead><tr><th>Source</th><th class="num">Starts</th><th class="num">Completes</th><th class="num">Valid</th><th class="num">New schools</th><th class="num tagcol">Students</th><th class="num tagcol">Educators</th><th class="num tagcol">Librarians</th><th class="num tagcol">States</th><th class="num">Valid this wk</th></tr></thead>
       <tbody>${rows.map((x) => `<tr><td>${srcName(x.source)}</td><td class="num">${fmt(x.starts)}</td><td class="num">${fmt(x.completes)}</td><td class="num">${srcBar(x.valid, mx)}</td><td class="num">${fmt(x.new_schools)}</td><td class="num tagcol">${fmt(x.by_survey.student || 0)}</td><td class="num tagcol">${fmt(x.by_survey.educator || 0)}</td><td class="num tagcol">${fmt(x.by_survey.librarian || 0)}</td><td class="num tagcol">${fmt(x.states.length)}</td><td class="num">${fmt(x.this_week)} <small style="color:var(--muted)">· last wk ${fmt(x.last_week)}</small></td></tr>`).join("")}</tbody></table></div>` : `<div class="sec-note" style="margin-top:8px">No responses yet.</div>`}
-      <div class="sub12" style="margin-top:8px">Ranked by valid reports this cycle. "Untagged" arrived without a utm_source: a shared or typed link, or a site visit before tags were added. Students who came through the educator survey's redirect are shown separately because the tag does not survive the redirect.</div>`;
+      <div class="sub12" style="margin-top:8px">Ranked by valid reports this cycle. "Untagged" arrived without a utm_source: a shared or typed link, or a visit before tags were added. Links tagged utm_source=test are team walkthroughs and are dropped before counting.</div>`;
   }
 
   // ---- schools
