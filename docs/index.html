@@ -81,6 +81,10 @@
   .stat28 { font-weight: 700; font-size: 28px; letter-spacing: -0.02em; line-height: 1; }
   .stat40 { font-weight: 700; font-size: 40px; letter-spacing: -0.03em; line-height: 1; color: var(--chalk); }
   .sub12 { font-size: 12px; color: var(--slate); margin-top: 4px; }
+  .bars i.stack { display: flex; flex-direction: column-reverse; overflow: hidden; }
+  .bars i.stack b { display: block; width: 100%; flex: 0 0 auto; }
+  .srclegend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 12px; color: var(--slate); }
+  .srclegend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
   .strow { display: flex; align-items: baseline; gap: 14px; margin-top: 6px; flex-wrap: wrap; }
   .strow .of { font-size: 18px; font-weight: 700; color: var(--slate); letter-spacing: 0; }
   .stbar { display: grid; grid-template-columns: repeat(50, 1fr); gap: 3px; margin-top: 14px; }
@@ -305,6 +309,7 @@
     <h2 class="ph">Data quality</h2><p class="pd">Coverage only counts valid reports. Everything excluded is listed so a rule that eats too much is visible the day it happens.</p>
     <div id="alerts"></div>
     <div class="grid2eq" style="align-items:stretch"><div class="card" id="dq1"></div><div class="card" id="dq2"></div></div>
+    <div class="card" style="margin-top:16px" id="dqSources"></div>
     <div class="card" style="margin-top:16px"><div class="card-title">What counts as a valid report</div>
       <p class="sub12" style="margin:8px 0 10px;line-height:1.5">A response passes every check below, in this order. Anything that fails is listed on this tab by the step it failed.</p>
       <ol class="defs">
@@ -695,6 +700,8 @@
     <div class="card"><div class="card-title">Most uncovered elementary schools</div><div class="ranked" style="margin-top:6px">${elemStates.map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc(g.state)}</span><span class="v">${fmt(g.remaining)} <small>· ${pct(g.pct)}</small></span></div>`).join("")}</div>
       <div style="margin-top:12px"><span class="pill" data-go="gaps">All states →</span></div></div>`;
 
+  const SRC = d.sources || {}, srcName = (x) => x === "untagged" ? '<span style="color:var(--muted)">untagged</span>' : esc(x);
+  const srcBar = (n2, mx) => `<span class="barcell"><i style="width:${Math.max(2, Math.round(90 * n2 / mx))}px"></i>${fmt(n2)}</span>`;
   function rolePage(key, tilesId, bodyId, noun) {
     const R = (c.by_role || {})[key] || {};
     if (P) { $("#" + tilesId).innerHTML = tile(`Schools with a ${noun} report this cycle`, PEND, "") ; $("#" + bodyId).innerHTML = pendCard(`${noun[0].toUpperCase() + noun.slice(1)} reports per week`) + pendCard(`States with the most ${noun}-reported schools`); return; }
@@ -713,7 +720,23 @@
         <div class="strow"><div class="stat40">${fmt(have.size)}<span class="of"> of 50</span></div><div class="sub12" style="margin-top:0">states have at least one school with a valid ${noun} report this cycle</div></div>
         <div class="stbar">${fifty.map((st) => `<i class="${have.has(st) ? "on" : ""}" data-tip="<b>${esc((byCode[st] || {}).state || st)}</b><br>${have.has(st) ? `at least one school with a ${noun} report` : `no ${noun} reports yet`}"></i>`).join("")}</div>
         <div class="sub12" style="margin-top:10px">${have.size ? `Reached: ${fifty.filter((st) => have.has(st)).map((st) => esc((byCode[st] || {}).state || st)).join(", ")}.` : `No states yet.`} DC and the territories count toward national totals but not toward the 50.</div></div>`;
-    const body = (key === "student" ? stateTracker : "") + weeklyCard + `<div class="card"><div class="card-title">States with the most ${noun}-reported schools</div><div class="ranked" style="margin-top:6px">${(R.top_states || []).map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc((byCode[g.st] || {}).state || g.st)}</span><span class="v">${fmt(g.schools)} <small>${g.schools === 1 ? "school" : "schools"}</small></span></div>`).join("") || `<div class="sec-note">—</div>`}</div></div>`
+    let srcCards = "";
+    if (key === "student" && SRC.student) {
+      const S = SRC.student, bs = S.by_source || [], mx = Math.max(1, ...bs.map((x) => x.valid));
+      const top = Object.keys((S.weekly || [])[0] ? S.weekly[0].by_source : {}), pal = ["#2C7A4B", "#8FC49B", "#1E4034", "#C3E5CB", "#5E9E72", "#A9D3B3"];
+      const wk = S.weekly || [], wmx = Math.max(1, ...wk.map((w) => Object.values(w.by_source).reduce((a, b) => a + b, 0) + w.other));
+      srcCards = `<div class="card" style="grid-column:1/-1"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Where student reports come from</div><div class="sec-note">${pct(S.tagged_share)} of student starts carried a utm tag</div></div>
+        ${bs.length ? `<div class="tablewrap"><table style="margin-top:10px"><thead><tr><th>Source</th><th class="num">Starts</th><th class="num">Completes</th><th class="num">Valid</th><th class="num">New schools</th><th class="num tagcol">Start → valid</th><th class="num tagcol">States</th><th class="num">This wk</th><th class="num tagcol">Last wk</th><th class="tagcol">First seen</th></tr></thead>
+        <tbody>${bs.map((x) => `<tr><td>${srcName(x.source)}</td><td class="num">${fmt(x.starts)}</td><td class="num">${fmt(x.completes)}</td><td class="num">${srcBar(x.valid, mx)}</td><td class="num">${fmt(x.new_schools)}</td><td class="num tagcol">${pct(x.starts ? 100 * x.valid / x.starts : 0)}</td><td class="num tagcol">${fmt(x.states.length)}</td><td class="num">${fmt(x.this_week)}</td><td class="num tagcol">${fmt(x.last_week)}</td><td class="tagcol">${x.first_seen ? mdy(x.first_seen) : "—"}</td></tr>`).join("")}</tbody></table></div>` : `<div class="sec-note" style="margin-top:8px">No student responses yet.</div>`}</div>`
+      + `<div class="card" style="display:flex;flex-direction:column"><div class="card-title">Valid student reports per week, by source</div>
+        <div class="cols"><div class="bars">${wk.map((w) => { const tot = Object.values(w.by_source).reduce((a, b) => a + b, 0) + w.other; return `<i class="stack ${w.partial ? "cur" : ""}" style="height:${Math.max(2, Math.round(100 * tot / wmx))}%;background:transparent" data-tip="<b>Week of ${mdy(w.week_start)}${w.partial ? " (partial)" : ""}</b><br>${top.map((t) => `${esc(t)} ${fmt(w.by_source[t])}`).join("<br>")}${w.other ? `<br>other ${fmt(w.other)}` : ""}">${top.map((t, i) => `<b style="height:${tot ? 100 * w.by_source[t] / tot : 0}%;background:${pal[i]}"></b>`).join("")}${w.other ? `<b style="height:${tot ? 100 * w.other / tot : 0}%;background:#D9D9D6"></b>` : ""}</i>`; }).join("")}</div></div>
+        <div class="xlab"><span>${wk.length ? mdy(wk[0].week_start) : ""}</span><span></span><span>${wk.length ? mdy(wk[wk.length - 1].week_start) : ""}</span></div>
+        <div class="srclegend">${top.map((t, i) => `<span><i style="background:${pal[i]}"></i>${srcName(t)}</span>`).join("")}${wk.some((w) => w.other) ? `<span><i style="background:#D9D9D6"></i>other</span>` : ""}</div></div>`
+      + `<div class="card"><div class="card-title">Campaigns</div><div class="sub12" style="margin-top:4px">source · medium · campaign, as tagged on the link</div>
+        ${(S.campaigns || []).length ? `<div class="tablewrap"><table style="margin-top:10px"><thead><tr><th>Source</th><th>Medium</th><th>Campaign</th><th class="num">Starts</th><th class="num">Valid</th><th class="num">New</th><th class="tagcol">Last seen</th></tr></thead>
+        <tbody>${S.campaigns.map((x) => `<tr><td>${srcName(x.source)}</td><td>${x.medium ? esc(x.medium) : '<span style="color:var(--muted)">—</span>'}</td><td>${x.campaign ? esc(x.campaign) : '<span style="color:var(--muted)">—</span>'}</td><td class="num">${fmt(x.starts)}</td><td class="num">${fmt(x.valid)}</td><td class="num">${fmt(x.new_schools)}</td><td class="tagcol">${x.last_seen ? mdy(x.last_seen) : "—"}</td></tr>`).join("")}</tbody></table></div>` : `<div class="sec-note" style="margin-top:8px">No tagged student links yet.</div>`}</div>`;
+    }
+    const body = (key === "student" ? stateTracker + srcCards : "") + weeklyCard + `<div class="card"><div class="card-title">States with the most ${noun}-reported schools</div><div class="ranked" style="margin-top:6px">${(R.top_states || []).map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc((byCode[g.st] || {}).state || g.st)}</span><span class="v">${fmt(g.schools)} <small>${g.schools === 1 ? "school" : "schools"}</small></span></div>`).join("") || `<div class="sec-note">—</div>`}</div></div>`
       + `<div style="grid-column:1/-1">${outreachCard(`Outreach to ${noun}s`, OUT.filter((o) => o.audience === key || o.audience === "all"), false)}</div>`;
     $("#" + tilesId).innerHTML = tiles; $("#" + bodyId).innerHTML = body;
   }
@@ -740,6 +763,15 @@
       <tr><td>Respondent level disagrees with school level</td><td class="num">${fmt(dq.respondent_level_mismatch)}</td></tr>
       <tr><td>Manual matches applied</td><td class="num">${fmt(dq.manual_matches_applied)}</td></tr>
     </tbody></table>`;
+
+  // ---- top sources, all surveys (utm_source on the link; the site passes tags through to the survey)
+  if ($("#dqSources")) {
+    const rows = SRC.all || [], mx = Math.max(1, ...rows.map((x) => x.valid));
+    $("#dqSources").innerHTML = P ? `<div class="card-title">Top sources</div><div class="sub12" style="margin-top:6px">${PEND}.</div>` : `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Top sources, all surveys</div><div class="sec-note">utm_source on the link · ${pct(SRC.tagged_share)} of starts carried a tag</div></div>
+      ${rows.length ? `<div class="tablewrap"><table style="margin-top:10px"><thead><tr><th>Source</th><th class="num">Starts</th><th class="num">Completes</th><th class="num">Valid</th><th class="num">New schools</th><th class="num tagcol">Students</th><th class="num tagcol">Educators</th><th class="num tagcol">Librarians</th><th class="num tagcol">States</th><th class="num">Valid this wk</th></tr></thead>
+      <tbody>${rows.map((x) => `<tr><td>${srcName(x.source)}</td><td class="num">${fmt(x.starts)}</td><td class="num">${fmt(x.completes)}</td><td class="num">${srcBar(x.valid, mx)}</td><td class="num">${fmt(x.new_schools)}</td><td class="num tagcol">${fmt(x.by_survey.student || 0)}</td><td class="num tagcol">${fmt(x.by_survey.educator || 0)}</td><td class="num tagcol">${fmt(x.by_survey.librarian || 0)}</td><td class="num tagcol">${fmt(x.states.length)}</td><td class="num">${fmt(x.this_week)} <small style="color:var(--muted)">· last wk ${fmt(x.last_week)}</small></td></tr>`).join("")}</tbody></table></div>` : `<div class="sec-note" style="margin-top:8px">No responses yet.</div>`}
+      <div class="sub12" style="margin-top:8px">Ranked by valid reports this cycle. "Untagged" arrived without a utm_source: a shared or typed link, or a site visit before tags were added. Students who came through the educator survey's redirect are shown separately because the tag does not survive the redirect.</div>`;
+  }
 
   // ---- schools
   const L = d.lists;
