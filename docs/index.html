@@ -165,8 +165,9 @@
 
   .callout { display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; }
   .callout .spikest { font-size: 30px; line-height: 1.1; }
-  .callout .spikehd { display: flex; align-items: center; gap: 14px; margin-top: 4px; }
-  .callout .stshape { width: 60px; height: 52px; flex: 0 0 auto; }
+  .callout { position: relative; }
+  .callout .stshape { position: absolute; top: 16px; right: 18px; width: 60px; height: 52px; }
+  .callout .spikest { padding-right: 70px; }
   .callout .stshape path { fill: var(--light); stroke: var(--study); stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
   .callout .t { font-size: 16px; font-weight: 700; line-height: 1.3; }
   .callout .b { font-size: 14px; color: var(--slate); line-height: 1.45; }
@@ -558,7 +559,10 @@
   };
   $("#callouts").innerHTML = (d.callouts || []).map((x) => x.rule === "avg_daily_responses" ? dailyTile(x) : `<div class="card action callout" data-go="${esc(x.target || "")}">
     <div class="sec-note">${esc(CALL_LABEL[x.rule] || x.title)}</div>${x.rule === "response_spike" && x.stat !== "—"
-      ? `<div class="spikehd"><div class="stat40 spikest">${esc(x.state || (x.title.match(/^reports from (.+?) in the last/) || [])[1] || "")}</div>${stateShape(((x.target || "").match(/state=([A-Z]{2})/) || [])[1])}</div><div class="b pretty" style="margin-top:4px"><b style="color:var(--ink)">${esc(x.stat)}</b> valid reports in the last 7 days, ${esc(String(x.title.match(/, (\d+x) the week before/) ? x.title.match(/, (\d+x) the week before/)[1] : ""))} the week before.${x.body && x.body.startsWith("Most from") ? " " + esc(x.body.split(". ")[0]) + "." : ""}</div>`
+      ? (() => { const code = ((x.target || "").match(/state=([A-Z]{2})/) || [])[1], st = d.states.find((y) => y.st === code) || { by_level: {} };
+          const m = st.by_level.middle || { eligible: 0, covered: 0 }, h = st.by_level.high || { eligible: 0, covered: 0 }, el = m.eligible + h.eligible, cv = m.covered + h.covered;
+          const gain = el ? 100 * (x.mshs_new_7d || 0) / el : 0;
+          return `${stateShape(code)}<div class="stat40 spikest" style="margin-top:4px">${esc(x.state || (x.title.match(/^reports from (.+?) in the last/) || [])[1] || "")}</div><div class="b pretty" style="margin-top:4px"><b style="color:var(--ink)">${esc(x.stat)}</b> valid reports in the last 7 days, ${esc(String(x.title.match(/, (\d+x) the week before/) ? x.title.match(/, (\d+x) the week before/)[1] : ""))} the week before. Current MS/HS coverage is <b style="color:var(--ink)">${el ? pct(100 * cv / el) : "—"}</b>${x.mshs_new_7d ? ` (+${gain < 0.1 ? gain.toFixed(2) : gain.toFixed(1)} pts this week)` : ""}, <b style="color:var(--ink)">${fmt(el - cv)}</b> schools remaining.</div>`; })()
       : `<div class="stat40" style="margin-top:4px">${esc(x.stat)}</div><div class="b pretty" style="margin-top:4px">${esc(x.body)}</div>`}</div>`).join("") || `<div class="card sec-note">${PEND}: this fills in once there is a week of data.</div>`;
   document.addEventListener("click", (e) => { const t = e.target.closest("[data-go]"); if (t) go(t.dataset.go); });
 
@@ -571,7 +575,6 @@
   const sinceM = (((d.funnel && d.funnel.cycle) || {}).new_mshs || 0), sincePts = M.eligible ? 100 * sinceM / M.eligible : 0;
   $("#pace").innerHTML = P ? `<div class="card-title">Pace</div><div class="sub12" style="margin-top:6px">${PEND}. New MS/HS schools per week and the pace toward ${my(TARGET)} appear once responses arrive.</div>` : `<div style="display:flex;justify-content:space-between;align-items:baseline"><div class="card-title">Pace</div><div class="sec-note">new MS/HS schools per week · ${last12.length} weeks</div></div>
     <div class="pace-stats">
-      <div><div class="stat28">+${fmt(thisWkM)}</div><div class="sub12">MS/HS this week so far · last week ${fmt(lastWkM)}</div></div>
       <div><div class="stat28">+${fmt(sinceM)}</div><div class="sub12">MS/HS since launch · +${sincePts.toFixed(2)} pts</div></div>
       <div><div class="stat28" style="color:var(--study)">${projPct == null ? "—" : pct(projPct)}</div><div class="sub12">by ${my(TARGET)} at this pace${avgMshs != null ? ` (${fmt(Math.round(avgMshs))}/wk)` : ""}</div></div>
       ${neededM ? `<div><div class="stat28">${fmt(neededM)}</div><div class="sub12">MS/HS per week to hit 100%</div></div>` : ""}
