@@ -546,10 +546,10 @@
     <div class="xlab"><span>${mdy(rows[0].week_start)}</span><span>${rows.length > 2 ? mdy(rows[mid].week_start) : ""}</span><span>${rows.length > 1 ? mdy(last.week_start) : ""}</span></div>`;
   }
   const dailyTile = (x) => {
-    const days = (v.daily || []), last7 = days.slice(-7).reduce((a, b) => a + (b.valid_responses || 0), 0);
-    const cyc0 = (d.cycle && d.cycle.start || "").slice(0, 10), shown = cyc0 && days.filter((y) => y.date >= cyc0).length >= 3 ? days.filter((y) => y.date >= cyc0).length : Math.min(30, days.length);
-    return `<div class="card action callout" data-go="${esc(x.target || "quality")}"><div class="sec-note">valid reports per day${shown < 30 ? " since launch" : ", last 30 days"}</div>${dailyChart()}
-      <div class="b" style="margin-top:2px"><b style="color:var(--ink)">${fmt(last7)}</b> in the last 7 days · about ${fmt(Math.round(last7 / 7))} a day</div></div>`;
+    const days = (v.daily || []), cyc0 = (d.cycle && d.cycle.start || "").slice(0, 10);
+    const since = cyc0 ? days.filter((y) => y.date >= cyc0) : [], shown = since.length >= 3 ? since : days.slice(-30);
+    const perDay = shown.length ? shown.reduce((a, b) => a + (b.valid_responses || 0), 0) / shown.length : 0;
+    return `<div class="card action callout" data-go="${esc(x.target || "quality")}"><div class="sec-note"><b style="color:var(--ink)">${fmt(Math.round(perDay))}</b> valid reports per day ${since.length >= 3 ? "since launch" : "over the last 30 days"}</div>${dailyChart()}</div>`;
   };
   const stateShape = (code) => {
     if (!paths || !paths[code]) return "";
