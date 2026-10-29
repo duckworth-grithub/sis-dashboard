@@ -800,7 +800,7 @@ def main():
     if pace.get("needed_per_week") and (new_this or new_last or rolling):
         callouts.append({"rule": "pace_vs_needed", "at_stake": 0, "stat": f"+{new_this:,}",
                          "title": "new schools this week so far." if new_this else "new schools this week so far.",
-                         "body": f"Last week {new_last:,}. The target date needs about {pace['needed_per_week']:,} per week; 4-week average is {rolling:,.0f}.",
+                         "body": f"Last week {new_last:,}. 4-week average is {rolling:,.0f}.",
                          "action": "Gaps", "target": "gaps"})
     callouts = callouts[:3]
 
