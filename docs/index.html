@@ -166,8 +166,9 @@
   .callout { display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; }
   .callout .spikest { font-size: 30px; line-height: 1.1; }
   .callout { position: relative; }
-  .callout .stshape { position: absolute; top: 16px; right: 18px; width: 60px; height: 52px; }
-  .callout .spikest { padding-right: 70px; }
+  .callout .spikeblk { display: block; }
+  .callout .stshape { float: right; width: 100px; height: 84px; margin: -22px 0 4px 14px; }   /* text wraps beside it, then runs full width below */
+  @media (max-width: 760px) { .callout .stshape { width: 84px; height: 70px; } }
   .callout .stshape path { fill: var(--light); stroke: var(--study); stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
   .callout .t { font-size: 16px; font-weight: 700; line-height: 1.3; }
   .callout .b { font-size: 14px; color: var(--slate); line-height: 1.45; }
@@ -565,7 +566,7 @@
       ? (() => { const code = ((x.target || "").match(/state=([A-Z]{2})/) || [])[1], st = d.states.find((y) => y.st === code) || { by_level: {} };
           const m = st.by_level.middle || { eligible: 0, covered: 0 }, h = st.by_level.high || { eligible: 0, covered: 0 }, el = m.eligible + h.eligible, cv = m.covered + h.covered;
           const gain = el ? 100 * (x.mshs_new_7d || 0) / el : 0;
-          return `${stateShape(code)}<div class="stat40 spikest" style="margin-top:4px">${esc(x.state || (x.title.match(/^reports from (.+?) in the last/) || [])[1] || "")}</div><div class="b pretty" style="margin-top:4px"><b style="color:var(--ink)">${esc(x.stat)}</b> valid reports in the last 7 days, ${esc(String(x.title.match(/, (\d+x) the week before/) ? x.title.match(/, (\d+x) the week before/)[1] : ""))} the week before. Current MS/HS coverage is <b style="color:var(--ink)">${el ? pct(100 * cv / el) : "—"}</b>${x.mshs_new_7d ? ` (+${gain < 0.1 ? gain.toFixed(2) : gain.toFixed(1)} pts this week)` : ""}, <b style="color:var(--ink)">${fmt(el - cv)}</b> schools remaining.</div>`; })()
+          return `<div class="spikeblk">${stateShape(code)}<div class="stat40 spikest" style="margin-top:4px">${esc(x.state || (x.title.match(/^reports from (.+?) in the last/) || [])[1] || "")}</div><div class="b pretty" style="margin-top:4px"><b style="color:var(--ink)">${esc(x.stat)}</b> valid reports in the last 7 days. Current MS/HS coverage is <b style="color:var(--ink)">${el ? pct(100 * cv / el) : "—"}</b>${x.mshs_new_7d ? ` (+${gain < 0.1 ? gain.toFixed(2) : gain.toFixed(1)} pts this week)` : ""}, <b style="color:var(--ink)">${fmt(el - cv)}</b> schools remaining.</div></div>`; })()
       : `<div class="stat40" style="margin-top:4px">${esc(x.stat)}</div><div class="b pretty" style="margin-top:4px">${x.rule === "pace_vs_needed" ? `<b style="color:var(--ink)">${fmt(((cur.by_level || {}).middle || 0) + ((cur.by_level || {}).high || 0))}</b> MS/HS · <b style="color:var(--ink)">${fmt((cur.by_level || {}).elementary || 0)}</b> elementary. ` : ""}${esc(x.body)}</div>`}</div>`).join("") || `<div class="card sec-note">${PEND}: this fills in once there is a week of data.</div>`;
   document.addEventListener("click", (e) => { const t = e.target.closest("[data-go]"); if (t) go(t.dataset.go); });
 
