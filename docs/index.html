@@ -176,9 +176,16 @@
   .spark .hit:hover { fill: rgba(44,122,75,0.12); }
   .spark .lab { font-size: 12px; font-weight: 700; fill: var(--ink); }
   .spark .xl { font-size: 10px; fill: var(--slate); }
-  .spark .line.dash { stroke-dasharray: 4 4; }
-  .spark .dot.hollow { fill: #FFFFFF; stroke: var(--study); }
-  .spark .avgl { stroke: var(--study); stroke-width: 1.5; stroke-dasharray: 3 4; opacity: 0.7; }
+  .wl { position: relative; flex: 1; min-height: 140px; margin-top: 18px; border-bottom: 1px solid var(--axis); }
+  .wl svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .wl .area { fill: var(--study); opacity: 0.10; }
+  .wl .line { fill: none; stroke: var(--study); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+  .wl .line.light { stroke: var(--seed); }
+  .wl .wlavg { position: absolute; left: 0; right: 0; border-top: 2px dashed var(--study); opacity: 0.55; }
+  .wl .wldot { position: absolute; width: 9px; height: 9px; margin: 0 0 -4.5px -4.5px; border-radius: 50%; background: var(--study); border: 2px solid #FFFFFF; box-sizing: border-box; cursor: default; }
+  .wl .wldot.hollow { background: #FFFFFF; border-color: var(--study); }
+  .wl .wldot:hover { transform: scale(1.4); }
+  .wl .wllab { position: absolute; font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: -8px; }
   .spark .mark { stroke: var(--chalk); stroke-width: 1.5; stroke-dasharray: 2 3; opacity: 0.6; cursor: default; }
   .spark .mark:hover { opacity: 1; stroke-width: 3; }
 
@@ -511,25 +518,24 @@
       <text x="${L}" y="${H - 6}" class="xl">${mdy(days[0].date)}</text><text x="${X(mid).toFixed(1)}" y="${H - 6}" class="xl" text-anchor="middle">${mdy(days[mid].date)}</text><text x="${(W - R).toFixed(1)}" y="${H - 6}" class="xl" text-anchor="end">${mdy(last.date)}</text>
     </svg>`;
   }
-  // weekly line: rows have week_start + partial; val(row) = the number; tip(row) = tooltip body. A partial week is drawn dashed with a hollow dot.
+  // weekly line: rows have week_start + partial; val(row) = the number; tip(row) = tooltip body.
+  // The line is an SVG that stretches to the card (preserveAspectRatio none, non-scaling stroke); dots, labels and the average live in HTML so nothing distorts.
   function weekLine(rows, val, tip, avg) {
     if (!rows.length) return `<div class="sec-note" style="margin-top:12px">No weeks yet.</div>`;
-    const W = 320, H = 110, L = 6, R = 34, T = 12, B = 22, mx = Math.max(1, ...rows.map(val), avg || 0);
-    const X = (i) => rows.length > 1 ? L + (i * (W - L - R)) / (rows.length - 1) : (L + W - R) / 2, Y = (n) => T + (H - T - B) * (1 - n / mx);
+    const mx = Math.max(1, ...rows.map(val), avg || 0), L = 1.5, R = 11, TOP = 14;
+    const X = (i) => rows.length > 1 ? L + (i * (100 - L - R)) / (rows.length - 1) : 50, Y = (n) => (100 - TOP) * n / mx;   // Y = % from the bottom
     const pts = rows.map((r, i) => [X(i), Y(val(r))]), nFull = rows[rows.length - 1].partial ? rows.length - 1 : rows.length;
-    const seg = (ps) => ps.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
-    const solid = seg(pts.slice(0, Math.max(1, nFull))), dashed = nFull < rows.length ? seg(pts.slice(nFull - 1)) : "";
-    const area = `${seg(pts)} L${pts[pts.length - 1][0].toFixed(1)},${(H - B).toFixed(1)} L${pts[0][0].toFixed(1)},${(H - B).toFixed(1)} Z`;
+    const seg = (ps) => ps.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(2)},${(100 - y).toFixed(2)}`).join(" ");
+    const solid = seg(pts.slice(0, Math.max(1, nFull))), light = nFull < rows.length ? seg(pts.slice(Math.max(0, nFull - 1))) : "";
+    const area = `${seg(pts)} L${pts[pts.length - 1][0].toFixed(2)},100 L${pts[0][0].toFixed(2)},100 Z`;
     const last = rows[rows.length - 1], [lx, ly] = pts[pts.length - 1], mid = Math.floor(rows.length / 2);
-    return `<svg class="spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="per week">
-      <line x1="${L}" y1="${(H - B).toFixed(1)}" x2="${W - R}" y2="${(H - B).toFixed(1)}" class="ax"/>
-      ${avg ? `<line x1="${L}" y1="${Y(avg).toFixed(1)}" x2="${W - R}" y2="${Y(avg).toFixed(1)}" class="avgl"/>` : ""}
-      <path d="${area}" class="area"/><path d="${solid}" class="line"/>${dashed ? `<path d="${dashed}" class="line dash"/>` : ""}
-      ${pts.map(([x, y], i) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="10" class="hit" data-tip="<b>Week of ${mdy(rows[i].week_start)}${rows[i].partial ? " (partial)" : ""}</b><br>${tip(rows[i])}"/>`).join("")}
-      ${pts.map(([x, y], i) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" class="${rows[i].partial ? "dot hollow" : "dot"}"/>`).join("")}
-      <text x="${(lx + 7).toFixed(1)}" y="${(ly + 4).toFixed(1)}" class="lab">${fmt(val(last))}</text>
-      <text x="${L}" y="${H - 6}" class="xl">${mdy(rows[0].week_start)}</text>${rows.length > 2 ? `<text x="${X(mid).toFixed(1)}" y="${H - 6}" class="xl" text-anchor="middle">${mdy(rows[mid].week_start)}</text>` : ""}${rows.length > 1 ? `<text x="${(W - R).toFixed(1)}" y="${H - 6}" class="xl" text-anchor="end">${mdy(last.week_start)}</text>` : ""}
-    </svg>`;
+    return `<div class="wl">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="${area}" class="area"/><path d="${solid}" class="line"/>${light ? `<path d="${light}" class="line light"/>` : ""}</svg>
+      ${avg ? `<div class="wlavg" style="bottom:${Y(avg).toFixed(2)}%"></div>` : ""}
+      ${pts.map(([x, y], i) => `<i class="wldot${rows[i].partial ? " hollow" : ""}" style="left:${x.toFixed(2)}%;bottom:${y.toFixed(2)}%" data-tip="<b>Week of ${mdy(rows[i].week_start)}${rows[i].partial ? " (so far)" : ""}</b><br>${tip(rows[i])}"></i>`).join("")}
+      <b class="wllab" style="left:${(lx + 2.2).toFixed(2)}%;bottom:${ly.toFixed(2)}%">${fmt(val(last))}</b>
+    </div>
+    <div class="xlab"><span>${mdy(rows[0].week_start)}</span><span>${rows.length > 2 ? mdy(rows[mid].week_start) : ""}</span><span>${rows.length > 1 ? mdy(last.week_start) : ""}</span></div>`;
   }
   const dailyTile = (x) => {
     const days = (v.daily || []), last7 = days.slice(-7).reduce((a, b) => a + (b.valid_responses || 0), 0);
@@ -548,11 +554,11 @@
     <div class="pace-stats">
       <div><div class="stat28">${fmt(v.rolling_avg_weekly_new)}</div><div class="sub12">4-week average</div></div>
       <div><div class="stat28">+${pace.pts_per_week == null ? "—" : pace.pts_per_week} pts</div><div class="sub12">coverage per week</div></div>
-      <div><div class="stat28" style="color:var(--study)">${pace.projected_full_date && +pace.projected_full_date.slice(0, 4) <= +TARGET.slice(0, 4) + 5 ? my(pace.projected_full_date) : "—"}</div><div class="sub12">${pace.projected_full_date && +pace.projected_full_date.slice(0, 4) > +TARGET.slice(0, 4) + 5 ? "not at this pace" : "projected 100%"}</div></div>
+      <div><div class="stat28" style="color:${pace.projected_full_date && +pace.projected_full_date.slice(0, 4) <= +TARGET.slice(0, 4) + 5 ? "var(--study)" : "var(--muted)"}">${pace.projected_full_date && +pace.projected_full_date.slice(0, 4) <= +TARGET.slice(0, 4) + 5 ? my(pace.projected_full_date) : "n/a"}</div><div class="sub12">${pace.projected_full_date && +pace.projected_full_date.slice(0, 4) > +TARGET.slice(0, 4) + 5 ? "not at this pace" : "projected 100%"}</div></div>
       ${pace.needed_per_week ? `<div><div class="stat28">${fmt(pace.needed_per_week)}</div><div class="sub12">needed / wk for ${my(pace.target_date)}</div></div>` : ""}
     </div>
     ${weekLine(last12, (w) => w.new, (w) => `${fmt(w.new)} new schools · ${fmt(w.second_reports)} second reports`, v.rolling_avg_weekly_new)}
-    <div class="sub12" style="margin-top:4px">Dashed line: 4-week average. Hollow dot: the current, partial week.</div>`;
+    <div class="sub12" style="margin-top:8px">Dashed line: 4-week average. Open dot: this week so far.</div>`;
 
   // ---- map + gaps
   function mapSvg(cls) {
