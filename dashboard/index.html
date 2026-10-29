@@ -92,7 +92,9 @@
   .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 12px; }
   .grid2 { display: grid; grid-template-columns: 1fr 1.3fr; gap: 16px; margin-top: 16px; }
   .grid2eq { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: center; }
-  @media (max-width: 1180px) { .grid3 { grid-template-columns: 1fr; } .grid2, .grid2eq { grid-template-columns: 1fr; } }
+  @media (max-width: 1180px) { .grid3 { grid-template-columns: minmax(0, 1fr); } .grid2, .grid2eq { grid-template-columns: minmax(0, 1fr); } }
+  .grid2 > div, .grid3 > div { min-width: 0; }
+  @media (max-width: 760px) { .tagcol, .phone-hide { display: none; } }
 
   .band { background: var(--chalk); color: #FFFFFF; margin-top: 24px; border-radius: 28px; padding: 36px 40px 34px; display: grid; grid-template-columns: 1fr; gap: 24px; align-items: center; }
   .cbar.with-stan { margin-top: 24px; overflow: visible; }
@@ -576,15 +578,15 @@
     <div class="review"><div style="width:100%"><div style="font-size:13px;font-weight:700">${esc(d.cycle.name)}</div>
       <div style="display:flex;gap:28px;margin-top:10px;flex-wrap:wrap">
         <div><div class="stat28">${fmt(fc.starts)}</div><div class="sub12">started</div></div>
-        <div><div class="stat28">${fmt(fc.completes)}</div><div class="sub12">completed</div></div>
+        <div class="phone-hide"><div class="stat28">${fmt(fc.completes)}</div><div class="sub12">completed</div></div>
         <div><div class="stat28">${fmt(fc.valid)}</div><div class="sub12">valid</div></div>
         <div><div class="stat28">${fmt(fc.new_schools)}</div><div class="sub12">new schools</div></div>
-        <div><div class="stat28">${fmt(fc.new_mshs)}</div><div class="sub12">new MS/HS</div></div></div>
+        <div class="phone-hide"><div class="stat28">${fmt(fc.new_mshs)}</div><div class="sub12">new MS/HS</div></div></div>
       <div style="display:flex;height:10px;gap:2px;border-radius:999px;overflow:hidden;margin-top:12px;background:var(--track)">${svOrder.map(([k, l, col]) => `<i style="display:block;height:100%;width:${(100 * (bySv[k].valid || 0) / svTotal).toFixed(1)}%;background:${col}" data-tip="<b>${l}</b><br>${fmt(bySv[k].valid)} valid reports"></i>`).join("")}</div>
       <div class="legend" style="color:var(--slate);margin-top:6px;font-size:12px"><span class="l">${svOrder.map(([k, l, col]) => `<span><span class="dot" style="background:${col}"></span>${l} <b style="color:var(--ink)">${fmt(bySv[k].valid)}</b></span>`).join("")}</span></div></div></div>`;
   const OUT = (d.outreach || []).slice().sort((a, b) => b.date.localeCompare(a.date));
   function outreachTable(rows, audienceCol) {
-    return rows.length ? `<div class="tablewrap"><table style="margin-top:10px"><thead><tr><th>Sent</th><th>What</th><th>State</th>${audienceCol ? "<th>Audience</th>" : ""}<th class="num">7 days after</th><th class="num">7 days before</th><th class="num">Tagged</th></tr></thead><tbody>${rows.map((o) => `<tr><td>${mdy(o.date)}</td><td>${esc(o.label)}</td><td>${esc(o.state || "national")}</td>${audienceCol ? `<td>${esc(o.audience)}</td>` : ""}<td class="num">${o.after_7d == null ? "—" : o.days_elapsed < 6 ? `${fmt(o.after_7d)} <small style="color:var(--muted)">(${o.days_elapsed + 1}d so far)</small>` : fmt(o.after_7d)}</td><td class="num">${o.before_7d == null ? "—" : fmt(o.before_7d)}</td><td class="num">${o.tagged_reports == null ? "<span style=\"color:var(--muted)\">no tag</span>" : fmt(o.tagged_reports)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="sec-note" style="margin-top:8px">No dated sends in the tracker${audienceCol ? "" : " for this audience"} yet.</div>`;
+    return rows.length ? `<div class="tablewrap"><table style="margin-top:10px"><thead><tr><th>Sent</th><th>What</th><th>State</th>${audienceCol ? "<th>Audience</th>" : ""}<th class="num">7 days after</th><th class="num">7 days before</th><th class="num tagcol">Tagged</th></tr></thead><tbody>${rows.map((o) => `<tr><td>${mdy(o.date)}</td><td>${esc(o.label)}</td><td>${esc(o.state || "national")}</td>${audienceCol ? `<td>${esc(o.audience)}</td>` : ""}<td class="num">${o.after_7d == null ? "—" : o.days_elapsed < 6 ? `${fmt(o.after_7d)} <small style="color:var(--muted)">(${o.days_elapsed + 1}d so far)</small>` : fmt(o.after_7d)}</td><td class="num">${o.before_7d == null ? "—" : fmt(o.before_7d)}</td><td class="num tagcol">${o.tagged_reports == null ? "<span style=\"color:var(--muted)\">no tag</span>" : fmt(o.tagged_reports)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="sec-note" style="margin-top:8px">No dated sends in the tracker${audienceCol ? "" : " for this audience"} yet.</div>`;
   }
   const outreachCard = (title, rows, audienceCol) => `<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">${title}</div><div class="sec-note">valid reports in the 7 days after a send vs the 7 before, same state and audience</div></div>${outreachTable(rows, audienceCol)}</div>`;
   $("#outreach").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Outreach</div><div class="sec-note">from the team's tracker · valid reports in the 7 days after a send vs the 7 before, same state and audience</div></div>` + outreachTable(OUT, true);
@@ -711,7 +713,7 @@
         <div class="strow"><div class="stat40">${fmt(have.size)}<span class="of"> of 50</span></div><div class="sub12" style="margin-top:0">states have at least one school with a valid ${noun} report this cycle</div></div>
         <div class="stbar">${fifty.map((st) => `<i class="${have.has(st) ? "on" : ""}" data-tip="<b>${esc((byCode[st] || {}).state || st)}</b><br>${have.has(st) ? `at least one school with a ${noun} report` : `no ${noun} reports yet`}"></i>`).join("")}</div>
         <div class="sub12" style="margin-top:10px">${have.size ? `Reached: ${fifty.filter((st) => have.has(st)).map((st) => esc((byCode[st] || {}).state || st)).join(", ")}.` : `No states yet.`} DC and the territories count toward national totals but not toward the 50.</div></div>`;
-    const body = (key === "student" ? stateTracker : "") + weeklyCard + `<div class="card"><div class="card-title">States with the most ${noun}-reported schools</div><div class="ranked" style="margin-top:6px">${(R.top_states || []).map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc((byCode[g.st] || {}).state || g.st)}</span><span class="v">${fmt(g.schools)} <small>schools</small></span></div>`).join("") || `<div class="sec-note">—</div>`}</div></div>`
+    const body = (key === "student" ? stateTracker : "") + weeklyCard + `<div class="card"><div class="card-title">States with the most ${noun}-reported schools</div><div class="ranked" style="margin-top:6px">${(R.top_states || []).map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc((byCode[g.st] || {}).state || g.st)}</span><span class="v">${fmt(g.schools)} <small>${g.schools === 1 ? "school" : "schools"}</small></span></div>`).join("") || `<div class="sec-note">—</div>`}</div></div>`
       + `<div style="grid-column:1/-1">${outreachCard(`Outreach to ${noun}s`, OUT.filter((o) => o.audience === key || o.audience === "all"), false)}</div>`;
     $("#" + tilesId).innerHTML = tiles; $("#" + bodyId).innerHTML = body;
   }
