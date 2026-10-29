@@ -405,7 +405,7 @@
   const STAN_LEAD = leadRows.length ? [`${leadRows[0].state} is in the lead!`] : [];
   // date-based lines: season, month edges, countdown to the target date
   const today = new Date(), mo = today.getMonth() + 1, dom = today.getDate(), lastDom = new Date(today.getFullYear(), mo, 0).getDate();
-  const TARGET = (d.config && d.config.target_date) || (d.velocity && d.velocity.pace && d.velocity.pace.target_date) || "2027-07-01";
+  const TARGET = (d.config && d.config.target_date) || (d.velocity && d.velocity.pace && d.velocity.pace.target_date) || "2027-05-31";
   const target = new Date(TARGET + "T00:00:00"), cycStart = new Date(d.cycle.start), daysLeft = Math.round((target - today) / 864e5), weeksLeft = Math.round(daysLeft / 7);
   const cycFrac = cycStart.getFullYear() > 2020 ? (today - cycStart) / (target - cycStart) : null;
   const STAN_DATE = [].concat(
