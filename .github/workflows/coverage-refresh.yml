@@ -1,4 +1,4 @@
-# Daily refresh of the coverage dashboard, run by GitHub Actions.
+# Refresh of the coverage dashboard (every 30 minutes by day, every 2 hours overnight), run by GitHub Actions.
 # Secrets (repo Settings -> Secrets and variables -> Actions): QUALTRICS_TOKEN, QUALTRICS_DATACENTER (yul1).
 # The export names only de-identified fields (no email, no IP, no free text); the raw exports never enter GitHub.
 # Inputs committed to the repo: data/ (school table, earlier-wave school counts, state codebook) and the public NCES
@@ -6,8 +6,9 @@
 name: Refresh coverage dashboard
 on:
   schedule:
-    - cron: "15 13-22 * * 1-5"   # weekdays, hourly at :15 from 13:15 to 22:15 UTC = 9am-6pm EDT / 8am-5pm EST
-    - cron: "30 6 * * *"          # once a day at 06:30 UTC (about 2:30am Eastern) to cover nights and weekends
+    - cron: "0,30 11-23 * * *"    # every 30 min, 11:00-23:30 UTC = 7am-7:30pm EDT / 6am-6:30pm EST, seven days a week
+    - cron: "0,30 0-2 * * *"      # ... continuing 00:00-02:30 UTC = 8pm-10:30pm EDT / 7pm-9:30pm EST
+    - cron: "0 4,6,8,10 * * *"    # overnight every 2 hours (04:00-10:00 UTC = midnight-6am EDT / 11pm-5am EST)
   workflow_dispatch:
   push:
     branches: [main]
