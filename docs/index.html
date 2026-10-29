@@ -165,6 +165,9 @@
 
   .callout { display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; }
   .callout .spikest { font-size: 30px; line-height: 1.1; }
+  .callout .spikehd { display: flex; align-items: center; gap: 14px; margin-top: 4px; }
+  .callout .stshape { width: 60px; height: 52px; flex: 0 0 auto; }
+  .callout .stshape path { fill: var(--light); stroke: var(--study); stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
   .callout .t { font-size: 16px; font-weight: 700; line-height: 1.3; }
   .callout .b { font-size: 14px; color: var(--slate); line-height: 1.45; }
   .callout .a { margin-top: auto; padding-top: 10px; }
@@ -544,9 +547,18 @@
     return `<div class="card action callout" data-go="${esc(x.target || "quality")}"><div class="sec-note">valid reports per day${shown < 30 ? " since launch" : ", last 30 days"}</div>${dailyChart()}
       <div class="b" style="margin-top:2px"><b style="color:var(--ink)">${fmt(last7)}</b> in the last 7 days · about ${fmt(Math.round(last7 / 7))} a day</div></div>`;
   };
+  const stateShape = (code) => {
+    if (!paths || !paths[code]) return "";
+    const ns = "http://www.w3.org/2000/svg", tmp = document.createElementNS(ns, "svg"); tmp.style.cssText = "position:absolute;left:-9999px;top:0;width:10px;height:10px";
+    const pth = document.createElementNS(ns, "path"); pth.setAttribute("d", paths[code]); tmp.appendChild(pth); document.body.appendChild(tmp);
+    const bb = pth.getBBox(); tmp.remove();
+    if (!bb.width || !bb.height) return "";
+    const pad = Math.max(bb.width, bb.height) * 0.06;
+    return `<svg class="stshape" viewBox="${(bb.x - pad).toFixed(1)} ${(bb.y - pad).toFixed(1)} ${(bb.width + 2 * pad).toFixed(1)} ${(bb.height + 2 * pad).toFixed(1)}" aria-hidden="true"><path d="${paths[code]}"/></svg>`;
+  };
   $("#callouts").innerHTML = (d.callouts || []).map((x) => x.rule === "avg_daily_responses" ? dailyTile(x) : `<div class="card action callout" data-go="${esc(x.target || "")}">
     <div class="sec-note">${esc(CALL_LABEL[x.rule] || x.title)}</div>${x.rule === "response_spike" && x.stat !== "—"
-      ? `<div class="stat40 spikest" style="margin-top:4px">${esc(x.state || (x.title.match(/^reports from (.+?) in the last/) || [])[1] || "")}</div><div class="b pretty" style="margin-top:4px"><b style="color:var(--ink)">${esc(x.stat)}</b> valid reports in the last 7 days, ${esc(String(x.title.match(/, (\d+x) the week before/) ? x.title.match(/, (\d+x) the week before/)[1] : ""))} the week before.${x.body && x.body.startsWith("Most from") ? " " + esc(x.body.split(". ")[0]) + "." : ""}</div>`
+      ? `<div class="spikehd"><div class="stat40 spikest">${esc(x.state || (x.title.match(/^reports from (.+?) in the last/) || [])[1] || "")}</div>${stateShape(((x.target || "").match(/state=([A-Z]{2})/) || [])[1])}</div><div class="b pretty" style="margin-top:4px"><b style="color:var(--ink)">${esc(x.stat)}</b> valid reports in the last 7 days, ${esc(String(x.title.match(/, (\d+x) the week before/) ? x.title.match(/, (\d+x) the week before/)[1] : ""))} the week before.${x.body && x.body.startsWith("Most from") ? " " + esc(x.body.split(". ")[0]) + "." : ""}</div>`
       : `<div class="stat40" style="margin-top:4px">${esc(x.stat)}</div><div class="b pretty" style="margin-top:4px">${esc(x.body)}</div>`}</div>`).join("") || `<div class="card sec-note">${PEND}: this fills in once there is a week of data.</div>`;
   document.addEventListener("click", (e) => { const t = e.target.closest("[data-go]"); if (t) go(t.dataset.go); });
 
