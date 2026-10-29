@@ -550,18 +550,22 @@
       : `<div class="stat40" style="margin-top:4px">${esc(x.stat)}</div><div class="b pretty" style="margin-top:4px">${esc(x.body)}</div>`}</div>`).join("") || `<div class="card sec-note">${PEND}: this fills in once there is a week of data.</div>`;
   document.addEventListener("click", (e) => { const t = e.target.closest("[data-go]"); if (t) go(t.dataset.go); });
 
-  // ---- pace
-  const last12 = wk.slice(-12), mx = Math.max(1, ...last12.map((w) => w.new));
-  const avgH = Math.round(100 * (v.rolling_avg_weekly_new || 0) / mx);
-  $("#pace").innerHTML = P ? `<div class="card-title">Pace</div><div class="sub12" style="margin-top:6px">${PEND}. New schools per week, the 4-week average and the projected 100% date appear once responses arrive.</div>` : `<div style="display:flex;justify-content:space-between;align-items:baseline"><div class="card-title">Pace</div><div class="sec-note">new schools per week · ${last12.length} weeks</div></div>
+  // ---- pace: the needle is MS/HS coverage, so everything here is MS/HS
+  const last12 = wk.slice(-12), mshsNew = (w) => ((w.by_level || {}).middle || 0) + ((w.by_level || {}).high || 0);
+  const fullWks = last12.filter((w) => !w.partial).slice(-4), avgMshs = fullWks.length ? fullWks.reduce((a, w) => a + mshsNew(w), 0) / fullWks.length : null;
+  const M = (d.coverage || {}).mshs || {}, wksLeftM = pace.weeks_left || 0, thisWkM = mshsNew(cur), lastWkM = wk.length > 1 ? mshsNew(wk[wk.length - 2]) : 0;
+  const projPct = avgMshs != null && M.eligible ? Math.min(100, 100 * (M.covered + avgMshs * wksLeftM) / M.eligible) : null;
+  const neededM = M.remaining && wksLeftM ? Math.round(M.remaining / wksLeftM) : null;
+  const sinceM = (((d.funnel && d.funnel.cycle) || {}).new_mshs || 0), sincePts = M.eligible ? 100 * sinceM / M.eligible : 0;
+  $("#pace").innerHTML = P ? `<div class="card-title">Pace</div><div class="sub12" style="margin-top:6px">${PEND}. New MS/HS schools per week and the pace toward ${my(TARGET)} appear once responses arrive.</div>` : `<div style="display:flex;justify-content:space-between;align-items:baseline"><div class="card-title">Pace</div><div class="sec-note">new MS/HS schools per week · ${last12.length} weeks</div></div>
     <div class="pace-stats">
-      <div><div class="stat28">${fmt(v.rolling_avg_weekly_new)}</div><div class="sub12">4-week average</div></div>
-      <div><div class="stat28">+${pace.pts_per_week == null ? "—" : pace.pts_per_week} pts</div><div class="sub12">coverage per week</div></div>
-      <div><div class="stat28" style="color:${pace.projected_full_date && +pace.projected_full_date.slice(0, 4) <= +TARGET.slice(0, 4) + 5 ? "var(--study)" : "var(--muted)"}">${pace.projected_full_date && +pace.projected_full_date.slice(0, 4) <= +TARGET.slice(0, 4) + 5 ? my(pace.projected_full_date) : "n/a"}</div><div class="sub12">${pace.projected_full_date && +pace.projected_full_date.slice(0, 4) > +TARGET.slice(0, 4) + 5 ? "not at this pace" : "projected 100%"}</div></div>
-      ${pace.needed_per_week ? `<div><div class="stat28">${fmt(pace.needed_per_week)}</div><div class="sub12">needed / wk for ${my(pace.target_date)}</div></div>` : ""}
+      <div><div class="stat28">+${fmt(thisWkM)}</div><div class="sub12">MS/HS this week so far · last week ${fmt(lastWkM)}</div></div>
+      <div><div class="stat28">+${fmt(sinceM)}</div><div class="sub12">MS/HS since launch · +${sincePts.toFixed(2)} pts</div></div>
+      <div><div class="stat28" style="color:var(--study)">${projPct == null ? "—" : pct(projPct)}</div><div class="sub12">by ${my(TARGET)} at this pace${avgMshs != null ? ` (${fmt(Math.round(avgMshs))}/wk)` : ""}</div></div>
+      ${neededM ? `<div><div class="stat28">${fmt(neededM)}</div><div class="sub12">MS/HS per week to hit 100%</div></div>` : ""}
     </div>
-    ${weekLine(last12, (w) => w.new, (w) => `${fmt(w.new)} new schools · ${fmt(w.second_reports)} second reports`, v.rolling_avg_weekly_new)}
-    <div class="sub12" style="margin-top:8px">Dashed line: 4-week average. Open dot: this week so far.</div>`;
+    ${weekLine(last12, mshsNew, (w) => `${fmt(mshsNew(w))} new MS/HS schools · ${fmt(w.new)} new schools at every level`, avgMshs)}
+    <div class="sub12" style="margin-top:8px">Dashed line: average of the last ${fullWks.length} full week${fullWks.length === 1 ? "" : "s"}. Open dot: this week so far. New = first report ever for that school.</div>`;
 
   // ---- map + gaps
   function mapSvg(cls) {
