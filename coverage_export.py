@@ -33,7 +33,7 @@ from common import HERE, load_config, load_state_codes, norm_state, parse_dt, is
 
 LEVELS = ["elementary", "middle", "high", "other", "unknown"]
 EMBEDDED = ["utm_source", "utm_medium", "utm_campaign", "src", "Referer", "Q_URL"]            # names read from a row
-EMBEDDED_BY_SURVEY = {"student": ["src"], "educator": ["utm_source", "utm_medium", "utm_campaign", "Referer", "Q_URL"],
+EMBEDDED_BY_SURVEY = {"student": ["utm_source", "utm_medium", "utm_campaign", "src", "Referer", "Q_URL"], "educator": ["utm_source", "utm_medium", "utm_campaign", "Referer", "Q_URL"],
                       "librarian": ["utm_source", "utm_medium", "utm_campaign", "Referer", "Q_URL"]}   # names each survey defines
 METADATA = ["startDate", "recordedDate", "finished", "progress", "duration", "distributionChannel"]   # never ipAddress
 
@@ -680,6 +680,41 @@ def main():
         f = funnel(rs)
         channels_4w.append({"channel": ch, "valid": f["valid"], "new_schools": f["new_schools"], "conv_valid_new": f["conv_valid_new"]})
     channels_4w.sort(key=lambda c: (-c["new_schools"], -c["valid"]))
+    # ---- utm sources: every link the team sends carries utm_source / utm_medium / utm_campaign (the site passes them through)
+    def clean_tag(v):
+        v = "".join(ch for ch in (v or "") if ch.isprintable()).strip().lower()
+        return v[:40]
+    def src_label(r):
+        return clean_tag(r["utm_source"]) or clean_tag(r["src"]) or ("educator survey redirect" if r["channel"] == "redirect_from_educator" else "untagged")
+    def source_rows(rs, key, fields):
+        groups = collections.defaultdict(list)
+        for r in rs:
+            groups[key(r)].append(r)
+        out = []
+        for k, g in groups.items():
+            f = funnel(g)
+            val = [r for r in g if r["valid"]]
+            seen = [r["recorded_at"] for r in g if r["recorded_at"]]
+            out.append({**dict(zip(fields, k if isinstance(k, tuple) else (k,))), **f,
+                        "by_survey": dict(collections.Counter(r["survey"] for r in val)),
+                        "states": sorted({by_id[r["ncessch"]]["st"] for r in val if r["ncessch"] and r["ncessch"] in by_id}),
+                        "this_week": sum(1 for r in val if r["week"] == str(this_wk)), "last_week": sum(1 for r in val if r["week"] == str(last_wk)),
+                        "first_seen": min(seen).strftime("%Y-%m-%d") if seen else None, "last_seen": max(seen).strftime("%Y-%m-%d") if seen else None})
+        out.sort(key=lambda x: (-x["valid"], -x["new_schools"], -x["starts"], x[fields[0]]))
+        return out
+    stu = [r for r in in_cycle if r["survey"] == "student"]
+    top_stu = [x["source"] for x in source_rows(stu, src_label, ["source"])[:6]]
+    sources = {
+        "all": source_rows(in_cycle, src_label, ["source"]),
+        "tagged_share": pct(sum(1 for r in in_cycle if clean_tag(r["utm_source"]) or clean_tag(r["src"])), len(in_cycle)),
+        "student": {
+            "tagged_share": pct(sum(1 for r in stu if clean_tag(r["utm_source"]) or clean_tag(r["src"])), len(stu)),
+            "by_source": source_rows(stu, src_label, ["source"]),
+            "by_medium": source_rows(stu, lambda r: clean_tag(r["utm_medium"]) or "none", ["medium"]),
+            "campaigns": source_rows(stu, lambda r: (src_label(r), clean_tag(r["utm_medium"]) or "", clean_tag(r["utm_campaign"]) or ""), ["source", "medium", "campaign"]),
+            "weekly": [{"week_start": w["week_start"], "partial": w["partial"],
+                        "by_source": {sl: sum(1 for r in stu if r["valid"] and r["week"] == w["week_start"] and src_label(r) == sl) for sl in top_stu},
+                        "other": sum(1 for r in stu if r["valid"] and r["week"] == w["week_start"] and src_label(r) not in top_stu)} for w in weekly]}}
     callouts = []
     outreach_path = os.path.join(a.inputs, "outreach.csv")
     outreach = [r for r in read_csv(outreach_path)] if os.path.exists(outreach_path) else []
@@ -869,7 +904,7 @@ def main():
         "cycle": {"name": cfg["cycle_name"], "start": iso(cycle_start)}, "fresh_start_levels": sorted(fresh_levels),
         "ccd_loaded": any(s["level"] != "unknown" for s in schools), "historical_loaded": any(s.get("hist_represented") == "true" for s in schools),
         "alerts": alerts, "levels": LEVELS, "coverage": coverage, "depth": depth, "velocity": velocity, "states": states,
-        "channels": channels, "channels_4w": channels_4w, "funnel": funnel_data, "callouts": callouts, "partners": partner_rows, "dq": dq, "lists": lists,
+        "channels": channels, "channels_4w": channels_4w, "sources": sources, "funnel": funnel_data, "callouts": callouts, "partners": partner_rows, "dq": dq, "lists": lists,
         "outreach": outreach_rows,
         "report_path": f"reports/week-{this_wk.isocalendar()[0]}-W{this_wk.isocalendar()[1]:02d}.md", "config": {k: v for k, v in cfg.items() if not k.startswith("_")},
     }
