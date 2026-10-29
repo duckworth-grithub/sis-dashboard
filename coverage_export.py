@@ -766,10 +766,11 @@ def main():
         rs_st = [r for r in responses if r["valid"] and r["state_name"] == st_name and in_window(r, d7, now.date())]
         top_d = collections.Counter(by_id[r["ncessch"]].get("district") or "" for r in rs_st if r["ncessch"]).most_common(1)
         top_c = collections.Counter(by_id[r["ncessch"]].get("city") or "" for r in rs_st if r["ncessch"]).most_common(1)
-        where = ", ".join(x for x in [top_d[0][0] if top_d and top_d[0][0] else "", top_c[0][0] if top_c and top_c[0][0] else ""] if x)
+        city = top_c[0][0] if top_c and top_c[0][0] else ""
+        where = ", ".join(x for x in [top_d[0][0] if top_d and top_d[0][0] else "", city.title() if city.isupper() else city] if x)
         causes = outreach_for(st_name, (now - timedelta(days=13)).date(), now.date())
         cause_txt = ("Likely: " + "; ".join(f"{o['label']} ({o['date'][5:]})" for o in causes[:2]) + ". ") if causes else "Nothing in the outreach tracker for this state in the last two weeks. "
-        callouts.append({"rule": "response_spike", "at_stake": 0, "stat": f"{n:,}",
+        callouts.append({"rule": "response_spike", "at_stake": 0, "stat": f"{n:,}", "state": st_name, "ratio": round(ratio, 1), "prev": prev,
                          "title": f"reports from {st_name} in the last 7 days, {ratio:.0f}x the week before.",
                          "body": (f"Most from {where}. " if where else "") + cause_txt,
                          "action": f"Gaps: {st_name}", "target": f"gaps?state={by_id[rs_st[0]['ncessch']]['st'] if rs_st and rs_st[0]['ncessch'] else ''}"})
