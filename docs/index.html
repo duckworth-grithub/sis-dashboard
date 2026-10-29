@@ -164,6 +164,7 @@
   .lvl .bar i { display: block; height: 100%; background: var(--seed); }
 
   .callout { display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; }
+  .callout .spikest { font-size: 30px; line-height: 1.1; }
   .callout .t { font-size: 16px; font-weight: 700; line-height: 1.3; }
   .callout .b { font-size: 14px; color: var(--slate); line-height: 1.45; }
   .callout .a { margin-top: auto; padding-top: 10px; }
@@ -544,7 +545,9 @@
       <div class="b" style="margin-top:2px"><b style="color:var(--ink)">${fmt(last7)}</b> in the last 7 days · about ${fmt(Math.round(last7 / 7))} a day</div></div>`;
   };
   $("#callouts").innerHTML = (d.callouts || []).map((x) => x.rule === "avg_daily_responses" ? dailyTile(x) : `<div class="card action callout" data-go="${esc(x.target || "")}">
-    <div class="sec-note">${esc(CALL_LABEL[x.rule] || x.title)}</div><div class="stat40" style="margin-top:4px">${esc(x.stat)}</div><div class="b pretty" style="margin-top:4px">${esc(x.rule === "response_spike" && x.stat !== "—" ? x.title.replace(/^reports from /, "") : x.body)}</div></div>`).join("") || `<div class="card sec-note">${PEND}: this fills in once there is a week of data.</div>`;
+    <div class="sec-note">${esc(CALL_LABEL[x.rule] || x.title)}</div>${x.rule === "response_spike" && x.stat !== "—"
+      ? `<div class="stat40 spikest" style="margin-top:4px">${esc(x.state || (x.title.match(/^reports from (.+?) in the last/) || [])[1] || "")}</div><div class="b pretty" style="margin-top:4px"><b style="color:var(--ink)">${esc(x.stat)}</b> valid reports in the last 7 days, ${esc(String(x.title.match(/, (\d+x) the week before/) ? x.title.match(/, (\d+x) the week before/)[1] : ""))} the week before.${x.body && x.body.startsWith("Most from") ? " " + esc(x.body.split(". ")[0]) + "." : ""}</div>`
+      : `<div class="stat40" style="margin-top:4px">${esc(x.stat)}</div><div class="b pretty" style="margin-top:4px">${esc(x.body)}</div>`}</div>`).join("") || `<div class="card sec-note">${PEND}: this fills in once there is a week of data.</div>`;
   document.addEventListener("click", (e) => { const t = e.target.closest("[data-go]"); if (t) go(t.dataset.go); });
 
   // ---- pace
