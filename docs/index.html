@@ -172,7 +172,7 @@
   .callout .t { font-size: 16px; font-weight: 700; line-height: 1.3; }
   .callout .b { font-size: 14px; color: var(--slate); line-height: 1.45; }
   .callout .a { margin-top: auto; padding-top: 10px; }
-  .spark { width: 100%; height: auto; display: block; margin-top: 6px; overflow: visible; }
+  .spark { width: 100%; height: auto; max-height: 92px; display: block; margin: 6px auto 0; overflow: visible; }
   .spark .ax { stroke: var(--axis); stroke-width: 1; }
   .spark .line { fill: none; stroke: var(--study); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
   .spark .area { fill: var(--study); opacity: 0.10; }
@@ -194,7 +194,9 @@
   .spark .mark { stroke: var(--chalk); stroke-width: 1.5; stroke-dasharray: 2 3; opacity: 0.6; cursor: default; }
   .spark .mark:hover { opacity: 1; stroke-width: 3; }
 
-  .pace-stats { display: flex; gap: 28px; margin-top: 16px; flex-wrap: wrap; }
+  .pace-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+  .pace-stats .sub12 { line-height: 1.35; }
+  @media (max-width: 760px) { .pace-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .cols { position: relative; flex: 1; min-height: 130px; margin-top: 18px; border-bottom: 1px solid var(--axis); }
   .cols .bars { position: absolute; inset: 0; display: flex; align-items: flex-end; gap: 6px; }
   .cols .bars i { flex: 1; display: block; border-radius: 4px 4px 0 0; background: var(--seed); min-width: 0; }
@@ -203,7 +205,8 @@
   .cols .bars i:hover { opacity: 0.85; }
   .xlab { display: flex; justify-content: space-between; font-size: 11px; color: var(--slate); margin-top: 6px; white-space: nowrap; }
 
-  .mapgrid { display: grid; grid-template-columns: 1fr 250px; gap: 28px; align-items: stretch; margin-top: 12px; }
+  #gapsCard { display: flex; flex-direction: column; }
+  .mapgrid { display: grid; grid-template-columns: 1fr 250px; gap: 28px; align-items: center; margin-top: 12px; flex: 1; min-height: 0; }
   .mapgrid .mapcol { display: flex; flex-direction: column; min-height: 0; }
   .mapgrid .mapcol .mapfit { flex: 1; min-height: 0; display: flex; }
   .mapgrid .mapcol .mapfit svg { width: 100%; height: 100%; }
@@ -563,7 +566,7 @@
           const m = st.by_level.middle || { eligible: 0, covered: 0 }, h = st.by_level.high || { eligible: 0, covered: 0 }, el = m.eligible + h.eligible, cv = m.covered + h.covered;
           const gain = el ? 100 * (x.mshs_new_7d || 0) / el : 0;
           return `${stateShape(code)}<div class="stat40 spikest" style="margin-top:4px">${esc(x.state || (x.title.match(/^reports from (.+?) in the last/) || [])[1] || "")}</div><div class="b pretty" style="margin-top:4px"><b style="color:var(--ink)">${esc(x.stat)}</b> valid reports in the last 7 days, ${esc(String(x.title.match(/, (\d+x) the week before/) ? x.title.match(/, (\d+x) the week before/)[1] : ""))} the week before. Current MS/HS coverage is <b style="color:var(--ink)">${el ? pct(100 * cv / el) : "—"}</b>${x.mshs_new_7d ? ` (+${gain < 0.1 ? gain.toFixed(2) : gain.toFixed(1)} pts this week)` : ""}, <b style="color:var(--ink)">${fmt(el - cv)}</b> schools remaining.</div>`; })()
-      : `<div class="stat40" style="margin-top:4px">${esc(x.stat)}</div><div class="b pretty" style="margin-top:4px">${esc(x.body)}</div>`}</div>`).join("") || `<div class="card sec-note">${PEND}: this fills in once there is a week of data.</div>`;
+      : `<div class="stat40" style="margin-top:4px">${esc(x.stat)}</div><div class="b pretty" style="margin-top:4px">${x.rule === "pace_vs_needed" ? `<b style="color:var(--ink)">${fmt(((cur.by_level || {}).middle || 0) + ((cur.by_level || {}).high || 0))}</b> MS/HS · <b style="color:var(--ink)">${fmt((cur.by_level || {}).elementary || 0)}</b> elementary. ` : ""}${esc(x.body)}</div>`}</div>`).join("") || `<div class="card sec-note">${PEND}: this fills in once there is a week of data.</div>`;
   document.addEventListener("click", (e) => { const t = e.target.closest("[data-go]"); if (t) go(t.dataset.go); });
 
   // ---- pace: the needle is MS/HS coverage, so everything here is MS/HS
