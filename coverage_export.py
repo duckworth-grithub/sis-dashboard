@@ -348,6 +348,9 @@ def main():
         rows = read_qualtrics_csv(path)
         responses += normalize_csv(survey, rows)
         print(f"{survey}: {len(rows)} rows read from {os.path.basename(path)}")
+    # links the team tags utm_source=test or utm_medium=test are walkthroughs: dropped before anything is counted
+    test_links = sum(1 for r in responses if r["utm_source"] == "test" or r["utm_medium"] == "test")
+    responses = [r for r in responses if not (r["utm_source"] == "test" or r["utm_medium"] == "test")]
     if not responses and not a.allow_empty:
         sys.exit("no responses: pass --from-qualtrics or --from-csv (or --allow-empty before launch)")
 
@@ -685,7 +688,7 @@ def main():
         v = "".join(ch for ch in (v or "") if ch.isprintable()).strip().lower()
         return v[:40]
     def src_label(r):
-        return clean_tag(r["utm_source"]) or clean_tag(r["src"]) or ("educator survey redirect" if r["channel"] == "redirect_from_educator" else "untagged")
+        return clean_tag(r["utm_source"]) or clean_tag(r["src"]) or "untagged"   # the site's own redirect hides the referer, so no inference from it
     def source_rows(rs, key, fields):
         groups = collections.defaultdict(list)
         for r in rs:
@@ -844,7 +847,7 @@ def main():
           "pending_ambiguous_responses": sum(1 for r in completes if r["match_status"] == "ambiguous"),
           "pending_ambiguous_schools_uncounted": coverage["overall"]["pending_ambiguous"],
           "unknown_channel_share": pct(sum(1 for r in valid if r["channel"] == "unknown"), len(valid)),
-          "redirect_from_educator": sum(1 for r in valid if r["channel"] == "redirect_from_educator"),
+          "redirect_from_educator": sum(1 for r in valid if r["channel"] == "redirect_from_educator"), "test_links": test_links,
           "district_reports": sum(1 for r in completes if r["role"] == "district_librarian"),
           "respondent_level_mismatch": sum(1 for r in valid if "respondent_level_mismatch" in r["flags"]),
           "codebook_misses": sum(codebook_misses.values()), "manual_matches_applied": sum(1 for r in responses if r["match_method"] == "manual"),
