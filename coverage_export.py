@@ -563,6 +563,23 @@ def main():
         by_role[role]["state_counts"] = {k: [{"st": st, "schools": n} for st, n in collections.Counter(by_id[sid]["st"] for sid in ids if sid in by_id and (k == "all" or lv3(sid) == k)).most_common()]
                                          for k in ("all", "mshs", "elementary")}
         by_role[role]["states_by_level"] = {k: sorted({by_id[sid]["st"] for sid in ids if sid in by_id and (k == "all" or lv3(sid) == k)}) for k in ("all", "mshs", "elementary")}
+        # biggest state this week for this role (per level): the state with the most valid reports from the role in the last 7 days
+        sd7, sd14 = (now - timedelta(days=6)).date(), (now - timedelta(days=13)).date()
+        _win = lambda r, lo, hi: bool(r["recorded_at"]) and lo <= r["recorded_at"].date() <= hi
+        spk = {}
+        for k in ("all", "mshs", "elementary"):
+            rk = [r for r in rs if r["ncessch"] and r["ncessch"] in by_id and (k == "all" or lv3(r["ncessch"]) == k)]
+            now7 = collections.Counter(by_id[r["ncessch"]]["st"] for r in rk if _win(r, sd7, now.date()))
+            if not now7:
+                spk[k] = None
+                continue
+            st = max(now7, key=lambda x: now7[x])
+            in7 = [r for r in rk if by_id[r["ncessch"]]["st"] == st and _win(r, sd7, now.date())]
+            spk[k] = {"st": st, "state": in7[0]["state_name"], "n": len(in7),
+                      "prev": sum(1 for r in rk if by_id[r["ncessch"]]["st"] == st and _win(r, sd14, sd7 - timedelta(days=1))),
+                      "new_mshs_7d": sum(1 for r in in7 if r.get("coverage_rank") == 1 and lv3(r["ncessch"]) == "mshs"),
+                      "new_elem_7d": sum(1 for r in in7 if r.get("coverage_rank") == 1 and lv3(r["ncessch"]) == "elementary")}
+        by_role[role]["spike"] = spk
     by_role["district_librarian"] = {"reports": sum(1 for r in responses if r["role"] == "district_librarian" and r["valid"])}
     lib_rows = [r for r in responses if r["survey"] == "librarian" and r["distribution_channel"] != "preview"
                 and not (r["recorded_at"] and r["recorded_at"] < cycle_start) and (r["school_string"] or r["typed_name_present"] or r["role"] == "district_librarian")]
