@@ -575,7 +575,9 @@ def main():
                 continue
             st = max(now7, key=lambda x: now7[x])
             in7 = [r for r in rk if by_id[r["ncessch"]]["st"] == st and _win(r, sd7, now.date())]
+            rk_st = [r for r in rk if by_id[r["ncessch"]]["st"] == st]
             spk[k] = {"st": st, "state": in7[0]["state_name"], "n": len(in7),
+                      "schools": len({r["ncessch"] for r in rk_st}), "schools_new": sum(1 for r in rk_st if r.get("coverage_rank") == 1),
                       "prev": sum(1 for r in rk if by_id[r["ncessch"]]["st"] == st and _win(r, sd14, sd7 - timedelta(days=1))),
                       "new_mshs_7d": sum(1 for r in in7 if r.get("coverage_rank") == 1 and lv3(r["ncessch"]) == "mshs"),
                       "new_elem_7d": sum(1 for r in in7 if r.get("coverage_rank") == 1 and lv3(r["ncessch"]) == "elementary")}
