@@ -836,11 +836,11 @@
     // cumulative since launch
     let cv = 0, cn = 0;
     const cum = (R.daily || []).map((x) => { cv += L === "all" ? x.valid : ((x.by_level || {})[L] || 0); cn += L === "all" ? x.new : ((x.new_by_level || {})[L] || 0); return { ...x, cv, cn }; });
-    const cumCard = `<div class="card" style="display:flex;flex-direction:column"><div class="card-title">${cap(pre)}educator reports since launch</div>
+    const cumCard = `<div class="card" style="display:flex;flex-direction:column"><div class="card-title">${cap(`${pre}educator reports since launch`)}</div>
         ${linesChart(cum, [{ name: "valid reports", val: (x) => x.cv }, { name: "schools put on the map", val: (x) => x.cn }], (x) => mdy(x.date), (x) => `${fmt(x.cv)} valid reports so far · ${fmt(x.cn)} schools put on the map · ${fmt(L === "all" ? x.valid : ((x.by_level || {})[L] || 0))} that day`)}
         <div class="sub12" style="margin-top:10px">Cumulative since ${mdy((d.cycle.start || "").slice(0, 10))}. "On the map" = the school's first report ever.</div></div>`;
     const wkR = R.weekly || [];
-    const wkCard = `<div class="card" style="display:flex;flex-direction:column"><div class="card-title">${cap(pre)}educator reports per week</div>
+    const wkCard = `<div class="card" style="display:flex;flex-direction:column"><div class="card-title">${cap(`${pre}educator reports per week`)}</div>
         ${L === "all"
           ? linesChart(wkR, [{ name: "MS/HS", val: (w) => (w.by_level || {}).mshs || 0 }, { name: "elementary", val: (w) => (w.by_level || {}).elementary || 0 }], (w) => mdy(w.week_start), (w) => `${fmt((w.by_level || {}).mshs || 0)} MS/HS · ${fmt((w.by_level || {}).elementary || 0)} elementary · ${fmt(w.reports)} in all`)
           : weekLine(wkR, (w) => (w.by_level || {})[L] || 0, (w) => `${fmt((w.by_level || {})[L] || 0)} valid ${pre}educator reports`)}
