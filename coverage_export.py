@@ -62,6 +62,14 @@ FIELDS = {
         "pol_view_ban_hw": ("QID417", "l_view_ban_hw"), "pol_view_ban_laptops": ("QID418", "l_view_ban_laptops"),
     },
 }
+# Marker-only fields: pulled so a "tktk" typed there marks a team test, then discarded. Never written to any output.
+MARKER_FIELDS = {
+    "student": {"mk_mascot": ("QID31", "s_school_mascot"), "mk_colors": ("QID32", "s_school_colors")},
+    "educator": {"mk_policy_text": ("QID57", "e_policy_text")},
+    "librarian": {"mk_policy_text": ("QID1", "l_policy_text"), "mk_dist_typed": ("QID264", "l_dist_name_typed"), "mk_dist_nces": ("QID261", "l_dist_name_nces")},
+}
+def pulled_fields(survey):
+    return {**FIELDS[survey], **MARKER_FIELDS.get(survey, {})}
 FIELDS["summer"] = {
     "role_type": ("QID1", "Q1role"), "lib_type": ("QID240", "Q240LibType"), "state": ("QID2", "Q2StateSummer"),
     "nces1": ("QID3", "Q3NameNCESSummer"), "in_nces": ("QID4", "Q4InNCESSummer"), "typed": ("QID6", "Q6NameTypedSummer"),
@@ -116,7 +124,7 @@ def read_qualtrics_csv(path):
 
 
 def normalize_csv(survey, rows):
-    tags = {k: t for k, (q, t) in FIELDS[survey].items()}
+    tags = {k: t for k, (q, t) in pulled_fields(survey).items()}
     out = []
     for r in rows:
         meta = {
@@ -142,7 +150,7 @@ def normalize_api(survey, responses):
             "finished": truthy(v.get("finished")), "progress": to_int(v.get("progress")), "duration_s": to_int(v.get("duration")),
             "distribution_channel": (v.get("distributionChannel") or "").lower(),
         }
-        ans = {k: get(v, q) for k, (q, t) in FIELDS[survey].items()}
+        ans = {k: get(v, q) for k, (q, t) in pulled_fields(survey).items()}
         emb = {k: v.get(k, "") for k in EMBEDDED}
         out.append(build(survey, meta, ans, emb))
     return out
@@ -203,7 +211,7 @@ def qualtrics_export(survey, survey_id, in_progress):
     import requests
     token, dc = os.environ["QUALTRICS_TOKEN"], os.environ["QUALTRICS_DATACENTER"]
     base, hdr = f"https://{dc}.qualtrics.com/API/v3", {"X-API-TOKEN": token, "Content-Type": "application/json"}
-    body = {"format": "json", "compress": True, "questionIds": [q for q, t in FIELDS[survey].values()],
+    body = {"format": "json", "compress": True, "questionIds": [q for q, t in pulled_fields(survey).values()],
             "embeddedDataIds": EMBEDDED_BY_SURVEY.get(survey, []), "surveyMetadataIds": METADATA}
     if in_progress:
         body["exportResponsesInProgress"] = True
