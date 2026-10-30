@@ -817,7 +817,7 @@
         <div class="sub12" style="margin-top:10px">${key === "student" ? "Students must be 13 or older, so student reports are MS/HS by definition." : key === "librarian" ? `Valid reports by branch: district ${fmt((R.by_branch || {}).valid_district)} (no school) · elementary-only ${fmt((R.by_branch || {}).valid_elementary)} · MS/HS ${fmt((R.by_branch || {}).valid_mshs)}. Responses on each path: ${fmt((R.by_branch || {}).district)} · ${fmt((R.by_branch || {}).elementary_only)} · ${fmt((R.by_branch || {}).mshs)}.` : ""}</div></div>`;
     const stateTracker = stateTrackerCard(R.states || (R.top_states || []).map((g) => g.st), noun);
     const srcCards = key === "student" ? sourceCards(SRC.student, "student", false) : "";
-    const spike = R.spike ? spikeCard((R.spike || {}).all, "mshs", noun) : "";
+    const spike = R.spike && key !== "student" ? spikeCard((R.spike || {}).all, "mshs", noun) : "";   // Sadie: no state card on Students
     const body = spike + (key === "student" ? stateTracker + srcCards : "") + weeklyCard + `<div class="card"><div class="card-title">States with the most ${noun}-reported schools</div><div class="ranked" style="margin-top:6px">${(R.top_states || []).map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc((byCode[g.st] || {}).state || g.st)}</span><span class="v">${fmt(g.schools)} <small>${g.schools === 1 ? "school" : "schools"}</small></span></div>`).join("") || `<div class="sec-note">—</div>`}</div></div>`
       + `<div style="grid-column:1/-1">${outreachCard(`Outreach to ${noun}s`, OUT.filter((o) => o.audience === key || o.audience === "all"), false)}</div>`;
     $("#" + tilesId).innerHTML = tiles; $("#" + bodyId).innerHTML = body;
