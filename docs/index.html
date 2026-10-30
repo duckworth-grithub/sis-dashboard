@@ -831,7 +831,7 @@
     const tiles = (L === "elementary"
         ? tile("Elementary schools with a " + esc(d.cycle.name) + " report", pct(E.pct), `${fmt(E.covered)} of ${fmt(E.eligible)} · ${fmt(E.remaining)} remaining`)
         : tile(cap(`${pre}schools with an educator report this cycle`), fmt(pick(R.schools_by_level)), L === "all" ? `${fmt((R.schools_by_level || {}).mshs || 0)} MS/HS · ${fmt((R.schools_by_level || {}).elementary || 0)} elementary · ${fmt(R.valid_reports)} valid reports` : `${fmt(pick(R.valid_by_level))} valid educator reports`))
-      + tile(cap(`${pre}schools educators put on the map`), fmt(pick(R.new_by_level)), "first-ever report came from an educator")
+      + tile(cap(`${pre}schools put on the map`), fmt(pick(R.new_by_level)), "first-ever report for the school")
       + tile(cap(`${pre}educator reports this week`), fmt(pick(R.this_week_by_level)), `last week ${fmt(pick(R.last_week_by_level))}`);
     // cumulative since launch
     let cv = 0, cn = 0;
@@ -861,7 +861,7 @@
           <div class="sub12" style="margin-top:8px">All roles' reports count toward coverage, not only educators.</div><div style="margin-top:12px"><span class="pill" data-go="gaps">All states →</span></div></div>`
       : "";
     $("#eduTiles").innerHTML = tiles;
-    $("#eduBody").innerHTML = stateTrackerCard((R.states_by_level || {})[L] || R.states, pre ? pre.trim() + " educator" : "educator")
+    $("#eduBody").innerHTML = (L === "elementary" ? stateTrackerCard((R.states_by_level || {}).elementary || [], "elementary educator") : "")
       + cumCard + wkCard + sourceCards((SRC.roles || {}).educator, "educator", true) + rankCard + extra
       + `<div style="grid-column:1/-1">${outreachCard("Outreach to educators", OUT.filter((o) => o.audience === "educator" || o.audience === "all"), false)}</div>`;
   }
