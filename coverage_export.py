@@ -349,8 +349,10 @@ def main():
         responses += normalize_csv(survey, rows)
         print(f"{survey}: {len(rows)} rows read from {os.path.basename(path)}")
     # links the team tags utm_source=test or utm_medium=test are walkthroughs: dropped before anything is counted
-    test_links = sum(1 for r in responses if r["utm_source"] == "test" or r["utm_medium"] == "test")
-    responses = [r for r in responses if not (r["utm_source"] == "test" or r["utm_medium"] == "test")]
+    # team tests never reach any count: "tktk" typed in a pulled field, a utm test link, or an id on inputs/test_responses.txt
+    is_test = lambda r: (r.get("test_marker") and not test_mode) or r["utm_source"] == "test" or r["utm_medium"] == "test" or r["response_id"] in test_ids
+    test_links = sum(1 for r in responses if is_test(r))
+    responses = [r for r in responses if not is_test(r)]
     if not responses and not a.allow_empty:
         sys.exit("no responses: pass --from-qualtrics or --from-csv (or --allow-empty before launch)")
 
