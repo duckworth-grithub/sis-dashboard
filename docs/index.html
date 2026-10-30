@@ -335,7 +335,7 @@
         <li><b>In the cycle.</b> Recorded on or after the cycle start. A response still in progress has no recorded date, so it is dated by its last activity.</li>
         <li><b>On the right survey.</b> Someone who chose student or librarian on the educator survey was sent to that survey and is counted there, not here.</li>
         <li><b>Complete.</b> Educators and students: named a school and answered a phone-policy question (for elementary educators, the device-access question). Middle/high librarians: named a school and answered a phone-policy question. Elementary-only librarians: named a school and answered a device question on the Your View page. District-wide librarians: reached the district questions; they have no school and no policy question. Qualtrics' own "finished" flag is recorded but never required.</li>
-        <li><b>Not a test.</b> No "tktk" in any field, and not on the test-response list.</li>
+        <li><b>Not a test.</b> Team tests are removed before anything is counted, so they never appear in submissions or starts: "tktk" typed in any pulled field (school name, zip, state, policy answers, link tags), a link tagged utm_source=test, or an id on the test-response list.</li>
         <li><b>Eligible role.</b> Students must have given consent.</li>
         <li><b>School matched.</b> The school named matches exactly one school in the NCES list. No match, or two possible matches, goes to the review queue instead of counting. District-wide librarians skip this step.</li>
         <li><b>Not a speeder.</b> At least 60 seconds, 25 for elementary-only librarians, no floor for district-wide librarians.</li>
@@ -810,7 +810,7 @@
       <tr><td>Schools with coverage earned but not countable</td><td class="num">${fmt(dq.pending_ambiguous_schools_uncounted)}</td></tr>
       <tr><td>Valid reports with no identifiable source</td><td class="num">${pct(dq.unknown_channel_share)} ${dq.unknown_channel_share > 20 ? '<span class="tag warn">&gt; 20%</span>' : ""}</td></tr>
       <tr><td>Students via the educator redirect (source lost)</td><td class="num">${fmt(dq.redirect_from_educator)}</td></tr>
-      <tr><td>Team test links (utm_source=test), dropped entirely</td><td class="num">${fmt(dq.test_links || 0)}</td></tr>
+      <tr><td>Team tests (tktk, utm_source=test, listed ids), dropped before counting</td><td class="num">${fmt(dq.test_links || 0)}</td></tr>
       <tr><td>District-only librarian reports (kept apart)</td><td class="num">${fmt(dq.district_reports)}</td></tr>
       <tr><td>Respondent level disagrees with school level</td><td class="num">${fmt(dq.respondent_level_mismatch)}</td></tr>
       <tr><td>Manual matches applied</td><td class="num">${fmt(dq.manual_matches_applied)}</td></tr>
