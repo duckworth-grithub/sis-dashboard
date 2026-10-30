@@ -553,6 +553,16 @@ def main():
                          "by_survey": dict(collections.Counter(r["survey"] for r in rs)),
                          "top_states": [{"st": st, "schools": n} for st, n in collections.Counter(by_id[sid]["st"] for sid in ids if sid in by_id).most_common(8)],
                          "states": sorted({by_id[sid]["st"] for sid in ids if sid in by_id})}   # every state/territory with at least one school reported by this role
+        # level splits (school level from NCES: mshs = middle or high, elementary, other) for the Educators tab's level switch
+        lv3 = lambda sid: ("mshs" if by_id.get(sid, {}).get("level") in ("middle", "high") else "elementary" if by_id.get(sid, {}).get("level") == "elementary" else "other")
+        by_role[role]["valid_by_level"] = dict(collections.Counter(lv3(r["ncessch"]) for r in rs if r["ncessch"]))
+        by_role[role]["schools_by_level"] = dict(collections.Counter(lv3(sid) for sid in ids))
+        by_role[role]["new_by_level"] = dict(collections.Counter(lv3(r["ncessch"]) for r in rs if r.get("coverage_rank") == 1 and r["ncessch"]))
+        by_role[role]["this_week_by_level"] = dict(collections.Counter(lv3(r["ncessch"]) for r in rs if r["week"] == str(this_wk) and r["ncessch"]))
+        by_role[role]["last_week_by_level"] = dict(collections.Counter(lv3(r["ncessch"]) for r in rs if r["week"] == str(last_wk) and r["ncessch"]))
+        by_role[role]["state_counts"] = {k: [{"st": st, "schools": n} for st, n in collections.Counter(by_id[sid]["st"] for sid in ids if sid in by_id and (k == "all" or lv3(sid) == k)).most_common()]
+                                         for k in ("all", "mshs", "elementary")}
+        by_role[role]["states_by_level"] = {k: sorted({by_id[sid]["st"] for sid in ids if sid in by_id and (k == "all" or lv3(sid) == k)}) for k in ("all", "mshs", "elementary")}
     by_role["district_librarian"] = {"reports": sum(1 for r in responses if r["role"] == "district_librarian" and r["valid"])}
     lib_rows = [r for r in responses if r["survey"] == "librarian" and r["distribution_channel"] != "preview"
                 and not (r["recorded_at"] and r["recorded_at"] < cycle_start) and (r["school_string"] or r["typed_name_present"] or r["role"] == "district_librarian")]
@@ -680,8 +690,17 @@ def main():
     partner_rows.sort(key=lambda x: (-x["new_schools"], x["partner"]))
 
     for role in ("student", "educator", "librarian"):
+        role_rs = [r for r in responses if r["valid"] and (r["role"] == role or (role == "librarian" and r["role"] == "district_librarian"))]
+        lv3 = lambda sid: ("mshs" if by_id.get(sid, {}).get("level") in ("middle", "high") else "elementary" if by_id.get(sid, {}).get("level") == "elementary" else "other")
         by_role[role]["weekly"] = [{"week_start": w["week_start"], "partial": w["partial"],
-                                    "reports": sum(1 for r in responses if r["valid"] and (r["role"] == role or (role == "librarian" and r["role"] == "district_librarian")) and r["week"] == w["week_start"])} for w in weekly]
+                                    "reports": sum(1 for r in role_rs if r["week"] == w["week_start"]),
+                                    "by_level": dict(collections.Counter(lv3(r["ncessch"]) for r in role_rs if r["week"] == w["week_start"] and r["ncessch"]))} for w in weekly]
+        day0 = max(cycle_start.date(), (now - timedelta(days=120)).date())
+        by_role[role]["daily"] = [{"date": str(dd), "valid": sum(1 for r in role_rs if r["recorded_at"] and r["recorded_at"].date() == dd),
+                                   "new": sum(1 for r in role_rs if r.get("coverage_rank") == 1 and r["recorded_at"] and r["recorded_at"].date() == dd),
+                                   "new_by_level": dict(collections.Counter(lv3(r["ncessch"]) for r in role_rs if r.get("coverage_rank") == 1 and r["ncessch"] and r["recorded_at"] and r["recorded_at"].date() == dd)),
+                                   "by_level": dict(collections.Counter(lv3(r["ncessch"]) for r in role_rs if r["ncessch"] and r["recorded_at"] and r["recorded_at"].date() == dd))}
+                                  for dd in (day0 + timedelta(days=i) for i in range((now.date() - day0).days + 1))]
     # ---- overview extras: pace detail, 4-week sources, callouts (rule engine, COVERAGE-DESIGN.md §7)
     pace["pts_per_week"] = round(100.0 * rolling / coverage["overall"]["eligible"], 2) if coverage["overall"]["eligible"] else None
     pace["projected_full_date"] = (now + timedelta(weeks=coverage["overall"]["remaining"] / rolling)).strftime("%Y-%m-%d") if rolling else None
@@ -715,19 +734,25 @@ def main():
                         "first_seen": min(seen).strftime("%Y-%m-%d") if seen else None, "last_seen": max(seen).strftime("%Y-%m-%d") if seen else None})
         out.sort(key=lambda x: (-x["valid"], -x["new_schools"], -x["starts"], x[fields[0]]))
         return out
-    stu = [r for r in in_cycle if r["survey"] == "student"]
-    top_stu = [x["source"] for x in source_rows(stu, src_label, ["source"])[:6]]
+    lv3 = lambda sid: ("mshs" if by_id.get(sid, {}).get("level") in ("middle", "high") else "elementary" if by_id.get(sid, {}).get("level") == "elementary" else "other")
+    def role_sources(survey):
+        rs_s = [r for r in in_cycle if r["survey"] == survey]
+        rows = source_rows(rs_s, src_label, ["source"])
+        for x in rows:   # valid reports by school level, for the Educators tab
+            x["valid_by_level"] = dict(collections.Counter(lv3(r["ncessch"]) for r in rs_s if r["valid"] and r["ncessch"] and src_label(r) == x["source"]))
+        top = [x["source"] for x in rows[:6]]
+        return {"tagged_share": pct(sum(1 for r in rs_s if clean_tag(r["utm_source"]) or clean_tag(r["src"])), len(rs_s)),
+                "by_source": rows,
+                "by_medium": source_rows(rs_s, lambda r: clean_tag(r["utm_medium"]) or "none", ["medium"]),
+                "campaigns": source_rows(rs_s, lambda r: (src_label(r), clean_tag(r["utm_medium"]) or "", clean_tag(r["utm_campaign"]) or ""), ["source", "medium", "campaign"]),
+                "weekly": [{"week_start": w["week_start"], "partial": w["partial"],
+                            "by_source": {sl: sum(1 for r in rs_s if r["valid"] and r["week"] == w["week_start"] and src_label(r) == sl) for sl in top},
+                            "other": sum(1 for r in rs_s if r["valid"] and r["week"] == w["week_start"] and src_label(r) not in top)} for w in weekly]}
+    roles_src = {sv: role_sources(sv) for sv in ("student", "educator", "librarian")}
     sources = {
         "all": source_rows(in_cycle, src_label, ["source"]),
         "tagged_share": pct(sum(1 for r in in_cycle if clean_tag(r["utm_source"]) or clean_tag(r["src"])), len(in_cycle)),
-        "student": {
-            "tagged_share": pct(sum(1 for r in stu if clean_tag(r["utm_source"]) or clean_tag(r["src"])), len(stu)),
-            "by_source": source_rows(stu, src_label, ["source"]),
-            "by_medium": source_rows(stu, lambda r: clean_tag(r["utm_medium"]) or "none", ["medium"]),
-            "campaigns": source_rows(stu, lambda r: (src_label(r), clean_tag(r["utm_medium"]) or "", clean_tag(r["utm_campaign"]) or ""), ["source", "medium", "campaign"]),
-            "weekly": [{"week_start": w["week_start"], "partial": w["partial"],
-                        "by_source": {sl: sum(1 for r in stu if r["valid"] and r["week"] == w["week_start"] and src_label(r) == sl) for sl in top_stu},
-                        "other": sum(1 for r in stu if r["valid"] and r["week"] == w["week_start"] and src_label(r) not in top_stu)} for w in weekly]}}
+        "roles": roles_src, "student": roles_src["student"]}
     callouts = []
     outreach_path = os.path.join(a.inputs, "outreach.csv")
     outreach = [r for r in read_csv(outreach_path)] if os.path.exists(outreach_path) else []

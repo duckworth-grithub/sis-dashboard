@@ -85,6 +85,14 @@
   .bars i.stack b { display: block; width: 100%; flex: 0 0 auto; }
   .srclegend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 12px; color: var(--slate); }
   .srclegend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  .lvlsw { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .lvlsw .pill { cursor: pointer; }
+  .lvlsw .pill[aria-pressed="true"] { background: var(--chalk); color: #FFFFFF; }
+  .ranked .row.more { display: none; }
+  .ranked.open .row.more { display: flex; }
+  .wl .wldot.s1 { background: var(--chalk); } .wl .wldot.s1.hollow { background: #FFFFFF; border-color: var(--chalk); }
+  .wl .line.s1 { stroke: var(--chalk); }
+  .wl .wllab.s1 { color: var(--chalk); }
   .strow { display: flex; align-items: baseline; gap: 14px; margin-top: 6px; flex-wrap: wrap; }
   .strow .of { font-size: 18px; font-weight: 700; color: var(--slate); letter-spacing: 0; }
   .stbar { display: grid; grid-template-columns: repeat(50, 1fr); gap: 3px; margin-top: 14px; }
@@ -305,10 +313,11 @@
     <div class="grid3 roster4" id="rosterCols"></div>
   </div>
 
-  <div class="page" id="page-elementary">
-    <h2 class="ph">Elementary</h2><p class="pd">The elementary survey is new this year, so elementary coverage restarts at zero. Schools that reported in earlier waves are listed as "reported before" and count once they take the new survey. Elementary is not part of the headline KPI.</p>
-    <div class="grid3" id="elemTiles" style="grid-template-columns:repeat(2,minmax(0,1fr))"></div>
-    <div class="grid2" id="elemBody"></div>
+  <div class="page" id="page-educator">
+    <h2 class="ph">Educators</h2><p class="pd">Teachers and school staff report on their own school. MS/HS reports feed the headline KPI. The elementary survey is new this year, so elementary coverage restarts at zero; schools that reported in earlier waves are listed as "reported before" and count once they take the new survey.</p>
+    <div class="lvlsw" id="eduLevel" role="group" aria-label="School level"><button class="pill" data-level="all" aria-pressed="true">All educators</button><button class="pill" data-level="mshs" aria-pressed="false">MS/HS</button><button class="pill" data-level="elementary" aria-pressed="false">Elementary</button></div>
+    <div class="grid3" id="eduTiles"></div>
+    <div class="grid2" id="eduBody"></div>
   </div>
 
   <div class="page" id="page-student">
@@ -373,7 +382,7 @@
   const byCode = {}; d.states.forEach((s) => (byCode[s.st] = s));
 
   // ---- header
-  const TABS = [["overview", "Overview"], ["gaps", "Gaps"], ["bystate", "By state"], ["elementary", "Elementary"], ["student", "Students"], ["librarian", "Librarians"], ["quality", "Data quality"]];
+  const TABS = [["overview", "Overview"], ["gaps", "Gaps"], ["bystate", "By state"], ["educator", "Educators"], ["student", "Students"], ["librarian", "Librarians"], ["quality", "Data quality"]];
   $("#tabs").innerHTML = TABS.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${k === "overview"}">${l}</button>`).join("");
   $("#secMenu").innerHTML = TABS.map(([k, l]) => `<button role="menuitem" data-tab="${k}" aria-selected="${k === "overview"}">${l}</button>`).join("");
   const secMenu = $("#secMenu"), secPick = $("#secPick");
@@ -387,12 +396,14 @@
     const cur = TABS.find(([k]) => k === tab); if (cur) $("#secPickLabel").textContent = cur[1];
     if (tab === "gaps" && params.state) { $("#stateSearch").value = params.state; renderStates(); }
     if (tab === "bystate" && params.state) { $("#rosterState").value = params.state; loadRoster(params.state); }
+    if (tab === "educator" && params.level && params.level !== eduLevel && typeof renderEducators === "function") { eduLevel = params.level; renderEducators(); }
     window.scrollTo({ top: 0 });
   }
   function go(target) {
     if (!target) return;
     if (target.endsWith(".csv") || target.endsWith(".md")) { window.location.href = target; return; }
     let [tab, q] = target.split("?");
+    if (tab === "elementary") { tab = "educator"; q = "level=elementary"; }   // old links
     if (!TABS.some(([k]) => k === tab)) tab = "overview";
     const params = Object.fromEntries(new URLSearchParams(q || ""));
     location.hash = tab + (q ? "?" + q : "");
@@ -411,7 +422,7 @@
   if (!d.ccd_loaded) n += `<div class="notice"><b>School levels unknown.</b> Load the NCES panel to split elementary / middle / high.</div>`;
   $("#notices").innerHTML = n;
 
-  // ---- band: headline = middle + high schools with at least one report (elementary has its own tab)
+  // ---- band: headline = middle + high schools with at least one report (elementary lives on the Educators tab)
   const wk = v.weekly || [], cur = wk[wk.length - 1] || { by_level: {} };
   const H = c.mshs && c.mshs.eligible ? c.mshs : o;
   const hLabel = c.mshs && c.mshs.eligible ? "Every U.S. MS/HS represented" : "Every U.S. public school represented";
@@ -739,21 +750,59 @@
   rsel.addEventListener("change", () => loadRoster(rsel.value));
   if (rsel.value) loadRoster(rsel.value);
 
-  // ---- elementary, students, librarians
+  // ---- educators (MS/HS + elementary, with a level switch), students, librarians
   const E = c.by_level.elementary || {};
-  const elemWeekly = wk.map((w) => ({ ...w, n: w.by_level.elementary || 0 })), emx = Math.max(1, ...elemWeekly.map((w) => w.n));
-  $("#elemTiles").innerHTML = tile("Elementary schools with a " + esc(d.cycle.name) + " report", P ? PEND : pct(E.pct), P ? `${fmt(E.eligible)} elementary schools in scope` : `${fmt(E.covered)} of ${fmt(E.eligible)} · ${fmt(E.remaining)} remaining`) +
-    tile("New elementary schools this week", P ? PEND : fmt(cur.by_level.elementary || 0), P ? "" : `last week ${fmt((wk[wk.length - 2] || { by_level: {} }).by_level.elementary || 0)}`);
+  const elemWeekly = wk.map((w) => ({ ...w, n: w.by_level.elementary || 0 }));
   const elemStates = [...d.states].map((s2) => ({ st: s2.st, state: s2.state, ...(s2.by_level.elementary || { eligible: 0, covered: 0 }) })).filter((x) => x.eligible > 0).map((x) => ({ ...x, remaining: x.eligible - x.covered, pct: +(100 * x.covered / x.eligible).toFixed(1) })).sort((a, b) => b.remaining - a.remaining).slice(0, 8);
-  $("#elemBody").innerHTML = `<div class="card" style="display:flex;flex-direction:column"><div class="card-title">Elementary schools newly represented per week</div>
-      ${weekLine(elemWeekly, (w) => w.n, (w) => `${fmt(w.n)} elementary schools`)}
-      <div class="sub12" style="margin-top:10px">Depth: ${fmt(E.depth ? E.depth["1"] : null)} with one report · ${fmt(E.depth ? E.depth["2plus"] : null)} with two or more.</div></div>
-    <div class="card"><div class="card-title">Most uncovered elementary schools</div><div class="ranked" style="margin-top:6px">${elemStates.map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc(g.state)}</span><span class="v">${fmt(g.remaining)} <small>· ${pct(g.pct)}</small></span></div>`).join("")}</div>
-      <div style="margin-top:12px"><span class="pill" data-go="gaps">All states →</span></div></div>
-    <div style="grid-column:1/-1">${outreachCard("Outreach to educators", OUT.filter((o) => o.audience === "educator" || o.audience === "all"), false)}</div>`;
-
+  let eduLevel = (new URLSearchParams((location.hash.split("?")[1] || ""))).get("level") || "all";
+  if (!["all", "mshs", "elementary"].includes(eduLevel)) eduLevel = "all";
   const SRC = d.sources || {}, srcName = (x) => x === "untagged" ? '<span style="color:var(--muted)">untagged</span>' : esc(x);
   const srcBar = (n2, mx) => `<span class="barcell"><i style="width:${Math.max(2, Math.round(90 * n2 / mx))}px"></i>${fmt(n2)}</span>`;
+  // multi-series line chart (same construction as weekLine): series = [{name, val(row), tip?}], lab(row) = x label
+  function linesChart(rows, series, lab, tipOf) {
+    if (!rows.length) return `<div class="sec-note" style="margin-top:12px">Nothing yet.</div>`;
+    const mx = Math.max(1, ...rows.flatMap((r) => series.map((sr) => sr.val(r)))), L = 1.5, R = 11, TOP = 14;
+    const X = (i) => rows.length > 1 ? L + (i * (100 - L - R)) / (rows.length - 1) : 50, Y = (n) => (100 - TOP) * n / mx;
+    const seg = (ps) => ps.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(2)},${(100 - y).toFixed(2)}`).join(" ");
+    const mid = Math.floor(rows.length / 2), last = rows[rows.length - 1];
+    const paths = series.map((sr, si) => { const pts = rows.map((r, i) => [X(i), Y(sr.val(r))]); return { sr, si, pts }; });
+    const area = paths[0].pts.length ? `${seg(paths[0].pts)} L${paths[0].pts[paths[0].pts.length - 1][0].toFixed(2)},100 L${paths[0].pts[0][0].toFixed(2)},100 Z` : "";
+    return `<div class="wl">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="${area}" class="area"/>${paths.map(({ si, pts }) => `<path d="${seg(pts)}" class="line s${si}"/>`).join("")}</svg>
+      ${paths.map(({ si, pts }) => pts.map(([x, y], i) => `<i class="wldot s${si}${rows[i].partial ? " hollow" : ""}" style="left:${x.toFixed(2)}%;bottom:${y.toFixed(2)}%" data-tip="<b>${esc(lab(rows[i]))}${rows[i].partial ? " (so far)" : ""}</b><br>${tipOf(rows[i])}"></i>`).join("")).join("")}
+      ${paths.map(({ sr, si, pts }) => `<b class="wllab s${si}" style="left:${(pts[pts.length - 1][0] + 2.2).toFixed(2)}%;bottom:${pts[pts.length - 1][1].toFixed(2)}%">${fmt(sr.val(last))}</b>`).join("")}
+    </div>
+    <div class="xlab"><span>${esc(lab(rows[0]))}</span><span>${rows.length > 2 ? esc(lab(rows[mid])) : ""}</span><span>${rows.length > 1 ? esc(lab(last)) : ""}</span></div>
+    ${series.length > 1 ? `<div class="srclegend">${series.map((sr, si) => `<span><i style="background:${si ? "var(--chalk)" : "var(--study)"}"></i>${esc(sr.name)}</span>`).join("")}</div>` : ""}`;
+  }
+  // "X of 50 states" tracker
+  const stateTrackerCard = (codes, noun) => {
+    const have = new Set((codes || []).filter((st) => st !== "DC" && !TERR.has(st)));
+    const fifty = d.states.map((s) => s.st).filter((st) => st !== "DC" && !TERR.has(st)).sort();
+    const art = /^(a|e|i|o|u|ms)/i.test(noun) ? "an" : "a";
+    return `<div class="card" style="grid-column:1/-1"><div class="card-title">States with ${art} ${noun}-reported school</div>
+        <div class="strow"><div class="stat40">${fmt(have.size)}<span class="of"> of 50</span></div><div class="sub12" style="margin-top:0">states have at least one school with a valid ${noun} report this cycle</div></div>
+        <div class="stbar">${fifty.map((st) => `<i class="${have.has(st) ? "on" : ""}" data-tip="<b>${esc((byCode[st] || {}).state || st)}</b><br>${have.has(st) ? `at least one school with a ${noun} report` : `no ${noun} reports yet`}"></i>`).join("")}</div>
+        <div class="sub12" style="margin-top:10px">${have.size ? `Reached: ${fifty.filter((st) => have.has(st)).map((st) => esc((byCode[st] || {}).state || st)).join(", ")}.` : `No states yet.`} DC and the territories count toward national totals but not toward the 50.</div></div>`;
+  };
+  // utm source cards for one survey: ranked sources, weekly stacked by source, campaigns. levelCols adds MS/HS and elementary valid columns.
+  const sourceCards = (S, noun, levelCols) => {
+    if (!S) return "";
+    const bs = S.by_source || [], mx = Math.max(1, ...bs.map((x) => x.valid));
+    const top = Object.keys((S.weekly || [])[0] ? S.weekly[0].by_source : {}), pal = ["#2C7A4B", "#8FC49B", "#1E4034", "#C3E5CB", "#5E9E72", "#A9D3B3"];
+    const wk = S.weekly || [], wmx = Math.max(1, ...wk.map((w) => Object.values(w.by_source).reduce((a, b) => a + b, 0) + w.other));
+    return `<div class="card" style="grid-column:1/-1"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Where ${noun} reports come from</div><div class="sec-note">${pct(S.tagged_share)} of ${noun} starts carried a utm tag${levelCols ? " · all levels" : ""}</div></div>
+        ${bs.length ? `<div class="tablewrap"><table style="margin-top:10px"><thead><tr><th>Source</th><th class="num">Starts</th><th class="num">Completes</th><th class="num">Valid</th>${levelCols ? `<th class="num tagcol">MS/HS</th><th class="num tagcol">Elem</th>` : ""}<th class="num">New schools</th><th class="num tagcol">Start → valid</th><th class="num tagcol">States</th><th class="num">This wk</th><th class="num tagcol">Last wk</th><th class="tagcol">First seen</th></tr></thead>
+        <tbody>${bs.map((x) => `<tr><td>${srcName(x.source)}</td><td class="num">${fmt(x.starts)}</td><td class="num">${fmt(x.completes)}</td><td class="num">${srcBar(x.valid, mx)}</td>${levelCols ? `<td class="num tagcol">${fmt((x.valid_by_level || {}).mshs || 0)}</td><td class="num tagcol">${fmt((x.valid_by_level || {}).elementary || 0)}</td>` : ""}<td class="num">${fmt(x.new_schools)}</td><td class="num tagcol">${pct(x.starts ? 100 * x.valid / x.starts : 0)}</td><td class="num tagcol">${fmt(x.states.length)}</td><td class="num">${fmt(x.this_week)}</td><td class="num tagcol">${fmt(x.last_week)}</td><td class="tagcol">${x.first_seen ? mdy(x.first_seen) : "—"}</td></tr>`).join("")}</tbody></table></div>` : `<div class="sec-note" style="margin-top:8px">No ${noun} responses yet.</div>`}
+        <div class="sub12" style="margin-top:8px">A personalized partner link shows up here as its own row (its utm_source) from the first click. "Untagged" arrived without a tag.</div></div>`
+      + `<div class="card" style="display:flex;flex-direction:column"><div class="card-title">Valid ${noun} reports per week, by source</div>
+        <div class="cols"><div class="bars">${wk.map((w) => { const tot = Object.values(w.by_source).reduce((a, b) => a + b, 0) + w.other; return `<i class="stack ${w.partial ? "cur" : ""}" style="height:${Math.max(2, Math.round(100 * tot / wmx))}%;background:transparent" data-tip="<b>Week of ${mdy(w.week_start)}${w.partial ? " (partial)" : ""}</b><br>${top.map((t) => `${esc(t)} ${fmt(w.by_source[t])}`).join("<br>")}${w.other ? `<br>other ${fmt(w.other)}` : ""}">${top.map((t, i) => `<b style="height:${tot ? 100 * w.by_source[t] / tot : 0}%;background:${pal[i]}"></b>`).join("")}${w.other ? `<b style="height:${tot ? 100 * w.other / tot : 0}%;background:#D9D9D6"></b>` : ""}</i>`; }).join("")}</div></div>
+        <div class="xlab"><span>${wk.length ? mdy(wk[0].week_start) : ""}</span><span></span><span>${wk.length ? mdy(wk[wk.length - 1].week_start) : ""}</span></div>
+        <div class="srclegend">${top.map((t, i) => `<span><i style="background:${pal[i]}"></i>${srcName(t)}</span>`).join("")}${wk.some((w) => w.other) ? `<span><i style="background:#D9D9D6"></i>other</span>` : ""}</div></div>`
+      + `<div class="card"><div class="card-title">Campaigns</div><div class="sub12" style="margin-top:4px">source · medium · campaign, as tagged on the link</div>
+        ${(S.campaigns || []).length ? `<div class="tablewrap"><table style="margin-top:10px"><thead><tr><th>Source</th><th>Medium</th><th>Campaign</th><th class="num">Starts</th><th class="num">Valid</th><th class="num">New</th><th class="tagcol">Last seen</th></tr></thead>
+        <tbody>${S.campaigns.map((x) => `<tr><td>${srcName(x.source)}</td><td>${x.medium ? esc(x.medium) : '<span style="color:var(--muted)">—</span>'}</td><td>${x.campaign ? esc(x.campaign) : '<span style="color:var(--muted)">—</span>'}</td><td class="num">${fmt(x.starts)}</td><td class="num">${fmt(x.valid)}</td><td class="num">${fmt(x.new_schools)}</td><td class="tagcol">${x.last_seen ? mdy(x.last_seen) : "—"}</td></tr>`).join("")}</tbody></table></div>` : `<div class="sec-note" style="margin-top:8px">No tagged ${noun} links yet.</div>`}</div>`;
+  };
   function rolePage(key, tilesId, bodyId, noun) {
     const R = (c.by_role || {})[key] || {};
     if (P) { $("#" + tilesId).innerHTML = tile(`Schools with a ${noun} report this cycle`, PEND, "") ; $("#" + bodyId).innerHTML = pendCard(`${noun[0].toUpperCase() + noun.slice(1)} reports per week`) + pendCard(`States with the most ${noun}-reported schools`); return; }
@@ -765,34 +814,61 @@
     const weeklyCard = `<div class="card" style="display:flex;flex-direction:column"><div class="card-title">${noun[0].toUpperCase() + noun.slice(1)} reports per week</div>
         ${weekLine(wkR, (w) => w.reports, (w) => `${fmt(w.reports)} valid ${noun} reports`)}
         <div class="sub12" style="margin-top:10px">${key === "student" ? "Students must be 13 or older, so student reports are MS/HS by definition." : key === "librarian" ? `Valid reports by branch: district ${fmt((R.by_branch || {}).valid_district)} (no school) · elementary-only ${fmt((R.by_branch || {}).valid_elementary)} · MS/HS ${fmt((R.by_branch || {}).valid_mshs)}. Responses on each path: ${fmt((R.by_branch || {}).district)} · ${fmt((R.by_branch || {}).elementary_only)} · ${fmt((R.by_branch || {}).mshs)}.` : ""}</div></div>`;
-    const have = new Set((R.states || (R.top_states || []).map((g) => g.st)).filter((st) => st !== "DC" && !TERR.has(st)));
-    const fifty = d.states.map((s) => s.st).filter((st) => st !== "DC" && !TERR.has(st)).sort();
-    const stateTracker = `<div class="card" style="grid-column:1/-1"><div class="card-title">States with a ${noun}-reported school</div>
-        <div class="strow"><div class="stat40">${fmt(have.size)}<span class="of"> of 50</span></div><div class="sub12" style="margin-top:0">states have at least one school with a valid ${noun} report this cycle</div></div>
-        <div class="stbar">${fifty.map((st) => `<i class="${have.has(st) ? "on" : ""}" data-tip="<b>${esc((byCode[st] || {}).state || st)}</b><br>${have.has(st) ? `at least one school with a ${noun} report` : `no ${noun} reports yet`}"></i>`).join("")}</div>
-        <div class="sub12" style="margin-top:10px">${have.size ? `Reached: ${fifty.filter((st) => have.has(st)).map((st) => esc((byCode[st] || {}).state || st)).join(", ")}.` : `No states yet.`} DC and the territories count toward national totals but not toward the 50.</div></div>`;
-    let srcCards = "";
-    if (key === "student" && SRC.student) {
-      const S = SRC.student, bs = S.by_source || [], mx = Math.max(1, ...bs.map((x) => x.valid));
-      const top = Object.keys((S.weekly || [])[0] ? S.weekly[0].by_source : {}), pal = ["#2C7A4B", "#8FC49B", "#1E4034", "#C3E5CB", "#5E9E72", "#A9D3B3"];
-      const wk = S.weekly || [], wmx = Math.max(1, ...wk.map((w) => Object.values(w.by_source).reduce((a, b) => a + b, 0) + w.other));
-      srcCards = `<div class="card" style="grid-column:1/-1"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Where student reports come from</div><div class="sec-note">${pct(S.tagged_share)} of student starts carried a utm tag</div></div>
-        ${bs.length ? `<div class="tablewrap"><table style="margin-top:10px"><thead><tr><th>Source</th><th class="num">Starts</th><th class="num">Completes</th><th class="num">Valid</th><th class="num">New schools</th><th class="num tagcol">Start → valid</th><th class="num tagcol">States</th><th class="num">This wk</th><th class="num tagcol">Last wk</th><th class="tagcol">First seen</th></tr></thead>
-        <tbody>${bs.map((x) => `<tr><td>${srcName(x.source)}</td><td class="num">${fmt(x.starts)}</td><td class="num">${fmt(x.completes)}</td><td class="num">${srcBar(x.valid, mx)}</td><td class="num">${fmt(x.new_schools)}</td><td class="num tagcol">${pct(x.starts ? 100 * x.valid / x.starts : 0)}</td><td class="num tagcol">${fmt(x.states.length)}</td><td class="num">${fmt(x.this_week)}</td><td class="num tagcol">${fmt(x.last_week)}</td><td class="tagcol">${x.first_seen ? mdy(x.first_seen) : "—"}</td></tr>`).join("")}</tbody></table></div>` : `<div class="sec-note" style="margin-top:8px">No student responses yet.</div>`}</div>`
-      + `<div class="card" style="display:flex;flex-direction:column"><div class="card-title">Valid student reports per week, by source</div>
-        <div class="cols"><div class="bars">${wk.map((w) => { const tot = Object.values(w.by_source).reduce((a, b) => a + b, 0) + w.other; return `<i class="stack ${w.partial ? "cur" : ""}" style="height:${Math.max(2, Math.round(100 * tot / wmx))}%;background:transparent" data-tip="<b>Week of ${mdy(w.week_start)}${w.partial ? " (partial)" : ""}</b><br>${top.map((t) => `${esc(t)} ${fmt(w.by_source[t])}`).join("<br>")}${w.other ? `<br>other ${fmt(w.other)}` : ""}">${top.map((t, i) => `<b style="height:${tot ? 100 * w.by_source[t] / tot : 0}%;background:${pal[i]}"></b>`).join("")}${w.other ? `<b style="height:${tot ? 100 * w.other / tot : 0}%;background:#D9D9D6"></b>` : ""}</i>`; }).join("")}</div></div>
-        <div class="xlab"><span>${wk.length ? mdy(wk[0].week_start) : ""}</span><span></span><span>${wk.length ? mdy(wk[wk.length - 1].week_start) : ""}</span></div>
-        <div class="srclegend">${top.map((t, i) => `<span><i style="background:${pal[i]}"></i>${srcName(t)}</span>`).join("")}${wk.some((w) => w.other) ? `<span><i style="background:#D9D9D6"></i>other</span>` : ""}</div></div>`
-      + `<div class="card"><div class="card-title">Campaigns</div><div class="sub12" style="margin-top:4px">source · medium · campaign, as tagged on the link</div>
-        ${(S.campaigns || []).length ? `<div class="tablewrap"><table style="margin-top:10px"><thead><tr><th>Source</th><th>Medium</th><th>Campaign</th><th class="num">Starts</th><th class="num">Valid</th><th class="num">New</th><th class="tagcol">Last seen</th></tr></thead>
-        <tbody>${S.campaigns.map((x) => `<tr><td>${srcName(x.source)}</td><td>${x.medium ? esc(x.medium) : '<span style="color:var(--muted)">—</span>'}</td><td>${x.campaign ? esc(x.campaign) : '<span style="color:var(--muted)">—</span>'}</td><td class="num">${fmt(x.starts)}</td><td class="num">${fmt(x.valid)}</td><td class="num">${fmt(x.new_schools)}</td><td class="tagcol">${x.last_seen ? mdy(x.last_seen) : "—"}</td></tr>`).join("")}</tbody></table></div>` : `<div class="sec-note" style="margin-top:8px">No tagged student links yet.</div>`}</div>`;
-    }
+    const stateTracker = stateTrackerCard(R.states || (R.top_states || []).map((g) => g.st), noun);
+    const srcCards = key === "student" ? sourceCards(SRC.student, "student", false) : "";
     const body = (key === "student" ? stateTracker + srcCards : "") + weeklyCard + `<div class="card"><div class="card-title">States with the most ${noun}-reported schools</div><div class="ranked" style="margin-top:6px">${(R.top_states || []).map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc((byCode[g.st] || {}).state || g.st)}</span><span class="v">${fmt(g.schools)} <small>${g.schools === 1 ? "school" : "schools"}</small></span></div>`).join("") || `<div class="sec-note">—</div>`}</div></div>`
       + `<div style="grid-column:1/-1">${outreachCard(`Outreach to ${noun}s`, OUT.filter((o) => o.audience === key || o.audience === "all"), false)}</div>`;
     $("#" + tilesId).innerHTML = tiles; $("#" + bodyId).innerHTML = body;
   }
   rolePage("student", "studentTiles", "studentBody", "student");
   rolePage("librarian", "libTiles", "libBody", "librarian");
+  function renderEducators() {
+    const R = (c.by_role || {}).educator || {}, L = eduLevel, cap = (t) => t ? t[0].toUpperCase() + t.slice(1) : "";
+    const pick = (o) => L === "all" ? Object.values(o || {}).reduce((a, b) => a + b, 0) : ((o || {})[L] || 0);
+    const pre = { all: "", mshs: "MS/HS ", elementary: "elementary " }[L];
+    document.querySelectorAll("#eduLevel button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.level === L)));
+    if (P) { $("#eduTiles").innerHTML = tile("Schools with an educator report this cycle", PEND, ""); $("#eduBody").innerHTML = pendCard("Educator reports per week") + pendCard("States with the most educator-reported schools"); return; }
+    const tiles = (L === "elementary"
+        ? tile("Elementary schools with a " + esc(d.cycle.name) + " report", pct(E.pct), `${fmt(E.covered)} of ${fmt(E.eligible)} · ${fmt(E.remaining)} remaining`)
+        : tile(cap(`${pre}schools with an educator report this cycle`), fmt(pick(R.schools_by_level)), L === "all" ? `${fmt((R.schools_by_level || {}).mshs || 0)} MS/HS · ${fmt((R.schools_by_level || {}).elementary || 0)} elementary · ${fmt(R.valid_reports)} valid reports` : `${fmt(pick(R.valid_by_level))} valid educator reports`))
+      + tile(cap(`${pre}schools educators put on the map`), fmt(pick(R.new_by_level)), "first-ever report came from an educator")
+      + tile(cap(`${pre}educator reports this week`), fmt(pick(R.this_week_by_level)), `last week ${fmt(pick(R.last_week_by_level))}`);
+    // cumulative since launch
+    let cv = 0, cn = 0;
+    const cum = (R.daily || []).map((x) => { cv += L === "all" ? x.valid : ((x.by_level || {})[L] || 0); cn += L === "all" ? x.new : ((x.new_by_level || {})[L] || 0); return { ...x, cv, cn }; });
+    const cumCard = `<div class="card" style="display:flex;flex-direction:column"><div class="card-title">${cap(pre)}educator reports since launch</div>
+        ${linesChart(cum, [{ name: "valid reports", val: (x) => x.cv }, { name: "schools put on the map", val: (x) => x.cn }], (x) => mdy(x.date), (x) => `${fmt(x.cv)} valid reports so far · ${fmt(x.cn)} schools put on the map · ${fmt(L === "all" ? x.valid : ((x.by_level || {})[L] || 0))} that day`)}
+        <div class="sub12" style="margin-top:10px">Cumulative since ${mdy((d.cycle.start || "").slice(0, 10))}. "On the map" = the school's first report ever.</div></div>`;
+    const wkR = R.weekly || [];
+    const wkCard = `<div class="card" style="display:flex;flex-direction:column"><div class="card-title">${cap(pre)}educator reports per week</div>
+        ${L === "all"
+          ? linesChart(wkR, [{ name: "MS/HS", val: (w) => (w.by_level || {}).mshs || 0 }, { name: "elementary", val: (w) => (w.by_level || {}).elementary || 0 }], (w) => mdy(w.week_start), (w) => `${fmt((w.by_level || {}).mshs || 0)} MS/HS · ${fmt((w.by_level || {}).elementary || 0)} elementary · ${fmt(w.reports)} in all`)
+          : weekLine(wkR, (w) => (w.by_level || {})[L] || 0, (w) => `${fmt((w.by_level || {})[L] || 0)} valid ${pre}educator reports`)}
+        <div class="sub12" style="margin-top:10px">${L === "elementary" ? "Elementary educators answer the device-access question as their policy block." : "Level is the school's NCES level: middle or high counts as MS/HS."}</div></div>`;
+    // state ranking (full list, first 8 shown)
+    const sc = (R.state_counts || {})[L] || [];
+    const rankCard = `<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">States with the most ${pre}educator-reported schools</div><div class="sec-note">${sc.length} states</div></div>
+        <div class="ranked" style="margin-top:6px" id="eduRank">${sc.map((g, i) => `<div class="row${i >= 8 ? " more" : ""}" data-go="gaps?state=${g.st}"><span class="n">${esc((byCode[g.st] || {}).state || g.st)}</span><span class="v">${fmt(g.schools)} <small>${g.schools === 1 ? "school" : "schools"}</small></span></div>`).join("") || `<div class="sec-note">—</div>`}</div>
+        ${sc.length > 8 ? `<div style="margin-top:12px"><button class="pill" data-toggle="eduRank">Show all ${sc.length} states</button></div>` : ""}</div>`;
+    // level extras
+    const extra = L === "elementary"
+      ? `<div class="card" style="display:flex;flex-direction:column"><div class="card-title">Elementary schools newly represented per week</div>${weekLine(elemWeekly, (w) => w.n, (w) => `${fmt(w.n)} elementary schools`)}
+          <div class="sub12" style="margin-top:10px">Depth: ${fmt(E.depth ? E.depth["1"] : null)} with one report · ${fmt(E.depth ? E.depth["2plus"] : null)} with two or more. Counts every role's reports, not only educators.</div></div>
+         <div class="card"><div class="card-title">Most uncovered elementary schools</div><div class="ranked" style="margin-top:6px">${elemStates.map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc(g.state)}</span><span class="v">${fmt(g.remaining)} <small>· ${pct(g.pct)}</small></span></div>`).join("")}</div>
+          <div style="margin-top:12px"><span class="pill" data-go="gaps">All states →</span></div></div>`
+      : L === "mshs"
+      ? `<div class="card"><div class="card-title">Most uncovered MS/HS</div><div class="ranked" style="margin-top:6px">${mh.filter((x) => x.eligible > 0).sort((a, b) => b.remaining - a.remaining).slice(0, 8).map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc(g.state)}</span><span class="v">${fmt(g.remaining)} <small>· ${pct(g.pct)}</small></span></div>`).join("")}</div>
+          <div class="sub12" style="margin-top:8px">All roles' reports count toward coverage, not only educators.</div><div style="margin-top:12px"><span class="pill" data-go="gaps">All states →</span></div></div>`
+      : "";
+    $("#eduTiles").innerHTML = tiles;
+    $("#eduBody").innerHTML = stateTrackerCard((R.states_by_level || {})[L] || R.states, pre ? pre.trim() + " educator" : "educator")
+      + cumCard + wkCard + sourceCards((SRC.roles || {}).educator, "educator", true) + rankCard + extra
+      + `<div style="grid-column:1/-1">${outreachCard("Outreach to educators", OUT.filter((o) => o.audience === "educator" || o.audience === "all"), false)}</div>`;
+  }
+  renderEducators();
+  $("#eduLevel").addEventListener("click", (e) => { const b = e.target.closest("button[data-level]"); if (!b) return; eduLevel = b.dataset.level; location.hash = "educator" + (eduLevel === "all" ? "" : "?level=" + eduLevel); renderEducators(); });
+  document.addEventListener("click", (e) => { const t = e.target.closest("[data-toggle]"); if (!t) return; const el = document.getElementById(t.dataset.toggle); if (!el) return; el.classList.toggle("open"); t.dataset.label = t.dataset.label || t.textContent; t.textContent = el.classList.contains("open") ? "Show fewer" : t.dataset.label; });
+
   $("#libBody").insertAdjacentHTML("beforeend", `<div class="card" style="grid-column:1 / -1"><div class="card-title">District-only librarians</div><div class="sub12">${fmt(((c.by_role || {}).district_librarian || {}).reports)} completed reports about district-wide circulation. They name a district, not a school, so they never count toward school coverage.</div></div>`);
 
   // ---- data quality
