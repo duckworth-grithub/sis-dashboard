@@ -982,6 +982,34 @@ def main():
                   "schools_out": sorted(s["school_name"] for s in ss if int(s["total_reports"]) == 0),
                   "districts_in": dist_in, "districts_out": [d_ for d_ in dist_all if d_ not in set(dist_in)]}
         roster["counts"] = {k: len(roster[k]) for k in ("schools_in", "schools_out", "districts_in", "districts_out")}
+        # educator + librarian reports to the new survey in this state: daily series (cumulative on the page) and by utm source,
+        # so the By state page can show a state partner whether their outreach is landing. Counts only; no respondent-level data.
+        # (recorded_at was turned into an ISO string for the private report just above, so parse it back here.)
+        rat = lambda r: parse_dt(r["recorded_at"]) if isinstance(r["recorded_at"], str) else r["recorded_at"]
+        rs_st = [r for r in responses if r["valid"] and r["survey"] in ("educator", "librarian") and r["state_name"] == st_name
+                 and not (rat(r) and rat(r) < cycle_start)]
+        day0 = max(cycle_start.date(), (now - timedelta(days=120)).date())
+        src_tot = collections.Counter(src_label(r) for r in rs_st)
+        top_src = [k for k, _ in src_tot.most_common() if k != "untagged"][:3]
+        by_day = collections.defaultdict(list)
+        for r in rs_st:
+            if rat(r):
+                by_day[rat(r).date()].append(r)
+        first_seen = {}
+        for r in rs_st:
+            if rat(r):
+                k = src_label(r)
+                first_seen[k] = min(first_seen.get(k, rat(r)), rat(r))
+        roster["responses"] = {
+            "total": len(rs_st), "educator": sum(1 for r in rs_st if r["survey"] == "educator"), "librarian": sum(1 for r in rs_st if r["survey"] == "librarian"),
+            "top_sources": top_src,
+            "daily": [{"date": str(dd), "edu": sum(1 for r in by_day.get(dd, []) if r["survey"] == "educator"), "lib": sum(1 for r in by_day.get(dd, []) if r["survey"] == "librarian"),
+                       "src": {k: sum(1 for r in by_day.get(dd, []) if src_label(r) == k) for k in top_src}}
+                      for dd in (day0 + timedelta(days=i) for i in range((now.date() - day0).days + 1))],
+            "sources": [{"source": k, "valid": n, "new_schools": sum(1 for r in rs_st if src_label(r) == k and r.get("coverage_rank") == 1),
+                         "this_week": sum(1 for r in rs_st if src_label(r) == k and r["week"] == str(this_wk)),
+                         "first_seen": first_seen[k].strftime("%Y-%m-%d") if k in first_seen else None}
+                        for k, n in src_tot.most_common()]}
         with open(os.path.join(a.out, "lists", "state", f"{ss[0]['st']}.json"), "w", encoding="utf-8") as fh:
             json.dump(roster, fh)
         rosters[ss[0]["st"]] = roster["counts"]
