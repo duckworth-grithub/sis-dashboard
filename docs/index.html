@@ -266,6 +266,17 @@
   .tag.warn { background: #FFF2EF; color: #B3261E; }
   .tag.good { background: #E4EDE6; color: #1C5E3D; }
   .filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 16px 0 12px; }
+  .filters .pill { cursor: pointer; box-shadow: var(--shadow); background: var(--card); }
+  .filters .pill[aria-pressed="true"] { background: var(--chalk); color: #FFFFFF; }
+  .tagpick { position: relative; display: inline-block; }
+  .tagpanel { position: absolute; top: calc(100% + 6px); left: 0; z-index: 30; background: var(--card); border-radius: 14px; box-shadow: 0 8px 28px rgba(0,0,0,.14); padding: 10px 12px; min-width: 300px; max-width: min(92vw, 460px); max-height: 340px; overflow: auto; font-size: 13px; }
+  .tagpanel .tp-quick { display: flex; gap: 6px; margin-bottom: 8px; }
+  .tagpanel .tp-quick .pill { padding: 6px 12px; font-size: 12px; box-shadow: none; background: var(--ground); }
+  .tagpanel .tp-quick .pill[aria-pressed="true"] { background: var(--chalk); color: #FFFFFF; }
+  .tagpanel label { display: flex; align-items: center; gap: 8px; padding: 5px 2px; border-top: 1px solid var(--rule-in); cursor: pointer; }
+  .tagpanel label small { color: var(--muted); margin-left: auto; }
+  .wl .wldot.s4 { background: #B08968; } .wl .wldot.s4.hollow { background: #FFFFFF; border-color: #B08968; } .wl .line.s4 { stroke: #B08968; } .wl .wllab.s4 { color: #B08968; }
+  .wl .wldot.s5 { background: #6B7FA3; } .wl .wldot.s5.hollow { background: #FFFFFF; border-color: #6B7FA3; } .wl .line.s5 { stroke: #6B7FA3; } .wl .wllab.s5 { color: #6B7FA3; }
   .filters .fl { font-size: 12px; color: var(--slate); font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
   .filters select, .filters input { font: inherit; font-weight: 700; font-size: 13px; padding: 8px 14px; border: 0; border-radius: 999px; background: var(--card); color: var(--chalk); box-shadow: var(--shadow); }
   .lvlsel { appearance: none; -webkit-appearance: none; font: inherit; font-weight: 700; color: var(--chalk); background: var(--ground); border: 0; border-radius: 999px; padding: 4px 28px 4px 12px; cursor: pointer; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%231E4034' stroke-width='1.6'/></svg>"); background-repeat: no-repeat; background-position: right 10px center; }
@@ -317,8 +328,8 @@
     <h2 class="ph">By state</h2><p class="pd">One state at a time: which schools and districts are in the data, and which are not yet. "In the data" = at least one report (earlier waves carry forward for middle/high; elementary counts only with the new survey).</p>
     <div class="filters"><select id="rosterState"></select>
       <select id="rvAud" aria-label="Audience"><option value="all">All audiences</option><option value="edulib">Educators + librarians</option><option value="edu">Educators</option><option value="lib">Librarians</option><option value="stu">Students</option></select>
-      <label class="fl">From <input type="date" id="rvFrom"></label>
-      <select id="rvTag" aria-label="UTM tags"><option value="all">All tags</option><option value="off">Hide tags</option></select>
+      <label class="fl">From <input type="date" id="rvFrom"></label><button class="pill" id="rvLaunch" type="button">From launch</button>
+      <span class="tagpick"><button class="pill" id="rvTagBtn" type="button" aria-haspopup="true" aria-expanded="false">All tags ▾</button><div class="tagpanel" id="rvTagPanel" hidden></div></span>
       <span class="sec-note" id="rosterNote"></span></div>
     <div class="grid3 roster4" id="rosterTiles"></div>
     <div id="rosterResp" style="margin-top:16px"></div>
@@ -756,14 +767,14 @@
   const dlCsv = (name, rows) => { const a2 = document.createElement("a"); a2.href = URL.createObjectURL(new Blob([rows.map((r) => '"' + String(r).replace(/"/g, '""') + '"').join("\n")], { type: "text/csv" })); a2.download = name; a2.click(); };
   // per-state: cumulative valid reports from a chosen start date, by audience and by full utm tag (source · medium · campaign).
   // Controls sit beside the state picker; settings live in the hash (#bystate?state=NJ&aud=edulib&from=2026-12-01&tag=off) so a clean view can be sent to a state.
-  const rv = { aud: "all", from: "", tag: "all" };
+  const rv = { aud: "all", from: "", tags: "all" };   // tags: "all" | "off" | [tag keys]
   let lastRoster = null;
   const AUD = { all: [0, 2, 4], edulib: [2, 4], edu: [2], lib: [4], stu: [0] };
   const AUD_NAME = { all: "Reports", edulib: "Educator and librarian reports", edu: "Educator reports", lib: "Librarian reports", stu: "Student reports" };
   const tagKey = (t) => [t.source, t.medium, t.campaign].join("|");
   const tagName = (t) => [t.source === "untagged" ? "untagged" : srcName(t.source), t.medium, t.campaign].filter(Boolean).join(" · ");
-  function rvFromHash(params) { rv.aud = AUD[params.aud] ? params.aud : "all"; rv.from = /^\d{4}-\d{2}-\d{2}$/.test(params.from || "") ? params.from : ""; rv.tag = params.tag ? decodeURIComponent(params.tag) : "all"; }
-  const rvHash = (st) => "bystate?state=" + st + (rv.aud !== "all" ? "&aud=" + rv.aud : "") + (rv.from ? "&from=" + rv.from : "") + (rv.tag !== "all" ? "&tag=" + encodeURIComponent(rv.tag) : "");
+  function rvFromHash(params) { rv.aud = AUD[params.aud] ? params.aud : "all"; rv.from = /^\d{4}-\d{2}-\d{2}$/.test(params.from || "") ? params.from : ""; const t = params.tag || params.tags || ""; rv.tags = !t || t === "all" ? "all" : t === "off" ? "off" : t.split(",").map((x) => decodeURIComponent(x)).filter(Boolean); }
+  const rvHash = (st) => "bystate?state=" + st + (rv.aud !== "all" ? "&aud=" + rv.aud : "") + (rv.from ? "&from=" + rv.from : "") + (rv.tags === "all" ? "" : "&tags=" + (rv.tags === "off" ? "off" : rv.tags.map(encodeURIComponent).join(",")));
   const stateRespCard = (name, st, rp) => {
     const tags = rp.tags || [], cols = AUD[rv.aud], cyc0 = (d.cycle.start || "").slice(0, 10), today = (d.as_of || "").slice(0, 10);
     const from = rv.from && rv.from > cyc0 ? rv.from : cyc0;
@@ -772,19 +783,20 @@
     const dayTot = (x) => (rv.aud === "all" || rv.aud === "stu" ? 0 : 0) + cols.reduce((a, j) => a + (x[{ 0: "stu", 2: "edu", 4: "lib" }[j]] || 0), 0);
     const tot = tags.map((t, i) => { let v = 0, n = 0, first = null; days.forEach((x) => { const c = cnt((x.t || {})[i]); if (c && !first) first = x.date; v += c; n += cntNew((x.t || {})[i]); }); return { ...t, i, key: tagKey(t), valid: v, new_schools: n, first_seen: first }; });
     const present = tot.filter((x) => x.valid > 0).sort((a, b) => b.valid - a.valid);
-    const sel = rv.tag !== "all" && rv.tag !== "off" ? present.find((x) => x.key === rv.tag) : null;
-    const tagsOff = rv.tag === "off";
-    const lineTags = tagsOff ? [] : sel ? [sel] : present.filter((x) => x.source !== "untagged").slice(0, 3);
+    const tagsOff = rv.tags === "off", picked = Array.isArray(rv.tags) ? present.filter((x) => rv.tags.includes(x.key)) : null;
+    const lineTags = tagsOff ? [] : picked ? picked.slice(0, 5) : present.filter((x) => x.source !== "untagged").slice(0, 3);
     let t = 0; const acc = {}; lineTags.forEach((x) => (acc[x.i] = 0));
     const cum = days.map((x) => { t += dayTot(x); lineTags.forEach((lt) => (acc[lt.i] += cnt((x.t || {})[lt.i]))); return { ...x, tt: t, c: { ...acc } }; });
     const total = t, stu = days.reduce((a, x) => a + (x.stu || 0), 0), edu = days.reduce((a, x) => a + (x.edu || 0), 0), lib = days.reduce((a, x) => a + (x.lib || 0), 0);
     const parts = [cols.includes(0) ? `${fmt(stu)} students` : "", cols.includes(2) ? `${fmt(edu)} educators` : "", cols.includes(4) ? `${fmt(lib)} librarians` : ""].filter(Boolean);
     const series = [{ name: "all " + AUD_NAME[rv.aud].toLowerCase(), val: (x) => x.tt }, ...lineTags.map((lt) => ({ name: tagName(lt), val: (x) => x.c[lt.i] }))];
-    const rows = tagsOff ? [] : sel ? [sel] : present;
-    // refresh the tag dropdown for this state and window (keeps the current choice when it still exists)
-    const ts = $("#rvTag"); ts.innerHTML = `<option value="all">All tags</option><option value="off">Hide tags</option>` + present.map((x) => `<option value="${esc(x.key)}">${esc(tagName(x))} (${fmt(x.valid)})</option>`).join("");
-    ts.value = tagsOff ? "off" : sel ? sel.key : "all"; if (!sel && !tagsOff) rv.tag = "all";
-    $("#rvAud").value = rv.aud; const fi = $("#rvFrom"); fi.min = cyc0; fi.max = today; fi.value = from;
+    const rows = tagsOff ? [] : picked ? picked : present;
+    // refresh the tag picker for this state and window
+    $("#rvTagBtn").textContent = (tagsOff ? "Hide tags" : picked ? (picked.length === 1 ? tagName(picked[0]) : `${picked.length} tags`) : "All tags") + " ▾";
+    $("#rvTagPanel").innerHTML = `<div class="tp-quick"><button class="pill" type="button" data-tags="all" aria-pressed="${rv.tags === "all"}">All tags</button><button class="pill" type="button" data-tags="off" aria-pressed="${tagsOff}">Hide tags</button></div>
+      ${present.map((x) => `<label><input type="checkbox" data-tagkey="${esc(x.key)}"${picked && rv.tags.includes(x.key) ? " checked" : ""}> ${esc(tagName(x))}<small>${fmt(x.valid)}</small></label>`).join("") || `<div class="sec-note">No tags in this window.</div>`}
+      <div class="sub12" style="margin-top:8px">Tick several to compare them. Up to five are drawn as lines; all ticked ones are in the table.</div>`;
+    $("#rvAud").value = rv.aud; const fi = $("#rvFrom"); fi.min = cyc0; fi.max = today; fi.value = from; $("#rvLaunch").setAttribute("aria-pressed", String(from === cyc0));
     return `<div class="card" style="display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">${AUD_NAME[rv.aud]} in ${esc(name)} since ${from === cyc0 ? "the " + esc(d.cycle.name) + " launch" : mdy(from)}</div><div class="sec-note">${fmt(total)} valid${parts.length > 1 ? " · " + parts.join(" · ") : ""}</div></div>
       ${total ? linesChart(cum, series, (x) => mdy(x.date), (x) => `${fmt(x.tt)} so far${lineTags.map((lt) => ` · ${esc(tagName(lt))} ${fmt(x.c[lt.i])}`).join("")}`) : `<div class="sec-note" style="margin-top:12px">No ${AUD_NAME[rv.aud].toLowerCase()} from ${esc(name)} ${from === cyc0 ? "yet" : "since " + mdy(from)}.</div>`}
       ${rows.length ? `<div class="tablewrap"><table style="margin-top:14px"><thead><tr><th>Source</th><th>Medium</th><th>Campaign</th><th class="num">Valid</th><th class="num">New schools</th><th class="tagcol">First seen</th></tr></thead>
@@ -792,7 +804,18 @@
       <div class="sub12" style="margin-top:10px">Cumulative valid reports from the start date.${tagsOff ? "" : ' A partner\'s link shows as its utm tag from the first click; "untagged" arrived without a tag.'} Link to this view: <code>#${esc(rvHash(st))}</code>.</div></div>`;
   };
   const rvRender = () => { if (!lastRoster) return; history.replaceState(null, "", "#" + rvHash(lastRoster.st)); $("#rosterResp").innerHTML = lastRoster.responses ? stateRespCard(lastRoster.state, lastRoster.st, lastRoster.responses) : ""; };
-  document.addEventListener("change", (e) => { if (e.target.id === "rvFrom") { rv.from = e.target.value || ""; rvRender(); } else if (e.target.id === "rvTag") { rv.tag = e.target.value; rvRender(); } else if (e.target.id === "rvAud") { rv.aud = e.target.value; rvRender(); } });
+  document.addEventListener("change", (e) => {
+    if (e.target.id === "rvFrom") { rv.from = e.target.value || ""; rvRender(); }
+    else if (e.target.id === "rvAud") { rv.aud = e.target.value; rvRender(); }
+    else if (e.target.matches("#rvTagPanel input[data-tagkey]")) { const keys = [...document.querySelectorAll("#rvTagPanel input[data-tagkey]:checked")].map((i) => i.dataset.tagkey); rv.tags = keys.length ? keys : "all"; rvRender(); openTagPanel(true); }
+  });
+  const openTagPanel = (open) => { const p = $("#rvTagPanel"); p.hidden = !open; $("#rvTagBtn").setAttribute("aria-expanded", String(open)); };
+  document.addEventListener("click", (e) => {
+    if (e.target.closest("#rvLaunch")) { rv.from = ""; rvRender(); return; }
+    if (e.target.closest("#rvTagBtn")) { openTagPanel($("#rvTagPanel").hidden); return; }
+    const q = e.target.closest("#rvTagPanel [data-tags]"); if (q) { rv.tags = q.dataset.tags; rvRender(); openTagPanel(true); return; }
+    if (!e.target.closest("#rvTagPanel")) openTagPanel(false);
+  });
   async function loadRoster(st) {
     if (!st) return;
     $("#rosterNote").textContent = "loading…";
@@ -831,7 +854,7 @@
       ${paths.filter(({ si }) => series.length <= 2 || si === 0).map(({ sr, si, pts }) => `<b class="wllab s${si}" style="left:${(pts[pts.length - 1][0] + 2.2).toFixed(2)}%;bottom:${pts[pts.length - 1][1].toFixed(2)}%">${fmt(sr.val(last))}</b>`).join("")}
     </div>
     <div class="xlab"><span>${esc(lab(rows[0]))}</span><span>${rows.length > 2 ? esc(lab(rows[mid])) : ""}</span><span>${rows.length > 1 ? esc(lab(last)) : ""}</span></div>
-    ${series.length > 1 ? `<div class="srclegend">${series.map((sr, si) => `<span><i style="background:${["var(--study)", "var(--chalk)", "#5E9E72", "#9A9A96"][si] || "#9A9A96"}"></i>${esc(sr.name)}</span>`).join("")}</div>` : ""}`;
+    ${series.length > 1 ? `<div class="srclegend">${series.map((sr, si) => `<span><i style="background:${["var(--study)", "var(--chalk)", "#5E9E72", "#9A9A96", "#B08968", "#6B7FA3"][si] || "#9A9A96"}"></i>${esc(sr.name)}</span>`).join("")}</div>` : ""}`;
   }
   // "X of 50 states" tracker
   const stateTrackerCard = (codes, noun) => {
