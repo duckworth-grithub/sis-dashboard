@@ -93,6 +93,8 @@
   .wl .wldot.s1 { background: var(--chalk); } .wl .wldot.s1.hollow { background: #FFFFFF; border-color: var(--chalk); }
   .wl .line.s1 { stroke: var(--chalk); }
   .wl .wllab.s1 { color: var(--chalk); }
+  .wl .wldot.s2 { background: #5E9E72; } .wl .wldot.s2.hollow { background: #FFFFFF; border-color: #5E9E72; } .wl .line.s2 { stroke: #5E9E72; } .wl .wllab.s2 { color: #5E9E72; }
+  .wl .wldot.s3 { background: #9A9A96; } .wl .wldot.s3.hollow { background: #FFFFFF; border-color: #9A9A96; } .wl .line.s3 { stroke: #9A9A96; } .wl .wllab.s3 { color: #9A9A96; }
   .strow { display: flex; align-items: baseline; gap: 14px; margin-top: 6px; flex-wrap: wrap; }
   .strow .of { font-size: 18px; font-weight: 700; color: var(--slate); letter-spacing: 0; }
   .stbar { display: grid; grid-template-columns: repeat(50, 1fr); gap: 3px; margin-top: 14px; }
@@ -314,6 +316,7 @@
     <h2 class="ph">By state</h2><p class="pd">One state at a time: which schools and districts are in the data, and which are not yet. "In the data" = at least one report (earlier waves carry forward for middle/high; elementary counts only with the new survey).</p>
     <div class="filters"><select id="rosterState"></select><span class="sec-note" id="rosterNote"></span></div>
     <div class="grid3 roster4" id="rosterTiles"></div>
+    <div id="rosterResp" style="margin-top:16px"></div>
     <div class="grid3 roster4" id="rosterCols"></div>
   </div>
 
@@ -746,6 +749,18 @@
   const rsel = $("#rosterState");
   rsel.innerHTML = Object.keys(rosterCounts).filter((st) => !TERR.has(st)).sort((a, b) => (stateNames[a] || a).localeCompare(stateNames[b] || b)).map((st) => `<option value="${st}">${esc(stateNames[st] || st)}</option>`).join("");
   const dlCsv = (name, rows) => { const a2 = document.createElement("a"); a2.href = URL.createObjectURL(new Blob([rows.map((r) => '"' + String(r).replace(/"/g, '""') + '"').join("\n")], { type: "text/csv" })); a2.download = name; a2.click(); };
+  // per-state: cumulative educator + librarian reports since launch, with the top tagged sources as their own lines
+  const stateRespCard = (name, st, rp) => {
+    const top = rp.top_sources || [], acc = {}; top.forEach((k) => (acc[k] = 0)); let t = 0;
+    const cum = (rp.daily || []).map((x) => { t += (x.edu || 0) + (x.lib || 0); top.forEach((k) => (acc[k] += (x.src || {})[k] || 0)); return { ...x, t, c: { ...acc } }; });
+    const series = [{ name: "all educator + librarian reports", val: (x) => x.t }, ...top.map((k) => ({ name: srcName(k), val: (x) => x.c[k] }))];
+    const rows = rp.sources || [];
+    return `<div class="card" style="display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Educator and librarian reports in ${esc(name)} since launch</div><div class="sec-note">${fmt(rp.total)} valid · ${fmt(rp.educator)} educators · ${fmt(rp.librarian)} librarians</div></div>
+      ${rp.total ? linesChart(cum, series, (x) => mdy(x.date), (x) => `${fmt(x.t)} so far${top.map((k) => ` · ${esc(srcName(k))} ${fmt(x.c[k])}`).join("")}`) : `<div class="sec-note" style="margin-top:12px">No educator or librarian reports from ${esc(name)} yet.</div>`}
+      ${rows.length ? `<div class="tablewrap"><table style="margin-top:14px"><thead><tr><th>Source</th><th class="num">Valid</th><th class="num">New schools</th><th class="num">This wk</th><th class="tagcol">First seen</th></tr></thead>
+      <tbody>${rows.map((x) => `<tr><td>${srcName(x.source)}</td><td class="num"><b>${fmt(x.valid)}</b></td><td class="num">${fmt(x.new_schools)}</td><td class="num">${fmt(x.this_week)}</td><td class="tagcol">${x.first_seen ? mdy(x.first_seen) : "—"}</td></tr>`).join("")}</tbody></table></div>` : ""}
+      <div class="sub12" style="margin-top:10px">Cumulative valid reports to the new educator and librarian surveys. A partner's link shows as its utm_source from the first click; "untagged" arrived without a tag. Link to this view: <code>#bystate?state=${esc(st)}</code>.</div></div>`;
+  };
   async function loadRoster(st) {
     if (!st) return;
     $("#rosterNote").textContent = "loading…";
@@ -754,6 +769,7 @@
       const cnt = r.counts;
       $("#rosterTiles").innerHTML = tile("Schools in the data", fmt(cnt.schools_in), `${pct(100 * cnt.schools_in / Math.max(1, cnt.schools_in + cnt.schools_out))} of ${fmt(cnt.schools_in + cnt.schools_out)}`) + tile("Districts in the data", fmt(cnt.districts_in), `of ${fmt(cnt.districts_in + cnt.districts_out)}`) + tile("Schools not yet", fmt(cnt.schools_out), "") + tile("Districts not yet", fmt(cnt.districts_out), "");
       const col = (title, rows, file) => `<div class="card" style="padding:16px 18px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><div class="card-title" style="font-size:14px">${title}</div></div><div style="max-height:520px;overflow:auto;margin-top:8px;font-size:13px;line-height:1.5">${rows.length ? rows.map((x) => `<div style="padding:3px 0;border-bottom:1px solid var(--rule-in)">${esc(x)}</div>`).join("") : `<div class="sec-note">none</div>`}</div></div>`;
+      $("#rosterResp").innerHTML = r.responses ? stateRespCard(r.state, r.st, r.responses) : "";
       $("#rosterCols").innerHTML = col("Schools in the data", r.schools_in, "schools_in") + col("Districts in the data", r.districts_in, "districts_in") + col("Schools not yet", r.schools_out, "schools_out") + col("Districts not yet", r.districts_out, "districts_out");
       $("#rosterNote").textContent = `${esc(r.state)}`;
     } catch (e) { $("#rosterNote").textContent = "roster not available"; }
@@ -780,10 +796,10 @@
     return `<div class="wl">
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="${area}" class="area"/>${paths.map(({ si, pts }) => `<path d="${seg(pts)}" class="line s${si}"/>`).join("")}</svg>
       ${paths.map(({ si, pts }) => pts.map(([x, y], i) => `<i class="wldot s${si}${rows[i].partial ? " hollow" : ""}" style="left:${x.toFixed(2)}%;bottom:${y.toFixed(2)}%" data-tip="<b>${esc(lab(rows[i]))}${rows[i].partial ? " (so far)" : ""}</b><br>${tipOf(rows[i])}"></i>`).join("")).join("")}
-      ${paths.map(({ sr, si, pts }) => `<b class="wllab s${si}" style="left:${(pts[pts.length - 1][0] + 2.2).toFixed(2)}%;bottom:${pts[pts.length - 1][1].toFixed(2)}%">${fmt(sr.val(last))}</b>`).join("")}
+      ${paths.filter(({ si }) => series.length <= 2 || si === 0).map(({ sr, si, pts }) => `<b class="wllab s${si}" style="left:${(pts[pts.length - 1][0] + 2.2).toFixed(2)}%;bottom:${pts[pts.length - 1][1].toFixed(2)}%">${fmt(sr.val(last))}</b>`).join("")}
     </div>
     <div class="xlab"><span>${esc(lab(rows[0]))}</span><span>${rows.length > 2 ? esc(lab(rows[mid])) : ""}</span><span>${rows.length > 1 ? esc(lab(last)) : ""}</span></div>
-    ${series.length > 1 ? `<div class="srclegend">${series.map((sr, si) => `<span><i style="background:${si ? "var(--chalk)" : "var(--study)"}"></i>${esc(sr.name)}</span>`).join("")}</div>` : ""}`;
+    ${series.length > 1 ? `<div class="srclegend">${series.map((sr, si) => `<span><i style="background:${["var(--study)", "var(--chalk)", "#5E9E72", "#9A9A96"][si] || "#9A9A96"}"></i>${esc(sr.name)}</span>`).join("")}</div>` : ""}`;
   }
   // "X of 50 states" tracker
   const stateTrackerCard = (codes, noun) => {
