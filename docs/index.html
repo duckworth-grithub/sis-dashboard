@@ -270,7 +270,9 @@
   .filters .pill[aria-pressed="true"] { background: var(--chalk); color: #FFFFFF; }
   .tagpick { position: relative; display: inline-block; }
   .tagpanel { position: absolute; top: calc(100% + 6px); left: 0; z-index: 30; background: var(--card); border-radius: 14px; box-shadow: 0 8px 28px rgba(0,0,0,.14); padding: 10px 12px; min-width: 300px; max-width: min(92vw, 460px); max-height: 340px; overflow: auto; font-size: 13px; }
-  .tagpanel .tp-quick { display: flex; gap: 6px; margin-bottom: 8px; }
+  .tagpanel .tp-quick { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  .tagpanel .tp-date { display: flex; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid var(--rule-in); font-size: 12px; color: var(--slate); font-weight: 700; }
+  .tagpanel .tp-date input { font: inherit; font-size: 13px; padding: 6px 10px; border: 1px solid var(--rule-in); border-radius: 10px; background: var(--card); color: var(--chalk); }
   .tagpanel .tp-quick .pill { padding: 6px 12px; font-size: 12px; box-shadow: none; background: var(--ground); }
   .tagpanel .tp-quick .pill[aria-pressed="true"] { background: var(--chalk); color: #FFFFFF; }
   .tagpanel label { display: flex; align-items: center; gap: 8px; padding: 5px 2px; border-top: 1px solid var(--rule-in); cursor: pointer; }
@@ -328,7 +330,7 @@
     <h2 class="ph">By state</h2><p class="pd">One state at a time: which schools and districts are in the data, and which are not yet. "In the data" = at least one report (earlier waves carry forward for middle/high; elementary counts only with the new survey).</p>
     <div class="filters"><select id="rosterState"></select>
       <select id="rvAud" aria-label="Audience"><option value="all">All audiences</option><option value="edulib">Educators + librarians</option><option value="edu">Educators</option><option value="lib">Librarians</option><option value="stu">Students</option></select>
-      <label class="fl">From <input type="date" id="rvFrom"></label><button class="pill" id="rvLaunch" type="button">From launch</button>
+      <span class="tagpick"><button class="pill" id="rvFromBtn" type="button" aria-haspopup="true" aria-expanded="false">Since launch ▾</button><div class="tagpanel" id="rvFromPanel" hidden></div></span>
       <span class="tagpick"><button class="pill" id="rvTagBtn" type="button" aria-haspopup="true" aria-expanded="false">All tags ▾</button><div class="tagpanel" id="rvTagPanel" hidden></div></span>
       <span class="sec-note" id="rosterNote"></span></div>
     <div class="grid3 roster4" id="rosterTiles"></div>
@@ -777,7 +779,8 @@
   const rvHash = (st) => "bystate?state=" + st + (rv.aud !== "all" ? "&aud=" + rv.aud : "") + (rv.from ? "&from=" + rv.from : "") + (rv.tags === "all" ? "" : "&tags=" + (rv.tags === "off" ? "off" : rv.tags.map(encodeURIComponent).join(",")));
   const stateRespCard = (name, st, rp) => {
     const tags = rp.tags || [], cols = AUD[rv.aud], cyc0 = (d.cycle.start || "").slice(0, 10), today = (d.as_of || "").slice(0, 10);
-    const from = rv.from && rv.from > cyc0 ? rv.from : cyc0;
+    if (rv.from && rv.from <= cyc0) rv.from = "";   // anything at or before launch is just "since launch"
+    const from = rv.from || cyc0;
     const days = (rp.daily || []).filter((x) => x.date >= from);
     const cnt = (v) => (v ? cols.reduce((a, j) => a + (v[j] || 0), 0) : 0), cntNew = (v) => (v ? cols.reduce((a, j) => a + (v[j + 1] || 0), 0) : 0);
     const dayTot = (x) => (rv.aud === "all" || rv.aud === "stu" ? 0 : 0) + cols.reduce((a, j) => a + (x[{ 0: "stu", 2: "edu", 4: "lib" }[j]] || 0), 0);
@@ -796,7 +799,13 @@
     $("#rvTagPanel").innerHTML = `<div class="tp-quick"><button class="pill" type="button" data-tags="all" aria-pressed="${rv.tags === "all"}">All tags</button><button class="pill" type="button" data-tags="off" aria-pressed="${tagsOff}">Hide tags</button></div>
       ${present.map((x) => `<label><input type="checkbox" data-tagkey="${esc(x.key)}"${picked && rv.tags.includes(x.key) ? " checked" : ""}> ${esc(tagName(x))}<small>${fmt(x.valid)}</small></label>`).join("") || `<div class="sec-note">No tags in this window.</div>`}
       <div class="sub12" style="margin-top:8px">Tick several to compare them. Up to five are drawn as lines; all ticked ones are in the table.</div>`;
-    $("#rvAud").value = rv.aud; const fi = $("#rvFrom"); fi.min = cyc0; fi.max = today; fi.value = from; $("#rvLaunch").setAttribute("aria-pressed", String(from === cyc0));
+    $("#rvAud").value = rv.aud;
+    const ago = (n) => { const t = new Date(today + "T12:00:00Z"); t.setUTCDate(t.getUTCDate() - n); const v = t.toISOString().slice(0, 10); return v > cyc0 ? v : cyc0; };
+    const quick = [["", "From launch"], [ago(7), "Last 7 days"], [ago(30), "Last 30 days"], [ago(90), "Last 90 days"]];
+    const q = quick.find(([v]) => (v || cyc0) === from);
+    $("#rvFromBtn").textContent = (q ? (q[1] === "From launch" ? "Since launch" : q[1]) : "Since " + mdy(from)) + " ▾";
+    $("#rvFromPanel").innerHTML = `<div class="tp-quick">${quick.map(([v, l]) => `<button class="pill" type="button" data-from="${v}" aria-pressed="${(v || cyc0) === from}">${l}</button>`).join("")}</div>
+      <label class="tp-date">Or pick a date <input type="date" id="rvFrom" value="${from}" min="${cyc0}" max="${today}"></label>`;
     return `<div class="card" style="display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">${AUD_NAME[rv.aud]} in ${esc(name)} since ${from === cyc0 ? "the " + esc(d.cycle.name) + " launch" : mdy(from)}</div><div class="sec-note">${fmt(total)} valid${parts.length > 1 ? " · " + parts.join(" · ") : ""}</div></div>
       ${total ? linesChart(cum, series, (x) => mdy(x.date), (x) => `${fmt(x.tt)} so far${lineTags.map((lt) => ` · ${esc(tagName(lt))} ${fmt(x.c[lt.i])}`).join("")}`) : `<div class="sec-note" style="margin-top:12px">No ${AUD_NAME[rv.aud].toLowerCase()} from ${esc(name)} ${from === cyc0 ? "yet" : "since " + mdy(from)}.</div>`}
       ${rows.length ? `<div class="tablewrap"><table style="margin-top:14px"><thead><tr><th>Source</th><th>Medium</th><th>Campaign</th><th class="num">Valid</th><th class="num">New schools</th><th class="tagcol">First seen</th></tr></thead>
@@ -805,16 +814,19 @@
   };
   const rvRender = () => { if (!lastRoster) return; history.replaceState(null, "", "#" + rvHash(lastRoster.st)); $("#rosterResp").innerHTML = lastRoster.responses ? stateRespCard(lastRoster.state, lastRoster.st, lastRoster.responses) : ""; };
   document.addEventListener("change", (e) => {
-    if (e.target.id === "rvFrom") { rv.from = e.target.value || ""; rvRender(); }
+    if (e.target.id === "rvFrom") { rv.from = e.target.value || ""; rvRender(); openPanel("rvFromPanel", "rvFromBtn", true); }
     else if (e.target.id === "rvAud") { rv.aud = e.target.value; rvRender(); }
     else if (e.target.matches("#rvTagPanel input[data-tagkey]")) { const keys = [...document.querySelectorAll("#rvTagPanel input[data-tagkey]:checked")].map((i) => i.dataset.tagkey); rv.tags = keys.length ? keys : "all"; rvRender(); openTagPanel(true); }
   });
-  const openTagPanel = (open) => { const p = $("#rvTagPanel"); p.hidden = !open; $("#rvTagBtn").setAttribute("aria-expanded", String(open)); };
+  const openPanel = (pid, bid, open) => { const p = $("#" + pid); if (!p) return; p.hidden = !open; $("#" + bid).setAttribute("aria-expanded", String(open)); };
+  const openTagPanel = (open) => openPanel("rvTagPanel", "rvTagBtn", open);
   document.addEventListener("click", (e) => {
-    if (e.target.closest("#rvLaunch")) { rv.from = ""; rvRender(); return; }
-    if (e.target.closest("#rvTagBtn")) { openTagPanel($("#rvTagPanel").hidden); return; }
+    if (e.target.closest("#rvTagBtn")) { openPanel("rvFromPanel", "rvFromBtn", false); openTagPanel($("#rvTagPanel").hidden); return; }
+    if (e.target.closest("#rvFromBtn")) { openTagPanel(false); openPanel("rvFromPanel", "rvFromBtn", $("#rvFromPanel").hidden); return; }
     const q = e.target.closest("#rvTagPanel [data-tags]"); if (q) { rv.tags = q.dataset.tags; rvRender(); openTagPanel(true); return; }
+    const f = e.target.closest("#rvFromPanel [data-from]"); if (f) { rv.from = f.dataset.from; rvRender(); openPanel("rvFromPanel", "rvFromBtn", false); return; }
     if (!e.target.closest("#rvTagPanel")) openTagPanel(false);
+    if (!e.target.closest("#rvFromPanel")) openPanel("rvFromPanel", "rvFromBtn", false);
   });
   async function loadRoster(st) {
     if (!st) return;
@@ -826,7 +838,7 @@
       const col = (title, rows, file) => `<div class="card" style="padding:16px 18px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><div class="card-title" style="font-size:14px">${title}</div></div><div style="max-height:520px;overflow:auto;margin-top:8px;font-size:13px;line-height:1.5">${rows.length ? rows.map((x) => `<div style="padding:3px 0;border-bottom:1px solid var(--rule-in)">${esc(x)}</div>`).join("") : `<div class="sec-note">none</div>`}</div></div>`;
       lastRoster = r; $("#rosterResp").innerHTML = r.responses ? stateRespCard(r.state, r.st, r.responses) : "";
       $("#rosterCols").innerHTML = col("Schools in the data", r.schools_in, "schools_in") + col("Districts in the data", r.districts_in, "districts_in") + col("Schools not yet", r.schools_out, "schools_out") + col("Districts not yet", r.districts_out, "districts_out");
-      $("#rosterNote").textContent = `${esc(r.state)}`;
+      $("#rosterNote").textContent = "";
     } catch (e) { $("#rosterNote").textContent = "roster not available"; }
   }
   rsel.addEventListener("change", () => { history.replaceState(null, "", "#" + rvHash(rsel.value)); loadRoster(rsel.value); });
