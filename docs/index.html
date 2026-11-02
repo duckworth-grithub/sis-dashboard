@@ -755,7 +755,7 @@
     const cum = (rp.daily || []).map((x) => { t += (x.edu || 0) + (x.lib || 0); top.forEach((k) => (acc[k] += (x.src || {})[k] || 0)); return { ...x, t, c: { ...acc } }; });
     const series = [{ name: "all educator + librarian reports", val: (x) => x.t }, ...top.map((k) => ({ name: srcName(k), val: (x) => x.c[k] }))];
     const rows = rp.sources || [];
-    return `<div class="card" style="display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Educator and librarian reports in ${esc(name)} since launch</div><div class="sec-note">${fmt(rp.total)} valid · ${fmt(rp.educator)} educators · ${fmt(rp.librarian)} librarians</div></div>
+    return `<div class="card" style="display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Educator and librarian reports in ${esc(name)} since the ${esc(d.cycle.name)} launch</div><div class="sec-note">${fmt(rp.total)} valid · ${fmt(rp.educator)} educators · ${fmt(rp.librarian)} librarians</div></div>
       ${rp.total ? linesChart(cum, series, (x) => mdy(x.date), (x) => `${fmt(x.t)} so far${top.map((k) => ` · ${esc(srcName(k))} ${fmt(x.c[k])}`).join("")}`) : `<div class="sec-note" style="margin-top:12px">No educator or librarian reports from ${esc(name)} yet.</div>`}
       ${rows.length ? `<div class="tablewrap"><table style="margin-top:14px"><thead><tr><th>Source</th><th class="num">Valid</th><th class="num">New schools</th><th class="num">This wk</th><th class="tagcol">First seen</th></tr></thead>
       <tbody>${rows.map((x) => `<tr><td>${srcName(x.source)}</td><td class="num"><b>${fmt(x.valid)}</b></td><td class="num">${fmt(x.new_schools)}</td><td class="num">${fmt(x.this_week)}</td><td class="tagcol">${x.first_seen ? mdy(x.first_seen) : "—"}</td></tr>`).join("")}</tbody></table></div>` : ""}
@@ -863,7 +863,7 @@
     // charts: MS/HS vs elementary in the All view; elementary reports + schools put on the map in the Elementary view
     let cm = 0, ce = 0, cn = 0;
     const cum = (R.daily || []).map((x) => { cm += (x.by_level || {}).mshs || 0; ce += (x.by_level || {}).elementary || 0; cn += (x.new_by_level || {}).elementary || 0; return { ...x, cm, ce, cn }; });
-    const cumCard = `<div class="card" style="display:flex;flex-direction:column"><div class="card-title">${cap(pre + "educator reports since launch")}</div>
+    const cumCard = `<div class="card" style="display:flex;flex-direction:column"><div class="card-title">${cap(pre + "educator reports since the " + d.cycle.name + " launch")}</div>
         ${EL ? linesChart(cum, [{ name: "valid reports", val: (x) => x.ce }, { name: "schools put on the map", val: (x) => x.cn }], (x) => mdy(x.date), (x) => `${fmt(x.ce)} elementary reports so far · ${fmt(x.cn)} schools put on the map`)
              : linesChart(cum, [{ name: "MS/HS", val: (x) => x.cm }, { name: "elementary", val: (x) => x.ce }], (x) => mdy(x.date), (x) => `${fmt(x.cm)} MS/HS · ${fmt(x.ce)} elementary so far · ${fmt(x.valid)} that day`)}
         <div class="sub12" style="margin-top:10px">Cumulative valid reports since ${mdy((d.cycle.start || "").slice(0, 10))}.${EL ? ' "On the map" = the school\'s first report ever.' : ""}</div></div>`;
