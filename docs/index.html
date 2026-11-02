@@ -87,7 +87,8 @@
   .srclegend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
   .lvlsw { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
   .lvlsw .pill { cursor: pointer; }
-  .lvlsw .pill[aria-pressed="true"] { background: var(--chalk); color: #FFFFFF; }
+  .lvlsw .pill[aria-pressed="true"], #stuToggle[aria-pressed="true"] { background: var(--chalk); color: #FFFFFF; }
+  #stuToggle { cursor: pointer; }
   .ranked .row.more { display: none; }
   .ranked.open .row.more { display: flex; }
   .wl .wldot.s1 { background: var(--chalk); } .wl .wldot.s1.hollow { background: #FFFFFF; border-color: var(--chalk); }
@@ -749,18 +750,22 @@
   const rsel = $("#rosterState");
   rsel.innerHTML = Object.keys(rosterCounts).filter((st) => !TERR.has(st)).sort((a, b) => (stateNames[a] || a).localeCompare(stateNames[b] || b)).map((st) => `<option value="${st}">${esc(stateNames[st] || st)}</option>`).join("");
   const dlCsv = (name, rows) => { const a2 = document.createElement("a"); a2.href = URL.createObjectURL(new Blob([rows.map((r) => '"' + String(r).replace(/"/g, '""') + '"').join("\n")], { type: "text/csv" })); a2.download = name; a2.click(); };
-  // per-state: cumulative educator + librarian reports since launch, with the top tagged sources as their own lines
+  // per-state: cumulative valid reports since launch (all surveys, or educators + librarians only), with the top tagged sources as their own lines
+  let stuOff = false, lastRoster = null;
   const stateRespCard = (name, st, rp) => {
     const top = rp.top_sources || [], acc = {}; top.forEach((k) => (acc[k] = 0)); let t = 0;
-    const cum = (rp.daily || []).map((x) => { t += (x.edu || 0) + (x.lib || 0); top.forEach((k) => (acc[k] += (x.src || {})[k] || 0)); return { ...x, t, c: { ...acc } }; });
-    const series = [{ name: "all educator + librarian reports", val: (x) => x.t }, ...top.map((k) => ({ name: srcName(k), val: (x) => x.c[k] }))];
-    const rows = rp.sources || [];
-    return `<div class="card" style="display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Educator and librarian reports in ${esc(name)} since the ${esc(d.cycle.name)} launch</div><div class="sec-note">${fmt(rp.total)} valid · ${fmt(rp.educator)} educators · ${fmt(rp.librarian)} librarians</div></div>
-      ${rp.total ? linesChart(cum, series, (x) => mdy(x.date), (x) => `${fmt(x.t)} so far${top.map((k) => ` · ${esc(srcName(k))} ${fmt(x.c[k])}`).join("")}`) : `<div class="sec-note" style="margin-top:12px">No educator or librarian reports from ${esc(name)} yet.</div>`}
+    const cum = (rp.daily || []).map((x) => { t += (x.edu || 0) + (x.lib || 0) + (stuOff ? 0 : (x.stu || 0)); top.forEach((k) => (acc[k] += ((stuOff ? x.src_ns : x.src) || {})[k] || 0)); return { ...x, t, c: { ...acc } }; });
+    const series = [{ name: stuOff ? "all educator + librarian reports" : "all reports", val: (x) => x.t }, ...top.map((k) => ({ name: srcName(k), val: (x) => x.c[k] }))];
+    const total = stuOff ? (rp.educator || 0) + (rp.librarian || 0) : rp.total;
+    const rows = (rp.sources || []).map((x) => stuOff ? { ...x, valid: x.valid_ns, new_schools: x.new_schools_ns, this_week: x.this_week_ns } : x).filter((x) => x.valid > 0).sort((a, b) => b.valid - a.valid);
+    const btn = `<button class="pill" id="stuToggle" aria-pressed="${stuOff}">${stuOff ? "Include students" : "Exclude students"}</button>`;
+    return `<div class="card" style="display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><div class="card-title">${stuOff ? "Educator and librarian reports" : "Reports"} in ${esc(name)} since the ${esc(d.cycle.name)} launch</div><div class="sec-note" style="margin-top:4px">${fmt(total)} valid${stuOff ? "" : ` · ${fmt(rp.student || 0)} students`} · ${fmt(rp.educator)} educators · ${fmt(rp.librarian)} librarians</div></div>${btn}</div>
+      ${total ? linesChart(cum, series, (x) => mdy(x.date), (x) => `${fmt(x.t)} so far${top.map((k) => ` · ${esc(srcName(k))} ${fmt(x.c[k])}`).join("")}`) : `<div class="sec-note" style="margin-top:12px">No ${stuOff ? "educator or librarian " : ""}reports from ${esc(name)} yet.</div>`}
       ${rows.length ? `<div class="tablewrap"><table style="margin-top:14px"><thead><tr><th>Source</th><th class="num">Valid</th><th class="num">New schools</th><th class="num">This wk</th><th class="tagcol">First seen</th></tr></thead>
       <tbody>${rows.map((x) => `<tr><td>${srcName(x.source)}</td><td class="num"><b>${fmt(x.valid)}</b></td><td class="num">${fmt(x.new_schools)}</td><td class="num">${fmt(x.this_week)}</td><td class="tagcol">${x.first_seen ? mdy(x.first_seen) : "—"}</td></tr>`).join("")}</tbody></table></div>` : ""}
-      <div class="sub12" style="margin-top:10px">Cumulative valid reports to the new educator and librarian surveys. A partner's link shows as its utm_source from the first click; "untagged" arrived without a tag. Link to this view: <code>#bystate?state=${esc(st)}</code>.</div></div>`;
+      <div class="sub12" style="margin-top:10px">Cumulative valid reports${stuOff ? " to the educator and librarian surveys" : " across the student, educator and librarian surveys"}. A partner's link shows as its utm_source from the first click; "untagged" arrived without a tag. Link to this view: <code>#bystate?state=${esc(st)}</code>.</div></div>`;
   };
+  document.addEventListener("click", (e) => { if (!e.target.closest("#stuToggle") || !lastRoster) return; stuOff = !stuOff; $("#rosterResp").innerHTML = stateRespCard(lastRoster.state, lastRoster.st, lastRoster.responses); });
   async function loadRoster(st) {
     if (!st) return;
     $("#rosterNote").textContent = "loading…";
@@ -769,7 +774,7 @@
       const cnt = r.counts;
       $("#rosterTiles").innerHTML = tile("Schools in the data", fmt(cnt.schools_in), `${pct(100 * cnt.schools_in / Math.max(1, cnt.schools_in + cnt.schools_out))} of ${fmt(cnt.schools_in + cnt.schools_out)}`) + tile("Districts in the data", fmt(cnt.districts_in), `of ${fmt(cnt.districts_in + cnt.districts_out)}`) + tile("Schools not yet", fmt(cnt.schools_out), "") + tile("Districts not yet", fmt(cnt.districts_out), "");
       const col = (title, rows, file) => `<div class="card" style="padding:16px 18px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><div class="card-title" style="font-size:14px">${title}</div></div><div style="max-height:520px;overflow:auto;margin-top:8px;font-size:13px;line-height:1.5">${rows.length ? rows.map((x) => `<div style="padding:3px 0;border-bottom:1px solid var(--rule-in)">${esc(x)}</div>`).join("") : `<div class="sec-note">none</div>`}</div></div>`;
-      $("#rosterResp").innerHTML = r.responses ? stateRespCard(r.state, r.st, r.responses) : "";
+      lastRoster = r; $("#rosterResp").innerHTML = r.responses ? stateRespCard(r.state, r.st, r.responses) : "";
       $("#rosterCols").innerHTML = col("Schools in the data", r.schools_in, "schools_in") + col("Districts in the data", r.districts_in, "districts_in") + col("Schools not yet", r.schools_out, "schools_out") + col("Districts not yet", r.districts_out, "districts_out");
       $("#rosterNote").textContent = `${esc(r.state)}`;
     } catch (e) { $("#rosterNote").textContent = "roster not available"; }
