@@ -87,8 +87,7 @@
   .srclegend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
   .lvlsw { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
   .lvlsw .pill { cursor: pointer; }
-  .lvlsw .pill[aria-pressed="true"], #stuToggle[aria-pressed="true"] { background: var(--chalk); color: #FFFFFF; }
-  #stuToggle { cursor: pointer; }
+  .lvlsw .pill[aria-pressed="true"] { background: var(--chalk); color: #FFFFFF; }
   .ranked .row.more { display: none; }
   .ranked.open .row.more { display: flex; }
   .wl .wldot.s1 { background: var(--chalk); } .wl .wldot.s1.hollow { background: #FFFFFF; border-color: var(--chalk); }
@@ -267,6 +266,7 @@
   .tag.warn { background: #FFF2EF; color: #B3261E; }
   .tag.good { background: #E4EDE6; color: #1C5E3D; }
   .filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 16px 0 12px; }
+  .filters .fl { font-size: 12px; color: var(--slate); font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
   .filters select, .filters input { font: inherit; font-weight: 700; font-size: 13px; padding: 8px 14px; border: 0; border-radius: 999px; background: var(--card); color: var(--chalk); box-shadow: var(--shadow); }
   .lvlsel { appearance: none; -webkit-appearance: none; font: inherit; font-weight: 700; color: var(--chalk); background: var(--ground); border: 0; border-radius: 999px; padding: 4px 28px 4px 12px; cursor: pointer; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%231E4034' stroke-width='1.6'/></svg>"); background-repeat: no-repeat; background-position: right 10px center; }
   .filters select { appearance: none; -webkit-appearance: none; padding-right: 30px; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%231E4034' stroke-width='1.6'/></svg>"); background-repeat: no-repeat; background-position: right 12px center; }
@@ -315,7 +315,11 @@
 
   <div class="page" id="page-bystate">
     <h2 class="ph">By state</h2><p class="pd">One state at a time: which schools and districts are in the data, and which are not yet. "In the data" = at least one report (earlier waves carry forward for middle/high; elementary counts only with the new survey).</p>
-    <div class="filters"><select id="rosterState"></select><span class="sec-note" id="rosterNote"></span></div>
+    <div class="filters"><select id="rosterState"></select>
+      <select id="rvAud" aria-label="Audience"><option value="all">All audiences</option><option value="edulib">Educators + librarians</option><option value="edu">Educators</option><option value="lib">Librarians</option><option value="stu">Students</option></select>
+      <label class="fl">From <input type="date" id="rvFrom"></label>
+      <select id="rvTag" aria-label="UTM tags"><option value="all">All tags</option><option value="off">Hide tags</option></select>
+      <span class="sec-note" id="rosterNote"></span></div>
     <div class="grid3 roster4" id="rosterTiles"></div>
     <div id="rosterResp" style="margin-top:16px"></div>
     <div class="grid3 roster4" id="rosterCols"></div>
@@ -403,7 +407,7 @@
     document.querySelectorAll("#tabs button, #secMenu button").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === tab));
     const cur = TABS.find(([k]) => k === tab); if (cur) $("#secPickLabel").textContent = cur[1];
     if (tab === "gaps" && params.state) { $("#stateSearch").value = params.state; renderStates(); }
-    if (tab === "bystate" && params.state) { $("#rosterState").value = params.state; loadRoster(params.state); }
+    if (tab === "bystate" && params.state) { $("#rosterState").value = params.state; if (typeof rvFromHash === "function") rvFromHash(params); loadRoster(params.state); }
     if (tab === "educator" && typeof renderEducators === "function") { const lv = params.level === "elementary" ? "elementary" : "all"; if (lv !== eduLevel) { eduLevel = lv; renderEducators(); } }
     window.scrollTo({ top: 0 });
   }
@@ -750,22 +754,45 @@
   const rsel = $("#rosterState");
   rsel.innerHTML = Object.keys(rosterCounts).filter((st) => !TERR.has(st)).sort((a, b) => (stateNames[a] || a).localeCompare(stateNames[b] || b)).map((st) => `<option value="${st}">${esc(stateNames[st] || st)}</option>`).join("");
   const dlCsv = (name, rows) => { const a2 = document.createElement("a"); a2.href = URL.createObjectURL(new Blob([rows.map((r) => '"' + String(r).replace(/"/g, '""') + '"').join("\n")], { type: "text/csv" })); a2.download = name; a2.click(); };
-  // per-state: cumulative valid reports since launch (all surveys, or educators + librarians only), with the top tagged sources as their own lines
-  let stuOff = false, lastRoster = null;
+  // per-state: cumulative valid reports from a chosen start date, by audience and by full utm tag (source · medium · campaign).
+  // Controls sit beside the state picker; settings live in the hash (#bystate?state=NJ&aud=edulib&from=2026-12-01&tag=off) so a clean view can be sent to a state.
+  const rv = { aud: "all", from: "", tag: "all" };
+  let lastRoster = null;
+  const AUD = { all: [0, 2, 4], edulib: [2, 4], edu: [2], lib: [4], stu: [0] };
+  const AUD_NAME = { all: "Reports", edulib: "Educator and librarian reports", edu: "Educator reports", lib: "Librarian reports", stu: "Student reports" };
+  const tagKey = (t) => [t.source, t.medium, t.campaign].join("|");
+  const tagName = (t) => [t.source === "untagged" ? "untagged" : srcName(t.source), t.medium, t.campaign].filter(Boolean).join(" · ");
+  function rvFromHash(params) { rv.aud = AUD[params.aud] ? params.aud : "all"; rv.from = /^\d{4}-\d{2}-\d{2}$/.test(params.from || "") ? params.from : ""; rv.tag = params.tag ? decodeURIComponent(params.tag) : "all"; }
+  const rvHash = (st) => "bystate?state=" + st + (rv.aud !== "all" ? "&aud=" + rv.aud : "") + (rv.from ? "&from=" + rv.from : "") + (rv.tag !== "all" ? "&tag=" + encodeURIComponent(rv.tag) : "");
   const stateRespCard = (name, st, rp) => {
-    const top = rp.top_sources || [], acc = {}; top.forEach((k) => (acc[k] = 0)); let t = 0;
-    const cum = (rp.daily || []).map((x) => { t += (x.edu || 0) + (x.lib || 0) + (stuOff ? 0 : (x.stu || 0)); top.forEach((k) => (acc[k] += ((stuOff ? x.src_ns : x.src) || {})[k] || 0)); return { ...x, t, c: { ...acc } }; });
-    const series = [{ name: stuOff ? "all educator + librarian reports" : "all reports", val: (x) => x.t }, ...top.map((k) => ({ name: srcName(k), val: (x) => x.c[k] }))];
-    const total = stuOff ? (rp.educator || 0) + (rp.librarian || 0) : rp.total;
-    const rows = (rp.sources || []).map((x) => stuOff ? { ...x, valid: x.valid_ns, new_schools: x.new_schools_ns, this_week: x.this_week_ns } : x).filter((x) => x.valid > 0).sort((a, b) => b.valid - a.valid);
-    const btn = `<button class="pill" id="stuToggle" aria-pressed="${stuOff}">${stuOff ? "Include students" : "Exclude students"}</button>`;
-    return `<div class="card" style="display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><div class="card-title">${stuOff ? "Educator and librarian reports" : "Reports"} in ${esc(name)} since the ${esc(d.cycle.name)} launch</div><div class="sec-note" style="margin-top:4px">${fmt(total)} valid${stuOff ? "" : ` · ${fmt(rp.student || 0)} students`} · ${fmt(rp.educator)} educators · ${fmt(rp.librarian)} librarians</div></div>${btn}</div>
-      ${total ? linesChart(cum, series, (x) => mdy(x.date), (x) => `${fmt(x.t)} so far${top.map((k) => ` · ${esc(srcName(k))} ${fmt(x.c[k])}`).join("")}`) : `<div class="sec-note" style="margin-top:12px">No ${stuOff ? "educator or librarian " : ""}reports from ${esc(name)} yet.</div>`}
-      ${rows.length ? `<div class="tablewrap"><table style="margin-top:14px"><thead><tr><th>Source</th><th class="num">Valid</th><th class="num">New schools</th><th class="num">This wk</th><th class="tagcol">First seen</th></tr></thead>
-      <tbody>${rows.map((x) => `<tr><td>${srcName(x.source)}</td><td class="num"><b>${fmt(x.valid)}</b></td><td class="num">${fmt(x.new_schools)}</td><td class="num">${fmt(x.this_week)}</td><td class="tagcol">${x.first_seen ? mdy(x.first_seen) : "—"}</td></tr>`).join("")}</tbody></table></div>` : ""}
-      <div class="sub12" style="margin-top:10px">Cumulative valid reports${stuOff ? " to the educator and librarian surveys" : " across the student, educator and librarian surveys"}. A partner's link shows as its utm_source from the first click; "untagged" arrived without a tag. Link to this view: <code>#bystate?state=${esc(st)}</code>.</div></div>`;
+    const tags = rp.tags || [], cols = AUD[rv.aud], cyc0 = (d.cycle.start || "").slice(0, 10), today = (d.as_of || "").slice(0, 10);
+    const from = rv.from && rv.from > cyc0 ? rv.from : cyc0;
+    const days = (rp.daily || []).filter((x) => x.date >= from);
+    const cnt = (v) => (v ? cols.reduce((a, j) => a + (v[j] || 0), 0) : 0), cntNew = (v) => (v ? cols.reduce((a, j) => a + (v[j + 1] || 0), 0) : 0);
+    const dayTot = (x) => (rv.aud === "all" || rv.aud === "stu" ? 0 : 0) + cols.reduce((a, j) => a + (x[{ 0: "stu", 2: "edu", 4: "lib" }[j]] || 0), 0);
+    const tot = tags.map((t, i) => { let v = 0, n = 0, first = null; days.forEach((x) => { const c = cnt((x.t || {})[i]); if (c && !first) first = x.date; v += c; n += cntNew((x.t || {})[i]); }); return { ...t, i, key: tagKey(t), valid: v, new_schools: n, first_seen: first }; });
+    const present = tot.filter((x) => x.valid > 0).sort((a, b) => b.valid - a.valid);
+    const sel = rv.tag !== "all" && rv.tag !== "off" ? present.find((x) => x.key === rv.tag) : null;
+    const tagsOff = rv.tag === "off";
+    const lineTags = tagsOff ? [] : sel ? [sel] : present.filter((x) => x.source !== "untagged").slice(0, 3);
+    let t = 0; const acc = {}; lineTags.forEach((x) => (acc[x.i] = 0));
+    const cum = days.map((x) => { t += dayTot(x); lineTags.forEach((lt) => (acc[lt.i] += cnt((x.t || {})[lt.i]))); return { ...x, tt: t, c: { ...acc } }; });
+    const total = t, stu = days.reduce((a, x) => a + (x.stu || 0), 0), edu = days.reduce((a, x) => a + (x.edu || 0), 0), lib = days.reduce((a, x) => a + (x.lib || 0), 0);
+    const parts = [cols.includes(0) ? `${fmt(stu)} students` : "", cols.includes(2) ? `${fmt(edu)} educators` : "", cols.includes(4) ? `${fmt(lib)} librarians` : ""].filter(Boolean);
+    const series = [{ name: "all " + AUD_NAME[rv.aud].toLowerCase(), val: (x) => x.tt }, ...lineTags.map((lt) => ({ name: tagName(lt), val: (x) => x.c[lt.i] }))];
+    const rows = tagsOff ? [] : sel ? [sel] : present;
+    // refresh the tag dropdown for this state and window (keeps the current choice when it still exists)
+    const ts = $("#rvTag"); ts.innerHTML = `<option value="all">All tags</option><option value="off">Hide tags</option>` + present.map((x) => `<option value="${esc(x.key)}">${esc(tagName(x))} (${fmt(x.valid)})</option>`).join("");
+    ts.value = tagsOff ? "off" : sel ? sel.key : "all"; if (!sel && !tagsOff) rv.tag = "all";
+    $("#rvAud").value = rv.aud; const fi = $("#rvFrom"); fi.min = cyc0; fi.max = today; fi.value = from;
+    return `<div class="card" style="display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">${AUD_NAME[rv.aud]} in ${esc(name)} since ${from === cyc0 ? "the " + esc(d.cycle.name) + " launch" : mdy(from)}</div><div class="sec-note">${fmt(total)} valid${parts.length > 1 ? " · " + parts.join(" · ") : ""}</div></div>
+      ${total ? linesChart(cum, series, (x) => mdy(x.date), (x) => `${fmt(x.tt)} so far${lineTags.map((lt) => ` · ${esc(tagName(lt))} ${fmt(x.c[lt.i])}`).join("")}`) : `<div class="sec-note" style="margin-top:12px">No ${AUD_NAME[rv.aud].toLowerCase()} from ${esc(name)} ${from === cyc0 ? "yet" : "since " + mdy(from)}.</div>`}
+      ${rows.length ? `<div class="tablewrap"><table style="margin-top:14px"><thead><tr><th>Source</th><th>Medium</th><th>Campaign</th><th class="num">Valid</th><th class="num">New schools</th><th class="tagcol">First seen</th></tr></thead>
+      <tbody>${rows.map((x) => `<tr><td>${x.source === "untagged" ? '<span style="color:var(--muted)">untagged</span>' : srcName(x.source)}</td><td>${x.medium ? esc(x.medium) : '<span style="color:var(--muted)">—</span>'}</td><td>${x.campaign ? esc(x.campaign) : '<span style="color:var(--muted)">—</span>'}</td><td class="num"><b>${fmt(x.valid)}</b></td><td class="num">${fmt(x.new_schools)}</td><td class="tagcol">${x.first_seen ? mdy(x.first_seen) : "—"}</td></tr>`).join("")}</tbody></table></div>` : ""}
+      <div class="sub12" style="margin-top:10px">Cumulative valid reports from the start date.${tagsOff ? "" : ' A partner\'s link shows as its utm tag from the first click; "untagged" arrived without a tag.'} Link to this view: <code>#${esc(rvHash(st))}</code>.</div></div>`;
   };
-  document.addEventListener("click", (e) => { if (!e.target.closest("#stuToggle") || !lastRoster) return; stuOff = !stuOff; $("#rosterResp").innerHTML = stateRespCard(lastRoster.state, lastRoster.st, lastRoster.responses); });
+  const rvRender = () => { if (!lastRoster) return; history.replaceState(null, "", "#" + rvHash(lastRoster.st)); $("#rosterResp").innerHTML = lastRoster.responses ? stateRespCard(lastRoster.state, lastRoster.st, lastRoster.responses) : ""; };
+  document.addEventListener("change", (e) => { if (e.target.id === "rvFrom") { rv.from = e.target.value || ""; rvRender(); } else if (e.target.id === "rvTag") { rv.tag = e.target.value; rvRender(); } else if (e.target.id === "rvAud") { rv.aud = e.target.value; rvRender(); } });
   async function loadRoster(st) {
     if (!st) return;
     $("#rosterNote").textContent = "loading…";
@@ -779,7 +806,7 @@
       $("#rosterNote").textContent = `${esc(r.state)}`;
     } catch (e) { $("#rosterNote").textContent = "roster not available"; }
   }
-  rsel.addEventListener("change", () => loadRoster(rsel.value));
+  rsel.addEventListener("change", () => { history.replaceState(null, "", "#" + rvHash(rsel.value)); loadRoster(rsel.value); });
   if (rsel.value) loadRoster(rsel.value);
 
   // ---- educators (MS/HS + elementary, with a level switch), students, librarians
