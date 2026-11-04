@@ -268,6 +268,10 @@
   .filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 16px 0 12px; }
   .filters .pill { cursor: pointer; box-shadow: var(--shadow); background: var(--card); }
   .filters .pill[aria-pressed="true"] { background: var(--chalk); color: #FFFFFF; }
+  .spk-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-right: 6px; vertical-align: 1px; }
+  .spk-badge.ok { background: var(--ground); color: var(--study); }
+  .spk-badge.warn { background: #FBE9D0; color: #8A4B08; }
+  .spk-tag { display: inline-block; background: var(--ground); border-radius: 8px; padding: 2px 8px; font-size: 12px; margin: 2px 4px 2px 0; }
   .tagpick { position: relative; display: inline-block; }
   .tagpanel { position: absolute; top: calc(100% + 6px); left: 0; z-index: 30; background: var(--card); border-radius: 14px; box-shadow: 0 8px 28px rgba(0,0,0,.14); padding: 10px 12px; min-width: 300px; max-width: min(92vw, 460px); max-height: 340px; overflow: auto; font-size: 13px; }
   .tagpanel .tp-quick { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
@@ -689,8 +693,30 @@
   function outreachTable(rows, audienceCol) {
     return rows.length ? `<div class="tablewrap"><table style="margin-top:10px"><thead><tr><th>Sent</th><th>What</th><th>State</th>${audienceCol ? "<th>Audience</th>" : ""}<th class="num">7 days after</th><th class="num">7 days before</th><th class="num tagcol">Tagged</th></tr></thead><tbody>${rows.map((o) => `<tr><td>${mdy(o.date)}</td><td>${esc(o.label)}</td><td>${esc(o.state || "national")}</td>${audienceCol ? `<td>${esc(o.audience)}</td>` : ""}<td class="num">${o.after_7d == null ? "—" : o.days_elapsed < 6 ? `${fmt(o.after_7d)} <small style="color:var(--muted)">(${o.days_elapsed + 1}d so far)</small>` : fmt(o.after_7d)}</td><td class="num">${o.before_7d == null ? "—" : fmt(o.before_7d)}</td><td class="num tagcol">${o.tagged_reports == null ? "<span style=\"color:var(--muted)\">no tag</span>" : fmt(o.tagged_reports)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="sec-note" style="margin-top:8px">No dated sends in the tracker${audienceCol ? "" : " for this audience"} yet.</div>`;
   }
+  const SRC = d.sources || {}, srcName = (x) => x === "untagged" ? '<span style="color:var(--muted)">untagged</span>' : esc(x);
+  // spikes in the last 30 days, with what explains each one (replaces the outreach tables, Nov 4)
+  const SPK = d.spikes || { events: [], window_days: 30 };
+  const spikesTable = (events, survey) => {
+    const rows = survey ? events.filter((e) => ((e.by_survey || {})[survey] || 0) >= Math.max(3, 0.25 * e.n)) : events;
+    if (!rows.length) return `<div class="sec-note" style="margin-top:10px">No spikes in the last ${SPK.window_days} days${survey ? ` with ${survey} reports` : ""}.</div>`;
+    const who = (e) => ["student", "educator", "librarian"].filter((k) => (e.by_survey || {})[k]).map((k) => `${fmt(e.by_survey[k])} ${k === "student" ? "stu" : k === "educator" ? "edu" : "lib"}`).join(" · ");
+    const tagTxt = (t) => [t.source === "untagged" ? "untagged" : srcName(t.source), t.medium, t.campaign].filter(Boolean).join(" · ");
+    const why = (e) => {
+      const tags = (e.tags || []).map((t) => `<span class="spk-tag">${esc(tagTxt(t))} <small>${fmt(t.n)}</small></span>`).join(" ");
+      const trk = (e.tracker || []).map((o) => `${esc(o.label)} <small style="color:var(--muted)">${mdy(o.date)}${o.state ? " · " + esc(o.state) : " · national"}</small>`).join("<br>");
+      if (e.explained === "utm") return `<span class="spk-badge ok">UTM</span> ${tags}`;
+      if (e.explained === "tracker") return `<span class="spk-badge ok">Tracker</span> ${trk}${tags ? `<div class="sub12" style="margin-top:4px">${pct(e.tagged_share)} tagged: ${tags}</div>` : ""}`;
+      if (e.explained === "partial") return `<span class="spk-badge warn">Partly tagged</span> ${tags}<div class="sub12" style="margin-top:4px">${pct(100 - e.tagged_share)} untagged and nothing on the tracker.</div>`;
+      return `<span class="spk-badge warn">Unknown</span> <span class="sub12">no tags, nothing on the tracker in the week before</span>`;
+    };
+    return `<div class="tablewrap"><table style="margin-top:10px"><thead><tr><th>When</th><th>State</th><th class="num">Reports</th><th class="tagcol">Who</th><th>Explained by</th></tr></thead>
+      <tbody>${rows.map((e) => `<tr><td style="white-space:nowrap">${mdy(e.start)}${e.end !== e.start ? "–" + mdy(e.end) : ""}</td><td>${e.state_name ? `<span data-go="bystate?state=${e.st}" style="cursor:pointer">${esc(e.state_name)}</span>` : `All states${(e.states || []).length ? `<div class="sub12">${e.states.map((x) => `${esc(x.state)} ${fmt(x.n)}`).join(" · ")}${e.states.length >= 6 ? " · …" : ""}</div>` : ""}`}</td><td class="num"><b>${fmt(e.n)}</b> <small style="color:var(--muted)">${e.ratio}× usual</small></td><td class="tagcol">${who(e)}</td><td>${why(e)}</td></tr>`).join("")}</tbody></table></div>`;
+  };
+  const spikesCard = (title, survey) => `<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">${title}</div><div class="sec-note">a day with 3× a state's usual reports (8+; 40+ for all states), merged across consecutive days</div></div>${spikesTable(SPK.events || [], survey)}
+    <div class="sub12" style="margin-top:8px">"Explained by" checks the utm tags on the spike's reports, then the outreach tracker for a send to that state or audience in the week before. Unknown = worth reverse-engineering.</div></div>`;
   const outreachCard = (title, rows, audienceCol) => `<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">${title}</div><div class="sec-note">valid reports in the 7 days after a send vs the 7 before, same state and audience</div></div>${outreachTable(rows, audienceCol)}</div>`;
-  $("#outreach").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Outreach</div><div class="sec-note">from the team's tracker · valid reports in the 7 days after a send vs the 7 before, same state and audience</div></div>` + outreachTable(OUT, true);
+  $("#outreach").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Spikes in the last ${SPK.window_days} days</div><div class="sec-note">a day with 3× a state's usual reports (8+; 40+ for all states), merged across consecutive days</div></div>${spikesTable(SPK.events || [], null)}
+    <div class="sub12" style="margin-top:8px">"Explained by" checks the utm tags on the spike's reports, then the outreach tracker for a send to that state or audience in the week before. Unknown = worth reverse-engineering.</div>`;
   $("#review").innerHTML = P ? `<div><div style="font-size:13px;font-weight:700">Needs review</div><div class="sub12">${PEND}.</div></div>`
     : `<div><div style="font-size:13px;font-weight:700">Needs review</div><div class="sub12 pretty"><b style="color:var(--ink)">${fmt(dq.needs_review)}</b> responses unmatched, ambiguous or too fast. Match rate ${pct(dq.match_rate)}. Queue ${fmt(dq.queue.size)}${dq.queue.oldest_days != null ? `, oldest ${dq.queue.oldest_days} d` : ""}.</div></div><span class="pill primary" data-go="quality">Review →</span>`;
 
@@ -849,7 +875,6 @@
   const elemWeekly = wk.map((w) => ({ ...w, n: w.by_level.elementary || 0 }));
   let eduLevel = (new URLSearchParams((location.hash.split("?")[1] || ""))).get("level") === "elementary" ? "elementary" : "all";
   const elemStates = [...d.states].map((s2) => ({ st: s2.st, state: s2.state, ...(s2.by_level.elementary || { eligible: 0, covered: 0 }) })).filter((x) => x.eligible > 0).map((x) => ({ ...x, remaining: x.eligible - x.covered, pct: +(100 * x.covered / x.eligible).toFixed(1) })).sort((a, b) => b.remaining - a.remaining).slice(0, 8);
-  const SRC = d.sources || {}, srcName = (x) => x === "untagged" ? '<span style="color:var(--muted)">untagged</span>' : esc(x);
   const srcBar = (n2, mx) => `<span class="barcell"><i style="width:${Math.max(2, Math.round(90 * n2 / mx))}px"></i>${fmt(n2)}</span>`;
   // multi-series line chart (same construction as weekLine): series = [{name, val(row), tip?}], lab(row) = x label
   function linesChart(rows, series, lab, tipOf) {
@@ -902,7 +927,7 @@
     const srcCards = key === "student" ? sourceCards(SRC.student, "student", false) : "";
     const spike = R.spike && key !== "student" ? spikeCard((R.spike || {}).all, "mshs", noun) : "";   // Sadie: no state card on Students
     const body = spike + (key === "student" ? stateTracker + srcCards : "") + weeklyCard + `<div class="card"><div class="card-title">States with the most ${noun}-reported schools</div><div class="ranked" style="margin-top:6px">${(R.top_states || []).map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc((byCode[g.st] || {}).state || g.st)}</span><span class="v">${fmt(g.schools)} <small>${g.schools === 1 ? "school" : "schools"}</small></span></div>`).join("") || `<div class="sec-note">—</div>`}</div></div>`
-      + `<div style="grid-column:1/-1">${outreachCard(`Outreach to ${noun}s`, OUT.filter((o) => o.audience === key || o.audience === "all"), false)}</div>`;
+      + `<div style="grid-column:1/-1">${spikesCard(`${noun[0].toUpperCase() + noun.slice(1)} spikes in the last ${SPK.window_days} days`, key)}</div>`;
     $("#" + tilesId).innerHTML = tiles; $("#" + bodyId).innerHTML = body;
   }
   rolePage("student", "studentTiles", "studentBody", "student");
@@ -947,7 +972,7 @@
     const elemCard = `<div class="card"><div class="card-title">Most uncovered elementary schools</div><div class="ranked" style="margin-top:6px">${elemStates.map((g) => `<div class="row" data-go="gaps?state=${g.st}"><span class="n">${esc(g.state)}</span><span class="v">${fmt(g.remaining)} <small>· ${pct(g.pct)}</small></span></div>`).join("")}</div>
         <div class="sub12" style="margin-top:8px">Elementary coverage counts every role's reports, not only educators.</div><div style="margin-top:12px"><span class="pill" data-go="gaps">All states →</span></div></div>`;
     $("#eduBody").innerHTML = stateCard + tracker + cumCard + wkCard + src + rankCard + elemCard
-      + `<div style="grid-column:1/-1">${outreachCard("Outreach to educators", OUT.filter((o) => o.audience === "educator" || o.audience === "all"), false)}</div>`;
+      + `<div style="grid-column:1/-1">${spikesCard(`Educator spikes in the last ${SPK.window_days} days`, "educator")}</div>`;
   }
   renderEducators();
   $("#eduLevel").addEventListener("click", (e) => { const b = e.target.closest("button[data-level]"); if (!b) return; eduLevel = b.dataset.level; location.hash = "educator" + (eduLevel === "all" ? "" : "?level=" + eduLevel); renderEducators(); });
