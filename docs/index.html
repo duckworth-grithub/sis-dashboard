@@ -271,6 +271,15 @@
   .spk-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-right: 6px; vertical-align: 1px; }
   .spk-badge.ok { background: var(--ground); color: var(--study); }
   .spk-badge.warn { background: #FBE9D0; color: #8A4B08; }
+  .spk-list { margin-top: 6px; }
+  .spk-row { display: grid; grid-template-columns: 120px 1.1fr 1fr 1.6fr; gap: 14px; align-items: start; padding: 12px 0; border-top: 1px solid var(--rule-in); font-size: 14px; }
+  .spk-row:first-child { border-top: 0; }
+  .spk-when { color: var(--slate); white-space: nowrap; }
+  .spk-what b { font-weight: 700; }
+  .spk-kind { display: block; font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+  .spk-n small { display: block; margin-top: 2px; }
+  .spk-why { line-height: 1.5; }
+  @media (max-width: 900px) { .spk-row { grid-template-columns: 1fr 1fr; } .spk-why { grid-column: 1 / -1; } }
   .spk-tag { display: inline-block; background: var(--ground); border-radius: 8px; padding: 2px 8px; font-size: 12px; margin: 2px 4px 2px 0; }
   .tagpick { position: relative; display: inline-block; }
   .tagpanel { position: absolute; top: calc(100% + 6px); left: 0; z-index: 30; background: var(--card); border-radius: 14px; box-shadow: 0 8px 28px rgba(0,0,0,.14); padding: 10px 12px; min-width: 300px; max-width: min(92vw, 460px); max-height: 340px; overflow: auto; font-size: 13px; }
@@ -696,27 +705,33 @@
   const SRC = d.sources || {}, srcName = (x) => x === "untagged" ? '<span style="color:var(--muted)">untagged</span>' : esc(x);
   // spikes in the last 30 days, with what explains each one (replaces the outreach tables, Nov 4)
   const SPK = d.spikes || { events: [], window_days: 30 };
-  const spikesTable = (events, survey) => {
+  const SPK_NOTE = "a state, a utm tag or the whole country with 3× its usual reports in a day (8+; 40+ for all states)";
+  const spikesList = (events, survey) => {
     const rows = survey ? events.filter((e) => ((e.by_survey || {})[survey] || 0) >= Math.max(3, 0.25 * e.n)) : events;
     if (!rows.length) return `<div class="sec-note" style="margin-top:10px">No spikes in the last ${SPK.window_days} days${survey ? ` with ${survey} reports` : ""}.</div>`;
-    const who = (e) => ["student", "educator", "librarian"].filter((k) => (e.by_survey || {})[k]).map((k) => `${fmt(e.by_survey[k])} ${k === "student" ? "stu" : k === "educator" ? "edu" : "lib"}`).join(" · ");
-    const tagTxt = (t) => [t.source === "untagged" ? "untagged" : srcName(t.source), t.medium, t.campaign].filter(Boolean).join(" · ");
+    const who = (e) => { const b = e.by_survey || {}, tot = e.n || 1, top = Object.entries(b).sort((x, y) => y[1] - x[1])[0]; if (!top) return ""; const nm = { student: "students", educator: "educators", librarian: "librarians" }[top[0]]; return top[1] >= 0.8 * tot ? `mostly ${nm}` : Object.entries(b).sort((x, y) => y[1] - x[1]).map(([k, v]) => `${fmt(v)} ${k === "student" ? "stu" : k === "educator" ? "edu" : "lib"}`).join(" · "); };
+    const where = (e) => (e.states || []).length ? `<div class="sub12">${e.states.map((x) => `${esc(x.state)} ${fmt(x.n)}`).join(" · ")}</div>` : "";
+    const hit = (e) => e.hit ? `${esc(e.hit.label)} <small style="color:var(--muted)">${mdy(e.hit.date)}${e.hit.state ? " · " + esc(e.hit.state) : " · national"}${e.more_hits ? ` · +${e.more_hits} more on the tracker` : ""}</small>` : "";
+    const tagChips = (e) => (e.tags || []).map((t) => `<span class="spk-tag">${esc(t.name)} <small>${fmt(t.n)}</small></span>`).join(" ");
     const why = (e) => {
-      const tags = (e.tags || []).map((t) => `<span class="spk-tag">${esc(tagTxt(t))} <small>${fmt(t.n)}</small></span>`).join(" ");
-      const trk = (e.tracker || []).map((o) => `${esc(o.label)} <small style="color:var(--muted)">${mdy(o.date)}${o.state ? " · " + esc(o.state) : " · national"}</small>`).join("<br>");
-      if (e.explained === "utm") return `<span class="spk-badge ok">UTM</span> ${tags}`;
-      if (e.explained === "tracker") return `<span class="spk-badge ok">Tracker</span> ${trk}${tags ? `<div class="sub12" style="margin-top:4px">${pct(e.tagged_share)} tagged: ${tags}</div>` : ""}`;
-      if (e.explained === "partial") return `<span class="spk-badge warn">Partly tagged</span> ${tags}<div class="sub12" style="margin-top:4px">${pct(100 - e.tagged_share)} untagged and nothing on the tracker.</div>`;
+      if (e.kind === "utm") return `<span class="spk-badge ok">UTM</span> this tag${e.hit ? ` · on the tracker as ${hit(e)}` : ""}`;
+      if (e.explained === "utm") return `<span class="spk-badge ok">UTM</span> ${tagChips(e)}`;
+      if (e.explained === "tracker") return `<span class="spk-badge ok">Tracker</span> ${hit(e)}${e.tags.length ? `<div class="sub12" style="margin-top:3px">${pct(e.tagged_share)} tagged · ${tagChips(e)}</div>` : ""}`;
+      if (e.explained === "partial") return `<span class="spk-badge warn">Partly tagged</span> ${tagChips(e)} <span class="sub12">· ${pct(100 - e.tagged_share)} untagged, nothing on the tracker</span>`;
       return `<span class="spk-badge warn">Unknown</span> <span class="sub12">no tags, nothing on the tracker in the week before</span>`;
     };
-    return `<div class="tablewrap"><table style="margin-top:10px"><thead><tr><th>When</th><th>State</th><th class="num">Reports</th><th class="tagcol">Who</th><th>Explained by</th></tr></thead>
-      <tbody>${rows.map((e) => `<tr><td style="white-space:nowrap">${mdy(e.start)}${e.end !== e.start ? "–" + mdy(e.end) : ""}</td><td>${e.state_name ? `<span data-go="bystate?state=${e.st}" style="cursor:pointer">${esc(e.state_name)}</span>` : `All states${(e.states || []).length ? `<div class="sub12">${e.states.map((x) => `${esc(x.state)} ${fmt(x.n)}`).join(" · ")}${e.states.length >= 6 ? " · …" : ""}</div>` : ""}`}</td><td class="num"><b>${fmt(e.n)}</b> <small style="color:var(--muted)">${e.ratio}× usual</small></td><td class="tagcol">${who(e)}</td><td>${why(e)}</td></tr>`).join("")}</tbody></table></div>`;
+    const kindTag = (e) => `<span class="spk-kind">${e.kind === "utm" ? "utm tag" : e.kind === "all" ? "national" : "state"}</span>`;
+    return `<div class="spk-list">${rows.map((e) => `<div class="spk-row">
+        <div class="spk-when">${mdy(e.start)}${e.end !== e.start ? "–" + mdy(e.end) : ""}</div>
+        <div class="spk-what">${kindTag(e)}<b${e.kind === "state" && e.st ? ` data-go="bystate?state=${e.st}" style="cursor:pointer"` : ""}>${esc(e.name)}</b>${where(e)}</div>
+        <div class="spk-n"><b>${fmt(e.n)}</b> reports <small style="color:var(--muted)">${e.ratio}× usual · ${who(e)}</small></div>
+        <div class="spk-why">${why(e)}</div></div>`).join("")}</div>`;
   };
-  const spikesCard = (title, survey) => `<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">${title}</div><div class="sec-note">a day with 3× a state's usual reports (8+; 40+ for all states), merged across consecutive days</div></div>${spikesTable(SPK.events || [], survey)}
-    <div class="sub12" style="margin-top:8px">"Explained by" checks the utm tags on the spike's reports, then the outreach tracker for a send to that state or audience in the week before. Unknown = worth reverse-engineering.</div></div>`;
+  const spikesCard = (title, survey) => `<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">${title}</div><div class="sec-note">${SPK_NOTE}</div></div>${spikesList(SPK.events || [], survey)}
+    <div class="sub12" style="margin-top:10px">Explained by: the utm tags on the spike's reports, else a send on the outreach tracker to that state or nationally in the week before, else unknown (worth reverse-engineering).</div></div>`;
   const outreachCard = (title, rows, audienceCol) => `<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">${title}</div><div class="sec-note">valid reports in the 7 days after a send vs the 7 before, same state and audience</div></div>${outreachTable(rows, audienceCol)}</div>`;
-  $("#outreach").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Spikes in the last ${SPK.window_days} days</div><div class="sec-note">a day with 3× a state's usual reports (8+; 40+ for all states), merged across consecutive days</div></div>${spikesTable(SPK.events || [], null)}
-    <div class="sub12" style="margin-top:8px">"Explained by" checks the utm tags on the spike's reports, then the outreach tracker for a send to that state or audience in the week before. Unknown = worth reverse-engineering.</div>`;
+  $("#outreach").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Spikes in the last ${SPK.window_days} days</div><div class="sec-note">${SPK_NOTE}</div></div>${spikesList(SPK.events || [], null)}
+    <div class="sub12" style="margin-top:10px">Explained by: the utm tags on the spike's reports, else a send on the outreach tracker to that state or nationally in the week before, else unknown (worth reverse-engineering).</div>`;
   $("#review").innerHTML = P ? `<div><div style="font-size:13px;font-weight:700">Needs review</div><div class="sub12">${PEND}.</div></div>`
     : `<div><div style="font-size:13px;font-weight:700">Needs review</div><div class="sub12 pretty"><b style="color:var(--ink)">${fmt(dq.needs_review)}</b> responses unmatched, ambiguous or too fast. Match rate ${pct(dq.match_rate)}. Queue ${fmt(dq.queue.size)}${dq.queue.oldest_days != null ? `, oldest ${dq.queue.oldest_days} d` : ""}.</div></div><span class="pill primary" data-go="quality">Review →</span>`;
 
