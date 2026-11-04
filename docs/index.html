@@ -280,6 +280,9 @@
   .spk-n small { display: block; margin-top: 2px; }
   .spk-why { line-height: 1.5; }
   @media (max-width: 900px) { .spk-row { grid-template-columns: 1fr 1fr; } .spk-why { grid-column: 1 / -1; } }
+  .spk-row.utm { background: #EAF5EC; margin: 0 -14px; padding-left: 14px; padding-right: 14px; border-radius: 10px; border-top: 0; }
+  .spk-row.utm + .spk-row { border-top: 0; }
+  .spk-row.utm .spk-kind, .spk-row.utm .spk-what b { color: var(--study); }
   .spk-tag { display: inline-block; background: var(--ground); border-radius: 8px; padding: 2px 8px; font-size: 12px; margin: 2px 4px 2px 0; }
   .tagpick { position: relative; display: inline-block; }
   .tagpanel { position: absolute; top: calc(100% + 6px); left: 0; z-index: 30; background: var(--card); border-radius: 14px; box-shadow: 0 8px 28px rgba(0,0,0,.14); padding: 10px 12px; min-width: 300px; max-width: min(92vw, 460px); max-height: 340px; overflow: auto; font-size: 13px; }
@@ -721,7 +724,7 @@
       return `<span class="spk-badge warn">Unknown</span> <span class="sub12">no tags, nothing on the tracker in the week before</span>`;
     };
     const kindTag = (e) => `<span class="spk-kind">${e.kind === "utm" ? "utm tag" : e.kind === "all" ? "national" : "state"}</span>`;
-    return `<div class="spk-list">${rows.map((e) => `<div class="spk-row">
+    return `<div class="spk-list">${rows.map((e) => `<div class="spk-row ${e.kind === "utm" ? "utm" : ""}">
         <div class="spk-when">${mdy(e.start)}${e.end !== e.start ? "–" + mdy(e.end) : ""}</div>
         <div class="spk-what">${kindTag(e)}<b${e.kind === "state" && e.st ? ` data-go="bystate?state=${e.st}" style="cursor:pointer"` : ""}>${esc(e.name)}</b>${where(e)}</div>
         <div class="spk-n"><b>${fmt(e.n)}</b> reports <small style="color:var(--muted)">${e.ratio}× usual · ${who(e)}</small></div>
