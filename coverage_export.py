@@ -850,6 +850,67 @@ def main():
         outreach_rows.append({"date": o["date"], "state": o.get("state", ""), "state_name": o["state_name"], "type": o.get("type", ""), "audience": aud,
                               "label": o.get("label", ""), "campaign": o.get("campaign", ""), "after_7d": after, "before_7d": before,
                               "tagged_reports": tagged if o.get("campaign") else None, "days_elapsed": (now.date() - od).days})
+    # ---- spikes in the last 30 days: a state (or the whole country) whose valid reports on a day are at least 3x its average over the
+    # prior 14 days. Consecutive spike days merge into one event. Each event says what explains it: the utm tags on its reports,
+    # a send on the outreach tracker in the week before, or "unknown" so the team can reverse-engineer it. Counts and labels only.
+    d30 = (now - timedelta(days=29)).date()
+    valr = [r for r in responses if r["valid"] and r["recorded_at"] and r["survey"] in ("student", "educator", "librarian")]
+    by_sd = collections.defaultdict(list)
+    by_d = collections.defaultdict(list)
+    for r in valr:
+        by_sd[(r["state_name"], r["recorded_at"].date())].append(r)
+        by_d[r["recorded_at"].date()].append(r)
+    def scan(rows_on, min_n):
+        found, run = [], None
+        for i in range((now.date() - d30).days + 1):
+            dd = d30 + timedelta(days=i)
+            n = len(rows_on(dd))
+            base = sum(len(rows_on(dd - timedelta(days=k))) for k in range(1, 15)) / 14.0
+            if n >= min_n and n >= 3 * max(base, 1):
+                if run and run["end"] == dd - timedelta(days=1):
+                    run["end"] = dd; run["n"] += n; run["base"] = min(run["base"], base)
+                else:
+                    run = {"start": dd, "end": dd, "n": n, "base": base}; found.append(run)
+        return found
+    events = []
+    for st_name in sorted({r["state_name"] for r in valr if r["state_name"]}):
+        for ev in scan(lambda dd, s=st_name: by_sd.get((s, dd), []), 8):
+            events.append({**ev, "state_name": st_name})
+    for ev in scan(lambda dd: by_d.get(dd, []), 40):
+        rows = [r for k in range((ev["end"] - ev["start"]).days + 1) for r in by_d.get(ev["start"] + timedelta(days=k), [])]
+        top = collections.Counter(r["state_name"] for r in rows).most_common(1)
+        if not top or top[0][1] <= 0.5 * len(rows):   # keep a national event only when no single state is most of it
+            events.append({**ev, "state_name": ""})
+    # a state spike that sits entirely inside a national one is the same story: keep the national row, fold the state rows into it
+    nat = [ev for ev in events if not ev["state_name"]]
+    inside = lambda ev: any(n["start"] <= ev["start"] and ev["end"] <= n["end"] for n in nat)
+    folded = collections.defaultdict(list)
+    for ev in events:
+        if ev["state_name"] and inside(ev):
+            for n in nat:
+                if n["start"] <= ev["start"] and ev["end"] <= n["end"]:
+                    folded[(n["start"], n["end"])].append((ev["n"], ev["state_name"]))
+    events = [ev for ev in events if not (ev["state_name"] and inside(ev))]
+    spikes = []
+    for ev in events:
+        days = [ev["start"] + timedelta(days=k) for k in range((ev["end"] - ev["start"]).days + 1)]
+        rows = [r for dd in days for r in (by_sd.get((ev["state_name"], dd), []) if ev["state_name"] else by_d.get(dd, []))]
+        tagged = [r for r in rows if src_label(r) != "untagged"]
+        tags = collections.Counter((src_label(r), clean_tag(r.get("utm_medium")), clean_tag(r.get("utm_campaign"))) for r in tagged)
+        share = len(tagged) / len(rows) if rows else 0.0
+        hits = outreach_for(ev["state_name"], ev["start"] - timedelta(days=7), ev["end"])
+        explained = "utm" if share >= 0.5 else "tracker" if hits else "partial" if share >= 0.15 else "unknown"
+        st_code = next((by_id[r["ncessch"]]["st"] for r in rows if r["ncessch"] and r["ncessch"] in by_id), "") if ev["state_name"] else ""
+        spikes.append({"state_name": ev["state_name"], "st": st_code, "start": str(ev["start"]), "end": str(ev["end"]), "days": len(days),
+                       "n": len(rows), "base_per_day": round(ev["base"], 1), "ratio": round(len(rows) / len(days) / max(ev["base"], 1), 1),
+                       "by_survey": dict(collections.Counter(r["survey"] for r in rows)),
+                       "tagged_share": round(100 * share, 1),
+                       "tags": [{"source": k[0], "medium": k[1], "campaign": k[2], "n": n} for k, n in tags.most_common(4)],
+                       "tracker": [{"label": o.get("label", ""), "date": o["date"], "state": o.get("state", ""), "audience": o.get("audience", "")} for o in hits[:3]],
+                       "explained": explained,
+                       "states": [{"state": nm, "n": n} for n, nm in sorted(folded.get((ev["start"], ev["end"]), []), reverse=True)[:6]] if not ev["state_name"] else []})
+    spikes.sort(key=lambda x: (x["start"], x["n"]), reverse=True)
+    data_spikes = {"window_days": 30, "since": str(d30), "events": spikes}
     # (c) new schools this week vs the pace the target needs
     if pace.get("needed_per_week") and (new_this or new_last or rolling):
         callouts.append({"rule": "pace_vs_needed", "at_stake": 0, "stat": f"+{new_this:,}",
@@ -964,7 +1025,7 @@ def main():
         "ccd_loaded": any(s["level"] != "unknown" for s in schools), "historical_loaded": any(s.get("hist_represented") == "true" for s in schools),
         "alerts": alerts, "levels": LEVELS, "coverage": coverage, "depth": depth, "velocity": velocity, "states": states,
         "channels": channels, "channels_4w": channels_4w, "sources": sources, "funnel": funnel_data, "callouts": callouts, "partners": partner_rows, "dq": dq, "lists": lists,
-        "outreach": outreach_rows,
+        "outreach": outreach_rows, "spikes": data_spikes,
         "report_path": f"reports/week-{this_wk.isocalendar()[0]}-W{this_wk.isocalendar()[1]:02d}.md", "config": {k: v for k, v in cfg.items() if not k.startswith("_")},
     }
     with open(os.path.join(a.out, "coverage-data.json"), "w", encoding="utf-8") as fh:
