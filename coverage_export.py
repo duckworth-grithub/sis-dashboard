@@ -950,22 +950,32 @@ def main():
                          "action": "Gaps", "target": "gaps"})
     callouts = callouts[:3]
 
-    # ---- funnel (visits come from inputs/traffic.csv when the team pastes analytics in; Qualtrics has no page views)
+    # ---- funnel (visits come from inputs/traffic.csv; Qualtrics has no page views). Rows are date ranges
+    # (start,end inclusive) of homepage loads, pasted from CloudFront's Popular objects report or an analytics tool.
+    # A legacy single `date` column is read as start=end. Rows that begin before the cycle are ignored.
     traffic = []
     tpath = os.path.join(a.inputs, "traffic.csv")
     if os.path.exists(tpath):
         for r in read_csv(tpath):
-            dt_ = parse_dt(r.get("date"))
+            d0 = parse_dt(r.get("start") or r.get("date")); d1 = parse_dt(r.get("end") or r.get("date"))
             n_ = to_int(r.get("visits"))
-            if dt_ and n_ is not None and dt_ >= cycle_start:
-                traffic.append((dt_, n_))
+            if d0 and d1 and n_ is not None and d0.date() >= cycle_start.date() and d1 >= d0:
+                traffic.append((d0.date(), d1.date(), n_))
     def funnel_block(rs, since=None):
         f = funnel(rs)
-        vis = sum(n_ for dt_, n_ in traffic if since is None or dt_.date() >= since) if traffic else None
-        return {"visits": vis, "starts": f["starts"], "completes": f["completes"], "valid": f["valid"], "matched": f["matched"],
+        rows = [t for t in traffic if since is None or t[0] >= since]
+        vis = sum(n_ for _, _, n_ in rows) if rows else None
+        v_from = min(t[0] for t in rows) if rows else None
+        v_to = max(t[1] for t in rows) if rows else None
+        v_days = sum((t[1] - t[0]).days + 1 for t in rows) if rows else 0
+        starts_in = sum(1 for r in rs if r["recorded_at"] and any(t[0] <= r["recorded_at"].date() <= t[1] for t in rows)) if rows else None
+        win_days = ((now.date() - (since or cycle_start.date())).days + 1)
+        return {"visits": vis, "visits_from": v_from.isoformat() if v_from else None, "visits_to": v_to.isoformat() if v_to else None,
+                "visits_days": v_days, "window_days": win_days, "visits_starts": starts_in,
+                "starts": f["starts"], "completes": f["completes"], "valid": f["valid"], "matched": f["matched"],
                 "new_schools": f["new_schools"], "second_reports": f["second_reports"],
                 "new_mshs": (f.get("by_level_new") or {}).get("middle", 0) + (f.get("by_level_new") or {}).get("high", 0),
-                "conv_visit_start": pct(f["starts"], vis) if vis else None, "conv_start_complete": f["conv_start_complete"],
+                "conv_visit_start": pct(starts_in, vis) if vis else None, "conv_start_complete": f["conv_start_complete"],
                 "conv_complete_valid": f["conv_complete_valid"], "conv_valid_new": f["conv_valid_new"]}
     funnel_data = {"cycle": funnel_block(in_cycle), "last_4w": funnel_block(recent, four_wk_start), "visits_loaded": bool(traffic)}
 
