@@ -6,9 +6,10 @@
 name: Refresh coverage dashboard
 on:
   schedule:
-    - cron: "0,30 11-23 * * *"    # every 30 min, 11:00-23:30 UTC = 7am-7:30pm EDT / 6am-6:30pm EST, seven days a week
-    - cron: "0,30 0-2 * * *"      # ... continuing 00:00-02:30 UTC = 8pm-10:30pm EDT / 7pm-9:30pm EST
-    - cron: "0 4,6,8,10 * * *"    # overnight every 2 hours (04:00-10:00 UTC = midnight-6am EDT / 11pm-5am EST)
+    # Minutes :07/:37 on purpose: GitHub drops a large share of scheduled runs at :00/:30 (Nov 5 2026: 3-4 of the 30 ticks a day ran).
+    - cron: "7,37 11-23 * * *"    # every 30 min, 11:07-23:37 UTC = 7am-7:30pm EDT / 6am-6:30pm EST, seven days a week
+    - cron: "7,37 0-2 * * *"      # ... continuing 00:07-02:37 UTC = 8pm-10:30pm EDT / 7pm-9:30pm EST
+    - cron: "7 4,6,8,10 * * *"    # overnight every 2 hours (04:07-10:07 UTC = midnight-6am EDT / 11pm-5am EST)
   workflow_dispatch:
   push:
     branches: [main]
