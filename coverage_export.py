@@ -963,6 +963,14 @@ def main():
                 r = requests.post("https://plausible.io/api/v2/query", headers=hdr, json=body, timeout=30)
                 r.raise_for_status()
                 return r.json().get("results") or []
+            # the site may be registered under a different spelling than the config says: use whatever this key can see
+            try:
+                seen = [x.get("domain") for x in (requests.get("https://plausible.io/api/v1/sites", headers=hdr, timeout=30).json().get("sites") or [])]
+                if psite not in seen and len(seen) == 1:
+                    print(f"plausible: site registered as {seen[0]} (config said {psite}); using it")
+                    psite = seen[0]
+            except Exception as e:
+                print(f"plausible: could not list sites ({e}); trying {psite}")
             rng = [cycle_start.date().isoformat(), now.date().isoformat()]
             daily = pq({"site_id": psite, "metrics": ["visitors", "pageviews"], "date_range": rng, "dimensions": ["time:day"]})
             days = sorted([{"date": x["dimensions"][0][:10], "visitors": int(x["metrics"][0] or 0), "pageviews": int(x["metrics"][1] or 0)} for x in daily], key=lambda x: x["date"])
