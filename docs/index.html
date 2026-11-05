@@ -685,13 +685,14 @@
   // ---- strip: funnel (4 weeks) + total responses; needs review sits at the bottom of the overview
   const fn = (d.funnel && d.funnel.last_4w) || {};
   const fc = (d.funnel && d.funnel.cycle) || {};
-  const stages = [["Survey starts", fn.starts, "#8FC49B"], ["Completions", fn.completes, "#5C9F6F"], ["Valid reports", fn.valid, "#2C7A4B"], ["New schools", fn.new_schools, "#1E4034"]].filter((x) => x[1] != null);
+  const stages = [["Homepage loads", fn.visits, "#C3E5CB"], ["Survey starts", fn.starts, "#8FC49B"], ["Completions", fn.completes, "#5C9F6F"], ["Valid reports", fn.valid, "#2C7A4B"], ["New schools", fn.new_schools, "#1E4034"]].filter((x) => x[1] != null);
+  const visNote = fn.visits == null ? "" : `<div class="sub12" style="margin-top:8px">Homepage loads = screensinschools.org front page, ${mdy(fn.visits_from)}–${mdy(fn.visits_to)}${fn.visits_days < fn.window_days ? ` (${fn.visits_days} of ${fn.window_days} days)` : ""}, from CloudFront; includes crawlers. ${fmt(fn.visits_starts)} survey starts in those days, <b style="color:var(--ink)">${fn.conv_visit_start}%</b> of loads.</div>`;
   const fmax = Math.max(1, ...stages.map((x) => x[1]));
   const bySv = dq.by_survey || {}, svOrder = [["student", "Students", "#C3E5CB"], ["educator", "Educators", "#5C9F6F"], ["librarian", "Librarians", "#1E4034"]].filter(([k]) => bySv[k]);
   const svTotal = Math.max(1, svOrder.reduce((a, [k]) => a + (bySv[k].valid || 0), 0));
   $("#strip").innerHTML = P ? `<div><span style="font-size:13px;font-weight:700">Last 30 days</span><div class="sub12">${PEND}.</div></div><div class="review"><div><div style="font-size:13px;font-weight:700">${esc(d.cycle.name)}</div><div class="sub12">${PEND}.</div></div></div>`
     : `<div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;font-weight:700">Last 30 days</span></div>
-      <div class="srcs" style="gap:6px">${stages.map(([l, n2, col]) => `<div style="align-items:center;gap:10px"><span style="color:var(--slate);width:110px;flex-shrink:0">${l}</span><span style="flex:1;height:8px;background:var(--track);border-radius:999px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(2, Math.round(100 * n2 / fmax))}%;background:${col};border-radius:999px"></i></span><b style="width:64px;text-align:right">${fmt(n2)}</b></div>`).join("")}</div></div>
+      <div class="srcs" style="gap:6px">${stages.map(([l, n2, col]) => `<div style="align-items:center;gap:10px"><span style="color:var(--slate);width:110px;flex-shrink:0">${l}</span><span style="flex:1;height:8px;background:var(--track);border-radius:999px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(2, Math.round(100 * n2 / fmax))}%;background:${col};border-radius:999px"></i></span><b style="width:64px;text-align:right">${fmt(n2)}</b></div>`).join("")}</div>${visNote}</div>
     <div class="review"><div style="width:100%"><div style="font-size:13px;font-weight:700">${esc(d.cycle.name)}</div>
       <div style="display:flex;gap:28px;margin-top:10px;flex-wrap:wrap">
         <div><div class="stat28">${fmt(fc.starts)}</div><div class="sub12">started</div></div>
