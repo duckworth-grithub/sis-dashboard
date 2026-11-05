@@ -950,6 +950,36 @@ def main():
                          "action": "Gaps", "target": "gaps"})
     callouts = callouts[:3]
 
+    # ---- site visitors from Plausible (Stats API v2) when PLAUSIBLE_API_KEY is set; falls back to inputs/traffic.csv.
+    # Only aggregates leave Plausible: unique visitors and page views per day, no visitor-level data.
+    plaus = None
+    pkey = os.environ.get("PLAUSIBLE_API_KEY", "").strip()
+    psite = (cfg.get("plausible_site") or "screensinschools.org").strip()
+    if pkey:
+        try:
+            import requests
+            hdr = {"Authorization": f"Bearer {pkey}", "Content-Type": "application/json"}
+            def pq(body):
+                r = requests.post("https://plausible.io/api/v2/query", headers=hdr, json=body, timeout=30)
+                r.raise_for_status()
+                return r.json().get("results") or []
+            rng = [cycle_start.date().isoformat(), now.date().isoformat()]
+            daily = pq({"site_id": psite, "metrics": ["visitors", "pageviews"], "date_range": rng, "dimensions": ["time:day"]})
+            days = sorted([{"date": x["dimensions"][0][:10], "visitors": int(x["metrics"][0] or 0), "pageviews": int(x["metrics"][1] or 0)} for x in daily], key=lambda x: x["date"])
+            live = [x for x in days if x["visitors"] or x["pageviews"]]
+            if live:
+                d_from, d_to = live[0]["date"], now.date().isoformat()
+                tot = pq({"site_id": psite, "metrics": ["visitors", "pageviews"], "date_range": [d_from, d_to]})
+                vis_tot = int(tot[0]["metrics"][0]) if tot else sum(x["visitors"] for x in live)
+                pv_tot = int(tot[0]["metrics"][1]) if tot else sum(x["pageviews"] for x in live)
+                plaus = {"site": psite, "from": d_from, "to": d_to, "visitors": vis_tot, "pageviews": pv_tot, "daily": days}
+                print(f"plausible: {vis_tot:,} visitors / {pv_tot:,} page views {d_from}..{d_to}")
+            else:
+                print("plausible: key works but no visitors recorded yet in the cycle")
+        except Exception as e:  # never fail the build over analytics
+            print(f"WARNING: Plausible fetch failed ({e}); falling back to inputs/traffic.csv")
+            plaus = None
+
     # ---- funnel (visits come from inputs/traffic.csv; Qualtrics has no page views). Rows are date ranges
     # (start,end inclusive) of homepage loads, pasted from CloudFront's Popular objects report or an analytics tool.
     # A legacy single `date` column is read as start=end. Rows that begin before the cycle are ignored.
@@ -963,6 +993,28 @@ def main():
                 traffic.append((d0.date(), d1.date(), n_))
     def funnel_block(rs, since=None):
         f = funnel(rs)
+        if plaus:
+            win0 = since or cycle_start.date()
+            p_from = max(parse_dt(plaus["from"]).date(), win0)
+            p_to = parse_dt(plaus["to"]).date()
+            rows = [(p_from, p_to, None)] if p_to >= p_from else []
+            dsel = [x for x in plaus["daily"] if p_from.isoformat() <= x["date"] <= p_to.isoformat()]
+            # unique visitors over the clipped range: a range query is exact; summing days double-counts return visits,
+            # so only re-query when the clip actually moved the start
+            vis = plaus["visitors"] if p_from.isoformat() == plaus["from"] else sum(x["visitors"] for x in dsel)
+            pv = plaus["pageviews"] if p_from.isoformat() == plaus["from"] else sum(x["pageviews"] for x in dsel)
+            v_from, v_to = (p_from, p_to) if rows else (None, None)
+            v_days = (p_to - p_from).days + 1 if rows else 0
+            starts_in = sum(1 for r in rs if r["recorded_at"] and rows and p_from <= r["recorded_at"].date() <= p_to) if rows else None
+            win_days = ((now.date() - win0).days + 1)
+            return {"visits": vis if rows else None, "visits_source": "plausible", "visits_pageviews": pv if rows else None,
+                    "visits_from": v_from.isoformat() if v_from else None, "visits_to": v_to.isoformat() if v_to else None,
+                    "visits_days": v_days, "window_days": win_days, "visits_starts": starts_in,
+                    "starts": f["starts"], "completes": f["completes"], "valid": f["valid"], "matched": f["matched"],
+                    "new_schools": f["new_schools"], "second_reports": f["second_reports"],
+                    "new_mshs": (f.get("by_level_new") or {}).get("middle", 0) + (f.get("by_level_new") or {}).get("high", 0),
+                    "conv_visit_start": pct(starts_in, vis) if rows and vis else None, "conv_start_complete": f["conv_start_complete"],
+                    "conv_complete_valid": f["conv_complete_valid"], "conv_valid_new": f["conv_valid_new"]}
         rows = [t for t in traffic if since is None or t[0] >= since]
         vis = sum(n_ for _, _, n_ in rows) if rows else None
         v_from = min(t[0] for t in rows) if rows else None
@@ -970,14 +1022,15 @@ def main():
         v_days = sum((t[1] - t[0]).days + 1 for t in rows) if rows else 0
         starts_in = sum(1 for r in rs if r["recorded_at"] and any(t[0] <= r["recorded_at"].date() <= t[1] for t in rows)) if rows else None
         win_days = ((now.date() - (since or cycle_start.date())).days + 1)
-        return {"visits": vis, "visits_from": v_from.isoformat() if v_from else None, "visits_to": v_to.isoformat() if v_to else None,
+        return {"visits": vis, "visits_source": "cloudfront" if rows else None, "visits_from": v_from.isoformat() if v_from else None, "visits_to": v_to.isoformat() if v_to else None,
                 "visits_days": v_days, "window_days": win_days, "visits_starts": starts_in,
                 "starts": f["starts"], "completes": f["completes"], "valid": f["valid"], "matched": f["matched"],
                 "new_schools": f["new_schools"], "second_reports": f["second_reports"],
                 "new_mshs": (f.get("by_level_new") or {}).get("middle", 0) + (f.get("by_level_new") or {}).get("high", 0),
                 "conv_visit_start": pct(starts_in, vis) if vis else None, "conv_start_complete": f["conv_start_complete"],
                 "conv_complete_valid": f["conv_complete_valid"], "conv_valid_new": f["conv_valid_new"]}
-    funnel_data = {"cycle": funnel_block(in_cycle), "last_4w": funnel_block(recent, four_wk_start), "visits_loaded": bool(traffic)}
+    funnel_data = {"cycle": funnel_block(in_cycle), "last_4w": funnel_block(recent, four_wk_start), "visits_loaded": bool(plaus or traffic),
+                   "traffic": {"source": "plausible", "site": plaus["site"], "daily": plaus["daily"]} if plaus else None}
 
     # data quality
     cyc = [r for r in responses if not (r["recorded_at"] and r["recorded_at"] < cycle_start) and r["invalid_reason"] != "redirected"]

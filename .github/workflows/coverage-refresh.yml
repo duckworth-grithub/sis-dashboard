@@ -41,6 +41,7 @@ jobs:
         env:
           QUALTRICS_TOKEN: ${{ secrets.QUALTRICS_TOKEN }}
           QUALTRICS_DATACENTER: ${{ secrets.QUALTRICS_DATACENTER }}
+          PLAUSIBLE_API_KEY: ${{ secrets.PLAUSIBLE_API_KEY }}    # site visitors for the funnel; aggregates only
         run: |
           if [ -n "$QUALTRICS_TOKEN" ]; then
             python3 coverage_export.py --from-qualtrics --include-in-progress --allow-empty --out out --publish-dir docs
