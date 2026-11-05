@@ -268,6 +268,9 @@
   .filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 16px 0 12px; }
   .filters .pill { cursor: pointer; box-shadow: var(--shadow); background: var(--card); }
   .filters .pill[aria-pressed="true"] { background: var(--chalk); color: #FFFFFF; }
+  .upd { font-size: 12px; color: var(--slate); white-space: nowrap; margin-right: 12px; }
+  .upd.stale { color: #8A4B08; background: #FBE9D0; border-radius: 999px; padding: 2px 9px; }
+  @media (max-width: 640px) { .upd { display: none; } }
   .spk-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-right: 6px; vertical-align: 1px; }
   .spk-badge.ok { background: var(--ground); color: var(--study); }
   .spk-badge.warn { background: #FBE9D0; color: #8A4B08; }
@@ -314,7 +317,7 @@
       <svg viewBox="0 0 96 46" width="26" height="12.6" aria-hidden="true"><path d="M48 4 L82 16 L48 28 L14 16 Z" fill="#1E4034"></path><circle cx="48" cy="13" r="2.5" fill="#1E4034"></circle><path d="M48 13 C60 13.5 73 15 79.5 17.5 C80.3 21 80.5 24 80.5 27" stroke="#1E4034" stroke-width="3" fill="none" stroke-linecap="round"></path><circle cx="80.5" cy="29.5" r="2.8" fill="#1E4034"></circle><path d="M78.5 33 C76.5 35.5 76 38 76.3 40 C76.3 42.5 84.7 42.5 84.7 40 C85 38 84.5 35.5 82.5 33 Z" fill="#1E4034"></path></svg></div>
     <nav class="tabs" id="tabs" role="tablist"></nav>
   </div>
-  <div class="hdr-right"><button class="secpick" id="secPick" aria-haspopup="true" aria-expanded="false"><span id="secPickLabel">Overview</span><svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="#1E4034" stroke-width="1.6"/></svg></button></div>
+  <div class="hdr-right"><span class="upd" id="upd" title="When the data was last refreshed"></span><button class="secpick" id="secPick" aria-haspopup="true" aria-expanded="false"><span id="secPickLabel">Overview</span><svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="#1E4034" stroke-width="1.6"/></svg></button></div>
   <div class="secmenu" id="secMenu" hidden></div>
 </div></header>
 
@@ -1039,6 +1042,12 @@
     <div><div class="stat28">${fmt(d.depth.median_days_first_to_second)}</div><div class="sub12">median days first → second</div></div></div>
     <div class="sub12" style="margin-top:12px">Out of scope (not in the denominator): ${Object.entries(c.out_of_scope).map(([k, n2]) => `${nice(k)} ${fmt(n2)}`).join(" · ") || "none"}.</div>`;
 
+  (() => { const t = new Date(d.generated_at), age = (Date.now() - t) / 6e4, el = $("#upd");
+    const et = t.toLocaleString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }) + " ET";
+    const day = t.toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" });
+    const sameDay = day === new Date().toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" });
+    el.textContent = `Updated ${sameDay ? "" : day + " "}${et}${age < 90 ? ` · ${Math.max(1, Math.round(age))} min ago` : ""}`;
+    el.classList.toggle("stale", age > 120); })();
   $("#foot").textContent = `Data as of ${d.as_of.slice(0, 10)} · generated ${d.generated_at.replace("T", " ").slice(0, 16)} UTC · eligible = every NCES school (${fmt(c.overall.eligible)}) including the territories; the state table lists the 50 states and DC.`;
 
   // ---- tooltips + routing
