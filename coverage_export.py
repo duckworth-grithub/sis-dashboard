@@ -1013,7 +1013,11 @@ def main():
             pv = plaus["pageviews"] if p_from.isoformat() == plaus["from"] else sum(x["pageviews"] for x in dsel)
             v_from, v_to = (p_from, p_to) if rows else (None, None)
             v_days = (p_to - p_from).days + 1 if rows else 0
-            starts_in = sum(1 for r in rs if r["recorded_at"] and rows and p_from <= r["recorded_at"].date() <= p_to) if rows else None
+            # the first day of counting is partial (the tag went live mid-day), so compare starts with visitors only from the
+            # next full day on; until then the rate is withheld rather than shown against a few hours of visitors
+            full_from = p_from + timedelta(days=1)
+            starts_in = sum(1 for r in rs if r["recorded_at"] and rows and full_from <= r["recorded_at"].date() <= p_to) if rows and p_to >= full_from else None
+            vis_full = sum(x["visitors"] for x in dsel if x["date"] >= full_from.isoformat()) if starts_in is not None else None
             win_days = ((now.date() - win0).days + 1)
             return {"visits": vis if rows else None, "visits_source": "plausible", "visits_pageviews": pv if rows else None,
                     "visits_from": v_from.isoformat() if v_from else None, "visits_to": v_to.isoformat() if v_to else None,
@@ -1021,7 +1025,7 @@ def main():
                     "starts": f["starts"], "completes": f["completes"], "valid": f["valid"], "matched": f["matched"],
                     "new_schools": f["new_schools"], "second_reports": f["second_reports"],
                     "new_mshs": (f.get("by_level_new") or {}).get("middle", 0) + (f.get("by_level_new") or {}).get("high", 0),
-                    "conv_visit_start": pct(starts_in, vis) if rows and vis else None, "conv_start_complete": f["conv_start_complete"],
+                    "conv_visit_start": pct(starts_in, vis_full) if vis_full else None, "conv_start_complete": f["conv_start_complete"],
                     "conv_complete_valid": f["conv_complete_valid"], "conv_valid_new": f["conv_valid_new"]}
         rows = [t for t in traffic if since is None or t[0] >= since]
         vis = sum(n_ for _, _, n_ in rows) if rows else None
