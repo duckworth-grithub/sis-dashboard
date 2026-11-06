@@ -694,7 +694,7 @@
   const stages = [[visLabel, fn.visits, "#C3E5CB"], ["Survey starts", fn.starts, "#8FC49B"], ["Completions", fn.completes, "#5C9F6F"], ["Valid reports", fn.valid, "#2C7A4B"], ["New schools", fn.new_schools, "#1E4034"]].filter((x) => x[1] != null);
   const visCover = fn.visits == null ? "" : `${fn.visits_from === fn.visits_to ? mdy(fn.visits_from) : `${mdy(fn.visits_from)}–${mdy(fn.visits_to)}`} (${fn.visits_days} of ${fn.window_days} days)`;
   const visNote = !visPartial ? "" : fn.visits_source === "plausible"
-    ? `* Site visitors = people who opened screensinschools.org, counted by Plausible since ${mdy(fn.visits_from)}, so this covers ${visCover}.${fn.conv_visit_start == null ? " The visitors-to-starts rate appears after the first full day." : ""} The asterisk goes away once 30 days are in.`
+    ? `* Site visitors = people who opened screensinschools.org or phonesinfocus.org, counted by Plausible since ${mdy(fn.visits_from)}, so this covers ${visCover}.${fn.conv_visit_start == null ? " The visitors-to-starts rate appears after the first full day." : ""} The asterisk goes away once 30 days are in.`
     : `* Homepage loads = screensinschools.org front page from CloudFront, ${visCover}; includes crawlers. The asterisk goes away once 30 days are in.`;
   $("#stripNote").textContent = visNote; $("#stripNote").hidden = !visNote;
   const fmax = Math.max(1, ...stages.map((x) => x[1]));
