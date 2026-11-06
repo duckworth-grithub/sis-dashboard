@@ -1055,7 +1055,8 @@
     const sameDay = day === new Date().toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" });
     el.textContent = `Updated ${sameDay ? "" : day + " "}${et}${age < 90 ? ` · ${Math.max(1, Math.round(age))} min ago` : ""}`;
     el.classList.toggle("stale", age > 120); })();
-  $("#foot").textContent = `Data as of ${d.as_of.slice(0, 10)} · generated ${d.generated_at.replace("T", " ").slice(0, 16)} UTC · eligible = every NCES school (${fmt(c.overall.eligible)}) including the territories; the state table lists the 50 states and DC.`;
+  const genET = new Date(d.generated_at).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+  $("#foot").textContent = `Data as of ${mdy(d.as_of.slice(0, 10))}, ${d.as_of.slice(0, 4)} · generated ${genET} ET · eligible = every NCES school (${fmt(c.overall.eligible)}) including the territories; the state table lists the 50 states and DC.`;
 
   // ---- tooltips + routing
   const tip = $("#tip");
