@@ -208,6 +208,17 @@
   .spark .mark { stroke: var(--chalk); stroke-width: 1.5; stroke-dasharray: 2 3; opacity: 0.6; cursor: default; }
   .spark .mark:hover { opacity: 1; stroke-width: 3; }
 
+  .grid2.three { grid-template-columns: 1.1fr 256px 1.3fr; }
+  @media (max-width: 1180px) { .grid2.three { grid-template-columns: minmax(0, 1fr); } }
+  .donut { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 22px; margin-top: 16px; }
+  .donut svg { width: 120px; height: 120px; flex: none; display: block; }
+  .donut svg [data-go] { cursor: pointer; }
+  .donut .lg { display: flex; flex-direction: column; gap: 8px; min-width: 150px; flex: 1; }
+  .donut .lg > div { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; border-radius: 8px; }
+  .donut .lg > div:hover { color: var(--study); }
+  .donut .lg i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+  .donut .lg b { margin-left: auto; }
+  .donut .lg .pc { width: 44px; text-align: right; color: var(--muted); font-size: 12px; }
   .pace-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
   .pace-stats .sub12 { line-height: 1.35; }
   @media (max-width: 760px) { .pace-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -329,8 +340,9 @@
     <div class="card strip grid2eq" id="strip"></div>
     <div class="sec-note" id="stripNote" hidden style="margin:8px 4px 0"></div>
     <section class="block"><div class="grid3" id="callouts" style="margin-top:16px"></div></section>
-    <div class="grid2">
+    <div class="grid2 three">
       <div class="card" style="display:flex;flex-direction:column" id="pace"></div>
+      <div class="card" id="who"></div>
       <div class="card" id="gapsCard"></div>
     </div>
     <div class="card" id="outreach" style="margin-top:16px"></div>
@@ -647,6 +659,26 @@
     </div>
     ${weekLine(last12, mshsNew, (w) => `${fmt(mshsNew(w))} new MS/HS schools · ${fmt(w.new)} new schools at every level`, avgMshs)}
     <div class="sub12" style="margin-top:8px">Dashed line: average of the last ${fullWks.length} full week${fullWks.length === 1 ? "" : "s"}. Open dot: this week so far. New = first report ever for that school.</div>`;
+
+  // ---- who reported the new MS/HS schools (first report ever at the school) since launch; slices are disjoint because coverage_rank is per school, not per role
+  {
+    const ROLES = [["educator", "Educators", "#1E4034"], ["student", "Students", "#5C9F6F"], ["librarian", "Librarians", "#C3E5CB"]];
+    const parts = ROLES.map(([k, l, col]) => ({ k, l, col, n: (((c.by_role || {})[k] || {}).new_by_level || {}).mshs || 0 }));
+    const tot = parts.reduce((a, p) => a + p.n, 0);
+    const R = 58, r = 39, cx = 60, cy = 60, pt = (a, rad) => [cx + rad * Math.cos(a), cy + rad * Math.sin(a)];
+    let a0 = -Math.PI / 2;
+    const arcs = parts.filter((p) => p.n > 0).map((p) => {
+      const a1 = a0 + 2 * Math.PI * p.n / tot, big = a1 - a0 > Math.PI ? 1 : 0;
+      const [x0, y0] = pt(a0, R), [x1, y1] = pt(a1, R), [u0, v0] = pt(a1, r), [u1, v1] = pt(a0, r);
+      const dd = p.n === tot ? "" : `M${x0.toFixed(2)} ${y0.toFixed(2)}A${R} ${R} 0 ${big} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}L${u0.toFixed(2)} ${v0.toFixed(2)}A${r} ${r} 0 ${big} 0 ${u1.toFixed(2)} ${v1.toFixed(2)}Z`;
+      a0 = a1; return { ...p, d: dd };
+    });
+    const tipOf = (p) => `<b>${p.l}</b><br>${fmt(p.n)} of ${fmt(tot)} new MS/HS schools · ${pct(100 * p.n / tot, 0)}`;
+    $("#who").innerHTML = `<div class="card-title">New MS/HS by reporter</div><div class="sec-note">first report ever at the school</div>` + (P || !tot ? `<div class="sub12" style="margin-top:8px">${PEND}. This fills in once new MS/HS schools are reported.</div>` : `<div class="donut">
+      <svg viewBox="0 0 120 120" role="img" aria-label="New MS/HS schools by reporter: ${parts.map((p) => `${p.l} ${p.n}`).join(", ")}">${arcs.map((p) => p.d ? `<path d="${p.d}" fill="${p.col}" stroke="var(--card)" stroke-width="2" stroke-linejoin="round" data-go="${p.k}" data-tip="${tipOf(p)}"/>` : `<circle cx="${cx}" cy="${cy}" r="${(R + r) / 2}" fill="none" stroke="${p.col}" stroke-width="${R - r}" data-go="${p.k}" data-tip="${tipOf(p)}"/>`).join("")}
+        <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" font-size="24" font-weight="700" letter-spacing="-0.02em" fill="var(--ink)" style="pointer-events:none">${fmt(tot)}</text></svg>
+      <div class="lg">${parts.map((p) => `<div data-go="${p.k}" data-tip="${tipOf(p)}"><i style="background:${p.col}"></i><span>${p.l}</span><b>${fmt(p.n)}</b><span class="pc">${pct(100 * p.n / tot, 0)}</span></div>`).join("")}</div></div>`);
+  }
 
   // ---- map + gaps
   function mapSvg(cls) {
