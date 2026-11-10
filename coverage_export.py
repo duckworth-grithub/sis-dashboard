@@ -360,6 +360,9 @@ def main():
     # team tests never reach any count: "tktk" typed in a pulled field, a utm test link, or an id on inputs/test_responses.txt
     is_test = lambda r: (r.get("test_marker") and not test_mode) or r["utm_source"] == "test" or r["utm_medium"] == "test" or r["response_id"] in test_ids
     test_links = sum(1 for r in responses if is_test(r))
+    # diagnostic (no ids printed): proves the API rows carry a response id the exclusion list can match against
+    print(f"test_responses.txt: {len(test_ids)} ids listed, {sum(1 for r in responses if r['response_id'] in test_ids)} matched; "
+          f"{sum(1 for r in responses if (r.get('response_id') or '').startswith('R_'))} of {len(responses)} pulled rows carry an R_ id")
     responses = [r for r in responses if not is_test(r)]
     if not responses and not a.allow_empty:
         sys.exit("no responses: pass --from-qualtrics or --from-csv (or --allow-empty before launch)")
