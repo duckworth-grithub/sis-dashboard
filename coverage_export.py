@@ -361,8 +361,9 @@ def main():
     is_test = lambda r: (r.get("test_marker") and not test_mode) or r["utm_source"] == "test" or r["utm_medium"] == "test" or r["response_id"] in test_ids
     test_links = sum(1 for r in responses if is_test(r))
     # diagnostic (no ids printed): proves the API rows carry a response id the exclusion list can match against
-    print(f"test_responses.txt: {len(test_ids)} ids listed, {sum(1 for r in responses if r['response_id'] in test_ids)} matched; "
-          f"{sum(1 for r in responses if (r.get('response_id') or '').startswith('R_'))} of {len(responses)} pulled rows carry an R_ id")
+    test_list_diag = {"listed": len(test_ids), "matched": sum(1 for r in responses if r["response_id"] in test_ids),
+                      "rows_with_id": sum(1 for r in responses if (r.get("response_id") or "").startswith("R_")), "rows": len(responses)}
+    print(f"test_responses.txt: {test_list_diag}")
     responses = [r for r in responses if not is_test(r)]
     if not responses and not a.allow_empty:
         sys.exit("no responses: pass --from-qualtrics or --from-csv (or --allow-empty before launch)")
@@ -1073,7 +1074,7 @@ def main():
           "pending_ambiguous_responses": sum(1 for r in completes if r["match_status"] == "ambiguous"),
           "pending_ambiguous_schools_uncounted": coverage["overall"]["pending_ambiguous"],
           "unknown_channel_share": pct(sum(1 for r in valid if r["channel"] == "unknown"), len(valid)),
-          "redirect_from_educator": sum(1 for r in valid if r["channel"] == "redirect_from_educator"), "test_links": test_links,
+          "redirect_from_educator": sum(1 for r in valid if r["channel"] == "redirect_from_educator"), "test_links": test_links, "test_list": test_list_diag,
           "district_reports": sum(1 for r in completes if r["role"] == "district_librarian"),
           "respondent_level_mismatch": sum(1 for r in valid if "respondent_level_mismatch" in r["flags"]),
           "codebook_misses": sum(codebook_misses.values()), "manual_matches_applied": sum(1 for r in responses if r["match_method"] == "manual"),
