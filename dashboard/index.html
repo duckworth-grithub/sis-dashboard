@@ -208,17 +208,18 @@
   .spark .mark { stroke: var(--chalk); stroke-width: 1.5; stroke-dasharray: 2 3; opacity: 0.6; cursor: default; }
   .spark .mark:hover { opacity: 1; stroke-width: 3; }
 
-  .grid2.three { grid-template-columns: 1.1fr 256px 1.3fr; }
+  .grid2.three { grid-template-columns: 1.3fr 1fr 1.35fr; }
   @media (max-width: 1180px) { .grid2.three { grid-template-columns: minmax(0, 1fr); } }
-  .donut { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 22px; margin-top: 16px; }
-  .donut svg { width: 120px; height: 120px; flex: none; display: block; }
+  .donut { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; margin-top: 12px; flex: 1; }
+  .donut svg { width: 168px; height: 168px; flex: none; display: block; }
   .donut svg [data-go] { cursor: pointer; }
-  .donut .lg { display: flex; flex-direction: column; gap: 8px; min-width: 150px; flex: 1; }
-  .donut .lg > div { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; border-radius: 8px; }
+  .donut .lg { display: flex; flex-direction: column; width: 100%; max-width: 280px; }
+  .donut .lg > div { display: flex; align-items: center; gap: 10px; font-size: 14px; padding: 7px 0; border-bottom: 1px solid var(--rule-in); cursor: pointer; }
+  .donut .lg > div:last-child { border-bottom: 0; }
   .donut .lg > div:hover { color: var(--study); }
   .donut .lg i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
   .donut .lg b { margin-left: auto; }
-  .donut .lg .pc { width: 44px; text-align: right; color: var(--muted); font-size: 12px; }
+  .donut .lg .pc { width: 44px; text-align: right; color: var(--muted); font-size: 13px; }
   .pace-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
   .pace-stats .sub12 { line-height: 1.35; }
   @media (max-width: 760px) { .pace-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -343,7 +344,7 @@
     <section class="block"><div class="grid3" id="callouts" style="margin-top:16px"></div></section>
     <div class="grid2 three">
       <div class="card" style="display:flex;flex-direction:column" id="pace"></div>
-      <div class="card" id="who"></div>
+      <div class="card" id="who" style="display:flex;flex-direction:column"></div>
       <div class="card" id="gapsCard"></div>
     </div>
     <div class="card" id="outreach" style="margin-top:16px"></div>
@@ -676,7 +677,7 @@
     const tipOf = (p) => `<b>${p.l}</b><br>${fmt(p.n)} of ${fmt(tot)} new MS/HS schools · ${pct(100 * p.n / tot, 0)}`;
     $("#who").innerHTML = `<div class="card-title">New MS/HS by reporter</div><div class="sec-note">first report ever at the school</div>` + (P || !tot ? `<div class="sub12" style="margin-top:8px">${PEND}. This fills in once new MS/HS schools are reported.</div>` : `<div class="donut">
       <svg viewBox="0 0 120 120" role="img" aria-label="New MS/HS schools by reporter: ${parts.map((p) => `${p.l} ${p.n}`).join(", ")}">${arcs.map((p) => p.d ? `<path d="${p.d}" fill="${p.col}" stroke="var(--card)" stroke-width="2" stroke-linejoin="round" data-go="${p.k}" data-tip="${tipOf(p)}"/>` : `<circle cx="${cx}" cy="${cy}" r="${(R + r) / 2}" fill="none" stroke="${p.col}" stroke-width="${R - r}" data-go="${p.k}" data-tip="${tipOf(p)}"/>`).join("")}
-        <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" font-size="24" font-weight="700" letter-spacing="-0.02em" fill="var(--ink)" style="pointer-events:none">${fmt(tot)}</text></svg>
+        <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" letter-spacing="-0.02em" fill="var(--ink)" style="pointer-events:none">${fmt(tot)}</text></svg>
       <div class="lg">${parts.map((p) => `<div data-go="${p.k}" data-tip="${tipOf(p)}"><i style="background:${p.col}"></i><span>${p.l}</span><b>${fmt(p.n)}</b><span class="pc">${pct(100 * p.n / tot, 0)}</span></div>`).join("")}</div></div>`);
   }
 
@@ -699,7 +700,7 @@
     return `<svg class="map" viewBox="0 0 1180 660" style="width:100%;display:block" role="img" aria-label="MS/HS coverage by state">${Object.keys(paths).map((k) => { const x = mhByCode[k]; return `<path d="${paths[k]}" fill="${ramp(x ? x.pct : null)}" data-go="gaps?state=${k}" data-tip="<b>${esc(x ? x.state : k)}</b>${rankOf[k] ? ` · #${rankOf[k]} of ${ranked.length}` : ""}<br>${x ? `${fmt(x.covered)} of ${fmt(x.eligible)} MS/HS · ${pct(x.pct)}` : "no data"}"></path>`; }).join("")}</svg>`;
   }
   $("#gapsCard").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">MS/HS Coverage</div><div class="sec-note">% of MS/HS with at least one report</div></div>
-    <div class="mapgrid solo"><div class="mapcol"><div class="mapfit">${mapSvgMH()}</div><div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">${rampLegend}<span class="sec-note" data-go="gaps" style="cursor:pointer">click a state →</span></div></div></div>`;
+    <div class="mapgrid solo"><div class="mapcol"><div class="mapfit">${mapSvgMH()}</div><div style="margin-top:8px">${rampLegend}</div></div></div>`;
   $("#gapsMapBig").addEventListener("change", (e) => { if (e.target.id !== "mapLevel") return; lf.value = e.target.value; lf.dispatchEvent(new Event("change")); });
   function renderGapsMap() {
     const lvl = lf.value;
