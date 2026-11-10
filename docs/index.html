@@ -219,7 +219,7 @@
   .donut .lg i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
   .donut .lg b { margin-left: auto; }
   .donut .lg .pc { width: 44px; text-align: right; color: var(--muted); font-size: 12px; }
-  .pace-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+  .pace-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
   .pace-stats .sub12 { line-height: 1.35; }
   @media (max-width: 760px) { .pace-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .cols { position: relative; flex: 1; min-height: 130px; margin-top: 18px; border-bottom: 1px solid var(--axis); }
@@ -241,6 +241,7 @@
   .roster4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   @media (max-width: 900px) { .roster4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 560px) { .roster4 { grid-template-columns: 1fr; } #rosterTiles.roster4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .mapgrid.solo { grid-template-columns: 1fr; }
   @media (max-width: 760px) { .mapgrid { grid-template-columns: 1fr; } }
   svg.map path { stroke: #FFFFFF; stroke-width: 1.5; cursor: pointer; transition: opacity 120ms; }
   #gapsMapBig { display: flex; flex-direction: column; }
@@ -653,7 +654,6 @@
   const sinceM = (((d.funnel && d.funnel.cycle) || {}).new_mshs || 0), sincePts = M.eligible ? 100 * sinceM / M.eligible : 0;
   $("#pace").innerHTML = P ? `<div class="card-title">Pace</div><div class="sub12" style="margin-top:6px">${PEND}. New MS/HS schools per week and the pace toward ${my(TARGET)} appear once responses arrive.</div>` : `<div style="display:flex;justify-content:space-between;align-items:baseline"><div class="card-title">Pace</div><div class="sec-note">new MS/HS schools per week · ${last12.length} weeks</div></div>
     <div class="pace-stats">
-      <div><div class="stat28">+${fmt(sinceM)}</div><div class="sub12">MS/HS since launch · +${sincePts.toFixed(2)} pts</div></div>
       <div><div class="stat28" style="color:var(--study)">${projPct == null ? "—" : pct(projPct)}</div><div class="sub12">by ${my(TARGET)} at this pace${avgMshs != null ? ` (${fmt(Math.round(avgMshs))}/wk)` : ""}</div></div>
       ${neededM ? `<div><div class="stat28">${fmt(neededM)}</div><div class="sub12">MS/HS per week to hit 100%</div></div>` : ""}
     </div>
@@ -698,11 +698,8 @@
     if (!paths) return `<div class="sec-note" style="padding:40px 0;text-align:center">Map needs assets/us-states-paths.json next to this page.</div>`;
     return `<svg class="map" viewBox="0 0 1180 660" style="width:100%;display:block" role="img" aria-label="MS/HS coverage by state">${Object.keys(paths).map((k) => { const x = mhByCode[k]; return `<path d="${paths[k]}" fill="${ramp(x ? x.pct : null)}" data-go="gaps?state=${k}" data-tip="<b>${esc(x ? x.state : k)}</b>${rankOf[k] ? ` · #${rankOf[k]} of ${ranked.length}` : ""}<br>${x ? `${fmt(x.covered)} of ${fmt(x.eligible)} MS/HS · ${pct(x.pct)}` : "no data"}"></path>`; }).join("")}</svg>`;
   }
-  $("#gapsCard").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">MS/HS State leaderboard</div><div class="sec-note">% of MS/HS with at least one report</div></div>
-    <div class="mapgrid"><div class="mapcol"><div class="mapfit">${mapSvgMH()}</div><div style="margin-top:8px">${rampLegend}</div></div><div class="ranked">
-      ${ranked.slice(0, 5).map((x, i) => `<div class="row" data-go="gaps?state=${x.st}" style="gap:10px;align-items:center"><span style="width:16px;color:var(--muted);font-size:12px">${i + 1}</span><span class="n" style="width:112px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(x.state)}</span><span style="flex:1;height:8px;background:var(--track);border-radius:999px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(2, Math.round(100 * x.pct / topPct))}%;background:${ramp(x.pct)};border-radius:999px"></i></span><span class="v"><b>${pct(x.pct)}</b></span></div>`).join("")}
-      <div class="row collapsed"><span style="width:16px;color:var(--muted);font-size:12px">⋮</span><span style="flex:1;border-top:2px dotted var(--axis)"></span></div>
-      <div class="foot"><span class="pill" data-go="gaps">All ${ranked.length} states →</span></div></div></div>`;
+  $("#gapsCard").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">MS/HS Coverage</div><div class="sec-note">% of MS/HS with at least one report</div></div>
+    <div class="mapgrid solo"><div class="mapcol"><div class="mapfit">${mapSvgMH()}</div><div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">${rampLegend}<span class="sec-note" data-go="gaps" style="cursor:pointer">click a state →</span></div></div></div>`;
   $("#gapsMapBig").addEventListener("change", (e) => { if (e.target.id !== "mapLevel") return; lf.value = e.target.value; lf.dispatchEvent(new Event("change")); });
   function renderGapsMap() {
     const lvl = lf.value;
