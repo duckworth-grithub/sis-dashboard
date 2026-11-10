@@ -35,7 +35,7 @@ LEVELS = ["elementary", "middle", "high", "other", "unknown"]
 EMBEDDED = ["utm_source", "utm_medium", "utm_campaign", "src", "Referer", "Q_URL"]            # names read from a row
 EMBEDDED_BY_SURVEY = {"student": ["utm_source", "utm_medium", "utm_campaign", "src", "Referer", "Q_URL"], "educator": ["utm_source", "utm_medium", "utm_campaign", "Referer", "Q_URL"],
                       "librarian": ["utm_source", "utm_medium", "utm_campaign", "Referer", "Q_URL"]}   # names each survey defines
-METADATA = ["startDate", "recordedDate", "finished", "progress", "duration", "distributionChannel"]   # never ipAddress
+METADATA = ["_recordId", "startDate", "recordedDate", "finished", "progress", "duration", "distributionChannel"]   # never ipAddress; _recordId = the R_ response id
 
 # logical field -> (QID for the API json export, export tag for CSV exports)
 FIELDS = {
@@ -81,6 +81,7 @@ FIELDS["summer"] = {
 }
 INVALID_ORDER = ["preview", "before_cycle", "redirected", "unfinished", "test", "ineligible_role", "district_only", "no_policy_data", "no_school",
                  "unmatched", "ambiguous", "speeder"]
+API_ROW_KEYS = {}
 RESPONSE_COLUMNS = ["response_id", "survey", "start_at", "recorded_at", "finished", "finished_qualtrics", "progress", "duration_s",
                     "distribution_channel", "role", "respondent_level", "state_code", "state_name", "school_string",
                     "school_found", "typed_name_present", "zip_present", "match_status", "ncessch", "match_method",
@@ -142,6 +143,9 @@ def normalize_csv(survey, rows):
 
 def normalize_api(survey, responses):
     out = []
+    global API_ROW_KEYS
+    if responses:
+        API_ROW_KEYS = {"top": sorted(responses[0].keys()), "values_id_like": sorted(k for k in (responses[0].get("values") or {}) if "id" in k.lower())}
     for x in responses:
         v = x.get("values", {})
         meta = {
@@ -363,7 +367,7 @@ def main():
     test_links = sum(1 for r in responses if is_test(r))
     # diagnostic (no ids printed): proves the API rows carry a response id the exclusion list can match against
     test_list_diag = {"listed": len(test_ids), "matched": sum(1 for r in responses if r["response_id"] in test_ids),
-                      "rows_with_id": sum(1 for r in responses if (r.get("response_id") or "").startswith("R_")), "rows": len(responses)}
+                      "rows_with_id": sum(1 for r in responses if (r.get("response_id") or "").startswith("R_")), "rows": len(responses), "api_keys": API_ROW_KEYS}
     print(f"test_responses.txt: {test_list_diag}")
     responses = [r for r in responses if not is_test(r)]
     if not responses and not a.allow_empty:
