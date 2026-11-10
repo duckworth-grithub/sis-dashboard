@@ -145,7 +145,8 @@ def normalize_api(survey, responses):
     for x in responses:
         v = x.get("values", {})
         meta = {
-            "response_id": x.get("responseId", ""), "start_at": parse_dt(v.get("startDate")),
+            # the JSON export carries the R_ id in values._recordId (top-level responseId is absent when fields are whitelisted)
+            "response_id": (x.get("responseId") or v.get("_recordId") or x.get("_recordId") or "").strip(), "start_at": parse_dt(v.get("startDate")),
             "recorded_at": parse_dt(v.get("recordedDate")) or parse_dt(v.get("endDate")) or parse_dt(v.get("startDate")),
             "finished": truthy(v.get("finished")), "progress": to_int(v.get("progress")), "duration_s": to_int(v.get("duration")),
             "distribution_channel": (v.get("distributionChannel") or "").lower(),
