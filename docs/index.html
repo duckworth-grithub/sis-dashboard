@@ -960,7 +960,7 @@
     return `<div class="card" style="grid-column:1/-1"><div class="card-title">States with ${art} ${noun}-reported school</div>
         <div class="strow"><div class="stat40">${fmt(have.size)}<span class="of"> of 50</span></div><div class="sub12" style="margin-top:0">states have at least one school with a valid ${noun} report this cycle</div></div>
         <div class="stbar">${fifty.map((st) => `<i class="${have.has(st) ? "on" : ""}" data-tip="<b>${esc((byCode[st] || {}).state || st)}</b><br>${have.has(st) ? `at least one school with a ${noun} report` : `no ${noun} reports yet`}"></i>`).join("")}</div>
-        <div class="sub12" style="margin-top:10px">${have.size ? `Reached: ${fifty.filter((st) => have.has(st)).map((st) => esc((byCode[st] || {}).state || st)).join(", ")}.` : `No states yet.`} DC and the territories count toward national totals but not toward the 50.</div></div>`;
+        <div class="sub12" style="margin-top:10px">${have.size > 25 ? `Remaining: ${fifty.filter((st) => !have.has(st)).map((st) => esc((byCode[st] || {}).state || st)).join(", ") || "none"}.` : have.size ? `Reached: ${fifty.filter((st) => have.has(st)).map((st) => esc((byCode[st] || {}).state || st)).join(", ")}.` : `No states yet.`} DC and the territories count toward national totals but not toward the 50.</div></div>`;
   };
   // utm source cards for one survey: ranked sources, weekly stacked by source, campaigns. levelCols adds MS/HS and elementary valid columns.
   const sourceCards = (S, noun, levelCols) => {
