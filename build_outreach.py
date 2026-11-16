@@ -80,9 +80,13 @@ def main():
                     "Partner newsletter" if "newsletter" in c else "Partner forums" if "forum" in c else "Social post" if "social" in c or "post" in c
                     else "Conference" if "conference" in c or "webinar" in c else "State email" if "state" in typ.lower() or "email" in c
                     else "Partner comms" if "partner" in typ.lower() else (typ or "Outreach"))
+            ongoing = ("State digest" if "digest" in c or "superintendent" in c else
+                       "State follow-ups" if re.search(r"follow[- ]?up|periodic|recurring|weekly|monthly|ongoing|again", c) else "")
             if standing:
-                kind = ("State digest" if "digest" in c else "State follow-ups" if "follow" in c else "State comms (no date)")
+                kind = ongoing or "State comms (no date)"
             out.append({"date": date, "state": state, "type": typ, "audience": audience, "label": kind, "campaign": camp, "standing": "true" if standing else ""})
+            if date and state and ongoing:   # a dated send whose notes promise more (periodic follow-ups, a digest) is also a standing commitment
+                out.append({"date": "", "state": state, "type": typ, "audience": audience, "label": ongoing, "campaign": "", "standing": "true"})
     out.sort(key=lambda x: (x["date"] or "9999", x["label"]))
     path = os.path.join(HERE, "inputs", "outreach.csv")
     with open(path, "w", newline="", encoding="utf-8") as f:
