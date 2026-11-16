@@ -897,6 +897,7 @@ def main():
                          "body": "A spike is a state with at least 20 valid reports in 7 days and 3x the week before.", "action": "Gaps", "target": "gaps"})
     # outreach sends with the valid reports in the matching state/audience in the 7 days after vs the 7 before
     outreach_rows = []
+    outreach = [o for o in outreach if o.get("date") or o.get("standing") == "true"]
     for o in outreach:
         try:
             od = datetime.fromisoformat(o["date"]).date()
@@ -989,8 +990,11 @@ def main():
         share = len(tagged) / len(rows) if rows else 0.0
         st_name = ev["key"] if ev["kind"] == "state" else ""
         hits = outreach_for(st_name, ev["start"] - timedelta(days=7), ev["end"])
+        standing = None
         if ev["kind"] == "state":   # a state's spike is explained only by a send to that state; a national send is not evidence (Nov 16, 2026)
             hits = [o for o in hits if o.get("state_name") == st_name]
+            if not hits:   # no dated send, but the state said it would send (tracker row with no date): that is the likely source
+                standing = next((o for o in outreach if o.get("standing") == "true" and o.get("state_name") == st_name), None)
         top_school = collections.Counter(r["ncessch"] for r in rows if r["ncessch"]).most_common(1)
         top_district = collections.Counter(by_id[r["ncessch"]]["leaid"] for r in rows if r["ncessch"] in by_id and by_id[r["ncessch"]]["leaid"]).most_common(1)
         school_share = top_school[0][1] / len(rows) if top_school and rows else 0.0
@@ -1007,7 +1011,7 @@ def main():
             explained = "district"   # one district's schools answering in the same days (a district-wide send)
             hits = []
         else:
-            explained = "utm" if share >= 0.5 else "tracker" if hits else "partial" if share >= 0.15 else "unknown"
+            explained = "utm" if share >= 0.5 else "tracker" if hits else "standing" if standing else "partial" if share >= 0.15 else "unknown"
         hit = best_hit(hits, st_name)
         st_code = next((by_id[r["ncessch"]]["st"] for r in rows if r["ncessch"] and r["ncessch"] in by_id), "") if ev["kind"] == "state" else ""
         top_states = collections.Counter(r["state_name"] for r in rows if r["state_name"]).most_common(5) if ev["kind"] != "state" else []
@@ -1019,7 +1023,8 @@ def main():
                        "by_survey": dict(collections.Counter(r["survey"] for r in rows)),
                        "tagged_share": round(100 * share, 1),
                        "tags": [{"name": tag_txt(k), "n": n} for k, n in tags.most_common(3)],
-                       "hit": {"label": hit.get("label", ""), "date": hit["date"], "state": hit.get("state", "")} if hit else None,
+                       "hit": {"label": hit.get("label", ""), "date": hit["date"], "state": hit.get("state", "")} if hit else
+                              {"label": standing.get("label", ""), "date": "", "state": standing.get("state", ""), "standing": True} if explained == "standing" else None,
                        "more_hits": max(0, len(hits) - 1),
                        "states": [{"state": nm, "n": n} for nm, n in top_states],
                        "school": {"name": by_id[top_school[0][0]]["school_name"], "n": top_school[0][1]} if explained == "school" and top_school[0][0] in by_id else None,

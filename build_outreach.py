@@ -2,7 +2,7 @@
 """Turn the team's outreach tracker (an .xlsx export of the Google Sheet) into inputs/outreach.csv.
 
 Only what the dashboard needs is kept: date, state, type, audience, a generic label (kind of send) and a campaign id. The sheet's own wording is not published.
-Owner and Notes never leave the spreadsheet. Rows without a real date (planned sends) are skipped.
+Owner and Notes never leave the spreadsheet. Rows without a real date are skipped, except a state's standing commitment (a digest, periodic follow-ups), kept with a blank date so the state's later spikes can be attributed to it.
 
 Usage: python3 build_outreach.py "/path/to/tracker.xlsx"   or   python3 build_outreach.py tracker.csv  (the sheet published as CSV)
 """
@@ -55,9 +55,10 @@ def main():
                     date = f"{m2.group(3)}-{int(m2.group(1)):02d}-{int(m2.group(2)):02d}" if m2 else ""
                 else:
                     date = m.group(0)
-            if not date:
-                continue   # planned, date unknown
             content = str(get(i_content) or "").strip()
+            standing = not date and bool(state_of(content))   # a state that said it would send (digest, periodic follow-ups) but gave no date
+            if not date and not standing:
+                continue   # planned, date unknown, no state to tie it to
             aud = str(get(i_aud) or "").strip().lower()
             audience = "librarian" if "librar" in aud else "student" if "student" in aud else "educator" if "educ" in aud or "teacher" in aud else aud or "all"
             typ = str(get(i_type) or "").strip()
@@ -69,13 +70,15 @@ def main():
                     "Partner newsletter" if "newsletter" in c else "Partner forums" if "forum" in c else "Social post" if "social" in c or "post" in c
                     else "Conference" if "conference" in c or "webinar" in c else "State email" if "state" in typ.lower() or "email" in c
                     else "Partner comms" if "partner" in typ.lower() else (typ or "Outreach"))
-            out.append({"date": date, "state": state_of(content), "type": typ, "audience": audience, "label": kind, "campaign": camp})
-    out.sort(key=lambda x: (x["date"], x["label"]))
+            if standing:
+                kind = ("State digest" if "digest" in c else "State follow-ups" if "follow" in c else "State comms (no date)")
+            out.append({"date": date, "state": state_of(content), "type": typ, "audience": audience, "label": kind, "campaign": camp, "standing": "true" if standing else ""})
+    out.sort(key=lambda x: (x["date"] or "9999", x["label"]))
     path = os.path.join(HERE, "inputs", "outreach.csv")
     with open(path, "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=["date", "state", "type", "audience", "label", "campaign"])
+        w = csv.DictWriter(f, fieldnames=["date", "state", "type", "audience", "label", "campaign", "standing"])
         w.writeheader(); w.writerows(out)
-    print(f"outreach.csv: {len(out)} dated sends ({sum(1 for x in out if x['state'])} with a state); planned rows without a date skipped")
+    print(f"outreach.csv: {sum(1 for x in out if x['date'])} dated sends ({sum(1 for x in out if x['state'] and x['date'])} with a state); {sum(1 for x in out if x['standing'])} standing state commitments without a date; other undated rows skipped")
 
 
 if __name__ == "__main__":
