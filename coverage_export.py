@@ -324,6 +324,34 @@ def main():
             sid = r["ncessch"].zfill(12)
             if sid in by_id:
                 by_key[(norm_state(r["agency"]), fold(by_id[sid]["school_name"]))].add(sid)
+    # denominator adjustments (decided Nov 16, 2026): closed schools with no successor leave the eligible set; duplicate NCES ids
+    # (same name and city as an open 2024 CCD school) leave it too and their reports and 2025-26 history move to the successor id.
+    crosswalk, denom_stats = {}, {"removed": 0, "crosswalked": 0, "history_moved": 0}
+    dn_path = os.path.join(a.inputs, "denominator.csv")
+    if os.path.exists(dn_path):
+        with open(dn_path, encoding="utf-8-sig", newline="") as fh:
+            dn_rows = list(csv.DictReader(l for l in fh if not l.startswith("#")))
+        for r in dn_rows:
+            sid = r["ncessch"].strip().zfill(12); s = by_id.get(sid)
+            if not s or not s["eligible"]:
+                continue
+            if r["action"] == "crosswalk":
+                new_id = r["successor_ncessch"].strip().zfill(12); t = by_id.get(new_id)
+                if not t or t is s:
+                    continue
+                crosswalk[sid] = new_id
+                s["eligible"], s["ineligible_reason"] = "", "duplicate_id"
+                h = to_int(s.get("hist_reports_2025")) or 0
+                if h:
+                    t["hist_reports_2025"] = str((to_int(t.get("hist_reports_2025")) or 0) + h)
+                    t["hist_represented"] = "true" if s.get("hist_represented") == "true" else t.get("hist_represented", "")
+                    t["hist_waves"] = ";".join(sorted({w for w in (t.get("hist_waves", "") + ";" + s.get("hist_waves", "")).split(";") if w}))
+                    s["hist_reports_2025"], s["hist_represented"], s["hist_waves"] = "0", "", ""
+                    denom_stats["history_moved"] += 1
+                denom_stats["crosswalked"] += 1
+            elif r["action"] == "remove":
+                s["eligible"], s["ineligible_reason"] = "", "closed_no_successor"
+                denom_stats["removed"] += 1
     dd25 = os.path.join(a.inputs, "phonebans", "nces_dropdown_cities.csv")   # last year's dropdown strings (summer survey still uses them)
     if os.path.exists(dd25):
         from common import STATE_CODE_NAMES
@@ -395,9 +423,10 @@ def main():
             if len(sid) == 12 and sid.isdigit() and sid in by_id:
                 r["match_status"], r["ncessch"], r["match_method"] = "matched", sid, "id_in_string"
             else:
-                cands = sorted(by_key.get((r["state_name"], fold(r["school_string"])), ()))
+                raw = by_key.get((r["state_name"], fold(r["school_string"])), ())
+                cands = sorted({crosswalk.get(c, c) for c in raw})
                 if len(cands) == 1:
-                    r["match_status"], r["ncessch"], r["match_method"] = "matched", cands[0], "exact"
+                    r["match_status"], r["ncessch"], r["match_method"] = "matched", cands[0], "exact" + ("+crosswalk" if any(c in crosswalk for c in raw) else "")
                 elif len(cands) > 1:
                     r["match_status"], r["candidates"] = "ambiguous", "|".join(cands)
                 else:
@@ -406,6 +435,8 @@ def main():
             r["match_status"] = "unmatched_typed"
         else:
             r["match_status"] = "no_school"
+        if r["ncessch"] in crosswalk:   # manual or id-in-string match on a retired duplicate id
+            r["ncessch"], r["match_method"] = crosswalk[r["ncessch"]], r["match_method"] + "+crosswalk"
         r["channel"], r["partner"] = assign_channel(r)
         if r["role"] == "student" and not r["utm_source"] and not r["src"] and r["referer_host"].endswith("qualtrics.com"):
             r["channel"] = "redirect_from_educator"
@@ -518,7 +549,7 @@ def main():
         fl = []
         if s.get("name_ambiguous"):
             fl.append("name_ambiguous")
-        if any(r["match_method"] == "manual" for r in rs):
+        if any(r["match_method"].startswith("manual") for r in rs):
             fl.append("manual_match")
         if any("respondent_level_mismatch" in r["flags"] for r in rs):
             fl.append("respondent_level_mismatch")
@@ -1082,7 +1113,8 @@ def main():
           "redirect_from_educator": sum(1 for r in valid if r["channel"] == "redirect_from_educator"), "test_links": test_links, "test_list": test_list_diag,
           "district_reports": sum(1 for r in completes if r["role"] == "district_librarian"),
           "respondent_level_mismatch": sum(1 for r in valid if "respondent_level_mismatch" in r["flags"]),
-          "codebook_misses": sum(codebook_misses.values()), "manual_matches_applied": sum(1 for r in responses if r["match_method"] == "manual"),
+          "codebook_misses": sum(codebook_misses.values()), "manual_matches_applied": sum(1 for r in responses if r["match_method"].startswith("manual")),
+          "denominator": {**denom_stats, "reports_crosswalked": sum(1 for r in responses if r["match_method"].endswith("+crosswalk"))},
           "needs_review": sum(1 for r in completes if r["invalid_reason"] in ("unmatched", "ambiguous", "speeder"))}
     if all(s["level"] == "unknown" for s in schools):
         alerts.append("NCES CCD not loaded: school levels unknown, level tiles are empty (see COVERAGE-DESIGN.md §10.6)")
