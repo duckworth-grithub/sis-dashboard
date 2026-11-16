@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ["dashboard/**", "coverage_export.py", "common.py", "config.json", "data/**", "inputs/**"]   # code or data change: republish
+    paths: ["dashboard/**", "coverage_export.py", "common.py", "fuzzy_match.py", "build_outreach.py", "config.json", "data/**", "inputs/**", ".github/workflows/coverage-refresh.yml"]   # code or data change: republish
 permissions:
   contents: write
 concurrency:
