@@ -204,6 +204,8 @@ def build(survey, meta, ans, emb):
                          else (1 if to_int(ans.get("in_nces")) == 6 and survey == "summer" else to_int(ans.get("in_nces")))),
         "policy_answered": policy_ok or (survey == "librarian" and role == "district_librarian"),   # the district path has no policy question
         "typed_name_present": bool(str(ans.get("typed") or "").strip()),
+        "typed_name": str(ans.get("typed") or "").strip(),
+        "school_zip": re.sub(r"\D", "", str(ans.get("zip") or ""))[:5],
         "zip_present": bool(str(ans.get("zip") or "").strip()),
         "consent": bool(str(ans.get("consent") or "").strip()), "role_type": to_int(ans.get("role_type")),
         "utm_source": (emb.get("utm_source") or "").strip().lower(), "utm_medium": (emb.get("utm_medium") or "").strip().lower(),
@@ -440,6 +442,27 @@ def main():
         r["channel"], r["partner"] = assign_channel(r)
         if r["role"] == "student" and not r["utm_source"] and not r["src"] and r["referer_host"].endswith("qualtrics.com"):
             r["channel"] = "redirect_from_educator"
+    # typed school names: the team's three stages on every refresh. Stages 1-2 (exact after cleaning) are applied; stage 3 is proposed
+    # into the private review queue with its score, never applied without a check pass (see fuzzy_match.py).
+    from fuzzy_match import Matcher
+    fz = Matcher(schools, a.inputs)
+    fuzzy_stats = collections.Counter()
+    rej_path = os.path.join(a.inputs, "fuzzy_rejected.txt")
+    fuzzy_rejected = {l.strip() for l in open(rej_path, encoding="utf-8")} if os.path.exists(rej_path) else set()
+    fuzzy_rejected = {x for x in fuzzy_rejected if x and not x.startswith("#")}
+    for r in responses:
+        r["fuzzy_stage"] = r["fuzzy_ncessch"] = r["fuzzy_school"] = r["fuzzy_score"] = r["fuzzy_runner_up"] = r["fuzzy_note"] = ""
+        if r["match_status"] != "unmatched_typed" or not r.get("typed_name"):
+            continue
+        f = fz.run(r["typed_name"], r["state_name"], r.get("school_zip", ""))
+        if r["response_id"] in fuzzy_rejected and f["stage"] == "3":
+            f = dict(f, stage="", ncessch="", school="", score="", runner_up="", note="stage-3 proposal rejected on review (inputs/fuzzy_rejected.txt)")
+        if f["stage"] in ("1", "2"):
+            r["match_status"], r["ncessch"], r["match_method"] = "matched", crosswalk.get(f["ncessch"], f["ncessch"]), "typed_exact" if f["stage"] == "1" else "typed_zip"
+            fuzzy_stats["applied_stage_" + f["stage"]] += 1
+        else:
+            r["fuzzy_stage"], r["fuzzy_ncessch"], r["fuzzy_school"], r["fuzzy_score"], r["fuzzy_runner_up"], r["fuzzy_note"] = f["stage"], f["ncessch"], f["school"], f["score"], f["runner_up"], f["note"]
+            fuzzy_stats["proposed_stage_3" if f["stage"] == "3" else "no_match"] += 1
     if codebook_misses:
         alerts.append("state codes not in state_codes.csv (survey edited?): " + ", ".join(f"{s}:{c}×{n}" for (s, c), n in codebook_misses.most_common(5)))
     unmatched_strings = sum(1 for r in responses if r["match_status"] == "unmatched" and r["school_found"] == 1 and r["finished"])
@@ -1114,6 +1137,7 @@ def main():
           "district_reports": sum(1 for r in completes if r["role"] == "district_librarian"),
           "respondent_level_mismatch": sum(1 for r in valid if "respondent_level_mismatch" in r["flags"]),
           "codebook_misses": sum(codebook_misses.values()), "manual_matches_applied": sum(1 for r in responses if r["match_method"].startswith("manual")),
+          "fuzzy": dict(fuzzy_stats),
           "denominator": {**denom_stats, "reports_crosswalked": sum(1 for r in responses if r["match_method"].endswith("+crosswalk"))},
           "needs_review": sum(1 for r in completes if r["invalid_reason"] in ("unmatched", "ambiguous", "speeder"))}
     if all(s["level"] == "unknown" for s in schools):
@@ -1148,8 +1172,12 @@ def main():
     write_csv(os.path.join(a.out, "queue", "unmatched.csv"),
               sorted(({"response_id": r["response_id"], "survey": r["survey"], "recorded_at": iso(r["recorded_at"]), "state_name": r["state_name"],
                        "match_status": r["match_status"], "school_found": r["school_found"], "typed_name_present": r["typed_name_present"],
-                       "zip_present": r["zip_present"], "candidates": r["candidates"]} for r in queue), key=lambda x: x["recorded_at"]),
-              ["response_id", "survey", "recorded_at", "state_name", "match_status", "school_found", "typed_name_present", "zip_present", "candidates"])
+                       "zip_present": r["zip_present"], "candidates": r["candidates"], "typed_name": r.get("typed_name", ""), "school_zip": r.get("school_zip", ""),
+                       "respondent_level": r.get("respondent_level", ""), "fuzzy_stage": r.get("fuzzy_stage", ""), "fuzzy_ncessch": r.get("fuzzy_ncessch", ""),
+                       "fuzzy_school": r.get("fuzzy_school", ""), "fuzzy_score": r.get("fuzzy_score", ""), "fuzzy_runner_up": r.get("fuzzy_runner_up", ""),
+                       "fuzzy_note": r.get("fuzzy_note", "")} for r in queue), key=lambda x: x["recorded_at"]),
+              ["response_id", "survey", "recorded_at", "state_name", "match_status", "school_found", "typed_name_present", "zip_present", "candidates",
+               "typed_name", "school_zip", "respondent_level", "fuzzy_stage", "fuzzy_ncessch", "fuzzy_school", "fuzzy_score", "fuzzy_runner_up", "fuzzy_note"])
 
     pending_launch = len(cyc) == 0
     # ---- outputs
