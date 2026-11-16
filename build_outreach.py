@@ -19,11 +19,17 @@ from common import STATE_CODE_NAMES  # noqa: E402
 NAME_TO_CODE = {v.lower(): k for k, v in STATE_CODE_NAMES.items()}
 
 
+AMBIGUOUS_CODES = {"IN", "OR", "ME", "OK", "HI", "OH"}   # two-letter codes that are also English words; only a full state name counts for these
+
+
 def state_of(text):
     t = (text or "").lower()
     for name, code in sorted(NAME_TO_CODE.items(), key=lambda kv: -len(kv[0])):
         if re.search(r"\b" + re.escape(name) + r"\b", t):
             return code
+    for m in re.finditer(r"\b([A-Z]{2})\b", text or ""):   # a bare upper-case code such as "SC said periodic follow ups"
+        if m.group(1) in STATE_CODE_NAMES and m.group(1) not in AMBIGUOUS_CODES:
+            return m.group(1)
     return ""
 
 
