@@ -938,7 +938,14 @@ def main():
                     run["end"] = dd; run["base"] = min(run["base"], base)
                 else:
                     run = {"start": dd, "end": dd, "base": base}; found.append(run)
-        return found
+        # a tag or state that keeps spiking with a quiet day or two in between is one story, not several
+        merged = []
+        for run in found:
+            if merged and (run["start"] - merged[-1]["end"]).days <= 3:
+                merged[-1]["end"] = run["end"]; merged[-1]["base"] = min(merged[-1]["base"], run["base"])
+            else:
+                merged.append(run)
+        return merged
     events = []
     for st_name in sorted({r["state_name"] for r in valr if r["state_name"]}):
         for ev in scan(lambda dd, s_=st_name: by_sd.get((s_, dd), []), 8):
@@ -982,10 +989,21 @@ def main():
         share = len(tagged) / len(rows) if rows else 0.0
         st_name = ev["key"] if ev["kind"] == "state" else ""
         hits = outreach_for(st_name, ev["start"] - timedelta(days=7), ev["end"])
+        top_school = collections.Counter(r["ncessch"] for r in rows if r["ncessch"]).most_common(1)
+        top_district = collections.Counter(by_id[r["ncessch"]]["leaid"] for r in rows if r["ncessch"] in by_id and by_id[r["ncessch"]]["leaid"]).most_common(1)
+        school_share = top_school[0][1] / len(rows) if top_school and rows else 0.0
         if ev["kind"] == "utm":
-            camp = ev["key"][2]
-            hits = [o for o in hits if o.get("campaign") and o["campaign"] == camp] or hits
+            # a tag explains itself; the tracker is only cited when a row names this campaign, or it is a paid send and the tag is paid
+            camp, medium = ev["key"][2], ev["key"][1]
+            hits = [o for o in hits if (o.get("campaign") and o["campaign"] == camp)
+                    or (medium in ("paid_social", "paid", "cpc") and "paid" in (str(o.get("type", "")) + " " + str(o.get("label", ""))).lower())]
             explained = "utm"
+        elif school_share >= 0.5 and top_school[0][1] >= 8:
+            explained = "school"   # one school's class or staff answering together, not a campaign
+            hits = []
+        elif top_district and top_district[0][1] >= 8 and top_district[0][1] / len(rows) >= 0.5:
+            explained = "district"   # one district's schools answering in the same days (a district-wide send)
+            hits = []
         else:
             explained = "utm" if share >= 0.5 else "tracker" if hits else "partial" if share >= 0.15 else "unknown"
         hit = best_hit(hits, st_name)
@@ -1002,6 +1020,8 @@ def main():
                        "hit": {"label": hit.get("label", ""), "date": hit["date"], "state": hit.get("state", "")} if hit else None,
                        "more_hits": max(0, len(hits) - 1),
                        "states": [{"state": nm, "n": n} for nm, n in top_states],
+                       "school": {"name": by_id[top_school[0][0]]["school_name"], "n": top_school[0][1]} if explained == "school" and top_school[0][0] in by_id else None,
+                       "district": {"name": next(by_id[r["ncessch"]]["district"] for r in rows if r["ncessch"] in by_id and by_id[r["ncessch"]]["leaid"] == top_district[0][0]), "n": top_district[0][1]} if explained == "district" else None,
                        "explained": explained})
     spikes.sort(key=lambda x: (x["start"], x["n"]), reverse=True)
     data_spikes = {"window_days": 30, "since": str(d30), "events": spikes}
