@@ -989,6 +989,8 @@ def main():
         share = len(tagged) / len(rows) if rows else 0.0
         st_name = ev["key"] if ev["kind"] == "state" else ""
         hits = outreach_for(st_name, ev["start"] - timedelta(days=7), ev["end"])
+        if ev["kind"] == "state":   # a state's spike is explained only by a send to that state; a national send is not evidence (Nov 16, 2026)
+            hits = [o for o in hits if o.get("state_name") == st_name]
         top_school = collections.Counter(r["ncessch"] for r in rows if r["ncessch"]).most_common(1)
         top_district = collections.Counter(by_id[r["ncessch"]]["leaid"] for r in rows if r["ncessch"] in by_id and by_id[r["ncessch"]]["leaid"]).most_common(1)
         school_share = top_school[0][1] / len(rows) if top_school and rows else 0.0
