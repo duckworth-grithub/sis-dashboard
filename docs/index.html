@@ -352,7 +352,7 @@
   </div>
 
   <div class="page" id="page-gaps">
-    <h2 class="ph">Coverage gaps</h2><p class="pd">Schools with no report yet, by state. MS/HS by default, the same schools the headline counts (any school with NCES enrollment in grades 6–12: grades 9–12 make it high, otherwise middle, so K–8 and K–12 count); Elementary is the new survey only; All is every school in the NCES list. "Lagging" = more than <span id="gapPts"></span> points below the national rate.</p>
+    <h2 class="ph">Coverage gaps</h2><p class="pd">Schools with no report yet, by state. MS/HS by default, the same schools the headline counts (any school with NCES enrollment in grades 6–12: grades 9–12 make it high, otherwise middle, so K–8 and K–12 count); Elementary is the new survey only; All is every school in the NCES list except closed schools and duplicate ids (see Data quality). "Lagging" = more than <span id="gapPts"></span> points below the national rate.</p>
     <div class="grid2eq" style="align-items:stretch;margin-top:12px"><div class="card" id="gapsMapBig"></div><div class="card" id="gapsBoard"></div></div>
     <div class="filters"><select id="levelFilter"></select><input id="stateSearch" placeholder="Find state" size="12"><span class="sec-note" id="listLinks"></span></div>
     <div class="card tablewrap"><table id="states"><thead></thead><tbody></tbody></table></div>
@@ -429,7 +429,7 @@
   const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const mdy = (iso) => { const d = new Date(iso + "T00:00:00Z"); return `${MON[d.getUTCMonth()]} ${d.getUTCDate()}`; };
   const my = (iso) => { const d = new Date(iso + "T00:00:00Z"); return `${MON[d.getUTCMonth()]} ${d.getUTCFullYear()}`; };
-  const nice = (s) => String(s || "").replace(/_/g, " ");
+  const nice = (s) => ({ closed_no_successor: "closed in CCD, no successor", duplicate_id: "duplicate NCES id (credited to the live id)", not_on_state_list: "not on the state list" })[s] || String(s || "").replace(/_/g, " ");
 
   let d, paths = null;
   try { d = await (await fetch("./coverage-data.json", { cache: "no-store" })).json(); }
@@ -705,7 +705,7 @@
   function renderGapsMap() {
     const lvl = lf.value;
     const src = lvl === "mshs" ? mhByCode : lvl ? Object.fromEntries(d.states.map((x) => { const b = x.by_level[lvl] || { eligible: 0, covered: 0 }; return [x.st, { ...x, eligible: b.eligible, covered: b.covered, pct: b.eligible ? +(100 * b.covered / b.eligible).toFixed(1) : null }]; })) : byCode;
-    const label = lvl === "mshs" ? "MS/HS" : lvl ? LEVEL[lvl].toLowerCase() + " schools" : "all schools (every school in the NCES list)";
+    const label = lvl === "mshs" ? "MS/HS" : lvl ? LEVEL[lvl].toLowerCase() + " schools" : "all schools (the NCES list minus closed schools and duplicate ids)";
     const svg = paths ? `<svg class="map big" viewBox="0 0 1180 660" style="width:100%;height:100%;display:block" role="img" aria-label="Coverage by state"><use href="#x"/>${Object.keys(paths).map((k) => { const x = src[k]; return `<path d="${paths[k]}" fill="${ramp(x ? x.pct : null)}" data-go="gaps?state=${k}" data-tip="<b>${esc(x ? x.state : k)}</b><br>${x && x.eligible ? `${fmt(x.covered)} of ${fmt(x.eligible)} ${label} · ${pct(x.pct)}` : "no data"}"></path>`; }).join("")}</svg>` : `<div class="sec-note" style="padding:40px 0;text-align:center">Map needs assets/us-states-paths.json next to this page.</div>`;
     $("#gapsMapBig").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title" style="display:flex;align-items:center;gap:8px">Coverage by state · <select id="mapLevel" class="lvlsel" aria-label="School level">${[["mshs", "MS/HS"], ["elementary", "Elementary"], ["", "All"]].map(([v, l]) => `<option value="${v}"${v === lvl ? " selected" : ""}>${l}</option>`).join("")}</select></div><div class="sec-note">${rampLegend}</div></div><div class="mapfill">${svg}</div><div class="sec-note" style="margin-top:8px;text-align:center">click a state to filter the table</div>`;
     const rowsB = Object.values(src).filter((x) => x && x.pct != null && x.eligible >= 50 && x.st !== "DC" && !TERR.has(x.st)).sort((a, b) => b.pct - a.pct || b.covered - a.covered);
@@ -1086,7 +1086,7 @@
     el.textContent = `Updated ${sameDay ? "" : day + " "}${et}${age < 90 ? ` · ${Math.max(1, Math.round(age))} min ago` : ""}`;
     el.classList.toggle("stale", age > 120); })();
   const genET = new Date(d.generated_at).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
-  $("#foot").textContent = `Data as of ${mdy(d.as_of.slice(0, 10))}, ${d.as_of.slice(0, 4)} · generated ${genET} ET · eligible = every NCES school (${fmt(c.overall.eligible)}) including the territories; the state table lists the 50 states and DC.`;
+  $("#foot").textContent = `Data as of ${mdy(d.as_of.slice(0, 10))}, ${d.as_of.slice(0, 4)} · generated ${genET} ET · eligible = every NCES school (${fmt(c.overall.eligible)}) including the territories, minus schools closed in the CCD with no successor and duplicate ids; the state table lists the 50 states and DC.`;
 
   // ---- tooltips + routing
   const tip = $("#tip");
