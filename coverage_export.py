@@ -902,6 +902,9 @@ def main():
         try:
             od = datetime.fromisoformat(o["date"]).date()
         except ValueError:
+            if o.get("standing") == "true":   # published as state + generic label only, no date, so the page can list what each state promised
+                outreach_rows.append({"date": "", "state": o.get("state", ""), "state_name": o["state_name"], "type": o.get("type", ""), "audience": o.get("audience") or "",
+                                      "label": o.get("label", ""), "campaign": "", "after_7d": None, "before_7d": None, "tagged": 0, "standing": True})
             continue
         aud = o.get("audience") or ""
         def cnt(lo, hi):
