@@ -2,7 +2,7 @@
 """Turn the team's outreach tracker (an .xlsx export of the Google Sheet) into inputs/outreach.csv.
 
 Only what the dashboard needs is kept: date, state, type, audience, a generic label (kind of send) and a campaign id. The sheet's own wording is not published.
-Owner and Notes never leave the spreadsheet. Rows without a real date are skipped, except a state's standing commitment (a digest, periodic follow-ups), kept with a blank date so the state's later spikes can be attributed to it.
+Owner never leaves the spreadsheet; Notes are read only to find the state and the kind of send, and the text is never written out. Rows without a real date are skipped, except a state's standing commitment (a digest, periodic follow-ups), kept with a blank date so the state's later spikes can be attributed to it.
 
 Usage: python3 build_outreach.py "/path/to/tracker.xlsx"   or   python3 build_outreach.py tracker.csv  (the sheet published as CSV)
 """
@@ -43,6 +43,7 @@ def main():
         hdr = [str(c or "").strip().lower() for c in rows[0]]
         col = lambda *names: next((i for i, h in enumerate(hdr) if any(h.startswith(n) for n in names)), None)
         i_content, i_type, i_aud, i_date, i_link, i_id = col("content"), col("type"), col("intended audience", "audience"), col("estimated date", "date"), col("link"), col("campaign")
+        i_notes, i_state = col("notes", "note"), col("state")   # read for the state name and the kind of send only; the text itself is never written out
         for r in rows[1:]:
             get = lambda i: (r[i] if i is not None and i < len(r) else None)
             d = get(i_date)
@@ -56,7 +57,10 @@ def main():
                 else:
                     date = m.group(0)
             content = str(get(i_content) or "").strip()
-            standing = not date and bool(state_of(content))   # a state that said it would send (digest, periodic follow-ups) but gave no date
+            notes = str(get(i_notes) or "").strip()
+            state = (str(get(i_state) or "").strip().upper() if i_state is not None else "")
+            state = state if state in STATE_CODE_NAMES else (NAME_TO_CODE.get(state.lower(), "") if state else "") or state_of(content) or state_of(notes)
+            standing = not date and bool(state)   # a state that said it would send (digest, periodic follow-ups) but gave no date
             if not date and not standing:
                 continue   # planned, date unknown, no state to tie it to
             aud = str(get(i_aud) or "").strip().lower()
@@ -65,14 +69,14 @@ def main():
             link = str(get(i_link) or "").strip()
             camp = str(get(i_id) or "").strip() or (re.search(r"utm_campaign=([^&\s]+)", link).group(1) if "utm_campaign=" in link else "")
             # generic label only (the page is public): kind of send, never the sheet's own wording
-            c = (content + " " + typ).lower()
+            c = (content + " " + typ + " " + notes).lower()
             kind = ("Online forum post" if "reddit" in c or ("forum" in c and "partner" not in typ.lower()) else
                     "Partner newsletter" if "newsletter" in c else "Partner forums" if "forum" in c else "Social post" if "social" in c or "post" in c
                     else "Conference" if "conference" in c or "webinar" in c else "State email" if "state" in typ.lower() or "email" in c
                     else "Partner comms" if "partner" in typ.lower() else (typ or "Outreach"))
             if standing:
                 kind = ("State digest" if "digest" in c else "State follow-ups" if "follow" in c else "State comms (no date)")
-            out.append({"date": date, "state": state_of(content), "type": typ, "audience": audience, "label": kind, "campaign": camp, "standing": "true" if standing else ""})
+            out.append({"date": date, "state": state, "type": typ, "audience": audience, "label": kind, "campaign": camp, "standing": "true" if standing else ""})
     out.sort(key=lambda x: (x["date"] or "9999", x["label"]))
     path = os.path.join(HERE, "inputs", "outreach.csv")
     with open(path, "w", newline="", encoding="utf-8") as f:
