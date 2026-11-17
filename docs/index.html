@@ -395,6 +395,7 @@
     <h2 class="ph">Data quality</h2><p class="pd">Coverage only counts valid reports. Everything excluded is listed so a rule that eats too much is visible the day it happens.</p>
     <div id="alerts"></div>
     <div class="grid2eq" style="align-items:stretch"><div class="card" id="dq1"></div><div class="card" id="dq2"></div></div>
+    <div class="card" style="margin-top:16px" id="dqFunnel"></div>
     <div class="card" style="margin-top:16px" id="dqSources"></div>
     <div class="card" style="margin-top:16px"><div class="card-title">What counts as a valid report</div>
       <p class="sub12" style="margin:8px 0 10px;line-height:1.5">A response passes every check below, in this order. Anything that fails is listed on this tab by the step it failed.</p>
@@ -721,18 +722,19 @@
   const fc = (d.funnel && d.funnel.cycle) || {};
   const visPartial = fn.visits != null && fn.visits_days < fn.window_days;
   const visLabel = (fn.visits_source === "plausible" ? "Site visitors" : "Homepage loads") + (visPartial ? "*" : "");
-  const stages = [[visLabel, fn.visits, "#C3E5CB"], ["Survey starts", fn.starts, "#8FC49B"], ["Completions", fn.completes, "#5C9F6F"], ["Valid reports", fn.valid, "#2C7A4B"], ["New schools", fn.new_schools, "#1E4034"]].filter((x) => x[1] != null);
+  const stagesFull = [[visLabel, fn.visits, "#C3E5CB"], ["Survey starts", fn.starts, "#8FC49B"], ["Completions", fn.completes, "#5C9F6F"], ["Valid reports", fn.valid, "#2C7A4B"], ["New schools", fn.new_schools, "#1E4034"]].filter((x) => x[1] != null);
+  const stages = stagesFull.filter((x) => x[0] !== visLabel);   // the home page strip starts at survey starts; the full funnel with site visitors lives on Data quality (Nov 17, 2026)
   const visCover = fn.visits == null ? "" : `${fn.visits_from === fn.visits_to ? mdy(fn.visits_from) : `${mdy(fn.visits_from)}–${mdy(fn.visits_to)}`} (${fn.visits_days} of ${fn.window_days} days)`;
   const visNote = !visPartial ? "" : fn.visits_source === "plausible"
     ? `* Site visitors = people who opened screensinschools.org or phonesinfocus.org, counted by Plausible since ${mdy(fn.visits_from)}, so this covers ${visCover}.${fn.conv_visit_start == null ? " The visitors-to-starts rate appears after the first full day." : ""} The asterisk goes away once 30 days are in.`
     : `* Homepage loads = screensinschools.org front page from CloudFront, ${visCover}; includes crawlers. The asterisk goes away once 30 days are in.`;
-  $("#stripNote").textContent = visNote; $("#stripNote").hidden = !visNote;
+  $("#stripNote").hidden = true;
   const fmax = Math.max(1, ...stages.map((x) => x[1]));
   const bySv = dq.by_survey || {}, svOrder = [["student", "Students", "#C3E5CB"], ["educator", "Educators", "#5C9F6F"], ["librarian", "Librarians", "#1E4034"]].filter(([k]) => bySv[k]);
   const svTotal = Math.max(1, svOrder.reduce((a, [k]) => a + (bySv[k].valid || 0), 0));
   $("#strip").innerHTML = P ? `<div><span style="font-size:13px;font-weight:700">Last 30 days</span><div class="sub12">${PEND}.</div></div><div class="review"><div><div style="font-size:13px;font-weight:700">${esc(d.cycle.name)}</div><div class="sub12">${PEND}.</div></div></div>`
     : `<div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;font-weight:700">Last 30 days</span></div>
-      <div class="srcs" style="gap:6px">${stages.map(([l, n2, col]) => `<div style="align-items:center;gap:10px"><span style="color:var(--slate);width:110px;flex-shrink:0">${l}</span><span style="flex:1;height:8px;background:var(--track);border-radius:999px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(2, Math.round(100 * n2 / fmax))}%;background:${col};border-radius:999px"></i></span><b style="width:64px;text-align:right">${fmt(n2)}</b></div>`).join("")}</div>${fn.visits != null && fn.conv_visit_start != null ? `<div class="sub12" style="margin-top:8px">${fmt(fn.visits_starts)} survey starts, <b style="color:var(--ink)">${fn.conv_visit_start}%</b> of ${fn.visits_source === "plausible" ? "visitors" : "loads"}.</div>` : ""}</div>
+      <div class="srcs" style="gap:6px">${stages.map(([l, n2, col]) => `<div style="align-items:center;gap:10px"><span style="color:var(--slate);width:110px;flex-shrink:0">${l}</span><span style="flex:1;height:8px;background:var(--track);border-radius:999px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(2, Math.round(100 * n2 / fmax))}%;background:${col};border-radius:999px"></i></span><b style="width:64px;text-align:right">${fmt(n2)}</b></div>`).join("")}</div></div>
     <div class="review"><div style="width:100%"><div style="font-size:13px;font-weight:700">${esc(d.cycle.name)}</div>
       <div style="display:flex;gap:28px;margin-top:10px;flex-wrap:wrap">
         <div><div class="stat28">${fmt(fc.starts)}</div><div class="sub12">started</div></div>
@@ -1064,6 +1066,16 @@
     </tbody></table>`;
 
   // ---- top sources, all surveys (utm_source on the link; the site passes tags through to the survey)
+  if ($("#dqFunnel")) {
+    const convs = [["Visitors who start a survey", fn.conv_visit_start], ["Starts that complete", fn.conv_start_complete], ["Completions that are valid", fn.conv_complete_valid], ["Valid reports at a school never reported before", fn.conv_valid_new]].filter((x) => x[1] != null);
+    const fmaxF = Math.max(1, ...stagesFull.map((x) => x[1]));
+    $("#dqFunnel").innerHTML = P ? pendCard("Funnel") : `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Funnel</div><div class="sec-note">last 30 days, all three surveys</div></div>
+      <div class="grid2eq" style="margin-top:12px;align-items:start">
+        <div class="srcs" style="gap:6px">${stagesFull.map(([l, n2, col]) => `<div style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="color:var(--slate);width:120px;flex-shrink:0">${l}</span><span style="flex:1;height:8px;background:var(--track);border-radius:999px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(2, Math.round(100 * n2 / fmaxF))}%;background:${col};border-radius:999px"></i></span><b style="width:64px;text-align:right">${fmt(n2)}</b></div>`).join("")}</div>
+        <div>${convs.map(([l, v]) => `<div style="display:flex;justify-content:space-between;gap:12px;font-size:13px;padding:5px 0;border-bottom:1px solid var(--rule-in)"><span style="color:var(--slate)">${l}</span><b>${pct(v)}</b></div>`).join("")}</div>
+      </div>
+      ${visNote ? `<div class="sub12" style="margin-top:10px">${visNote}</div>` : fn.visits != null ? `<div class="sub12" style="margin-top:10px">Site visitors = people who opened screensinschools.org or phonesinfocus.org, counted by Plausible.</div>` : ""}`;
+  }
   if ($("#dqSources")) {
     const rows = SRC.all || [], mx = Math.max(1, ...rows.map((x) => x.valid));
     $("#dqSources").innerHTML = P ? `<div class="card-title">Top sources</div><div class="sub12" style="margin-top:6px">${PEND}.</div>` : `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Top sources, all surveys</div><div class="sec-note">utm_source on the link · ${pct(SRC.tagged_share)} of starts carried a tag</div></div>
