@@ -32,6 +32,7 @@ from datetime import datetime, timedelta, timezone
 from common import HERE, load_config, load_state_codes, norm_state, parse_dt, iso, read_csv, write_csv, to_int, truthy, glob_match
 
 LEVELS = ["elementary", "middle", "high", "other", "unknown"]
+NCES_MSHS = {"Middle", "High", "Secondary"}   # NCES's own level values that count as MS/HS for the hero toggle
 EMBEDDED = ["utm_source", "utm_medium", "utm_campaign", "src", "Referer", "Q_URL"]            # names read from a row
 EMBEDDED_BY_SURVEY = {"student": ["utm_source", "utm_medium", "utm_campaign", "src", "Referer", "Q_URL"], "educator": ["utm_source", "utm_medium", "utm_campaign", "Referer", "Q_URL"],
                       "librarian": ["utm_source", "utm_medium", "utm_campaign", "Referer", "Q_URL"]}   # names each survey defines
@@ -316,6 +317,15 @@ def main():
     # ---- reference data
     schools = read_csv(os.path.join(a.data, "schools.csv"))
     by_id = {s["ncessch"]: s for s in schools}
+    # NCES's own level field (Elementary / Middle / High / Secondary / Other ...) for the hero toggle (Sadie, Nov 19, 2026):
+    # "Has grades 6-12" is the dashboard's level from the grade span; "NCES classified as MS/HS" is Middle, High or Secondary here.
+    nces_lv = {}
+    nl_path = os.path.join(a.inputs, "phonebans", "nces_schools_latest.csv")
+    if os.path.exists(nl_path):
+        nces_lv = {r["ncessch"].zfill(12): (r.get("level") or "").strip() for r in read_csv(nl_path)}
+    for s in schools:
+        s["nces_level"] = nces_lv.get(s["ncessch"], "")
+        s["nces_mshs"] = s["nces_level"] in NCES_MSHS
     fold = lambda t: re.sub(r"\s+", " ", (t or "")).strip().casefold()
     by_key = collections.defaultdict(set)
     for s in schools:
@@ -599,7 +609,8 @@ def main():
                 "pending_ambiguous": sum(1 for s in ss if int(s["pending_ambiguous"]) > 0 and tot(s) == 0)}
 
     coverage = {"overall": block(elig), "by_level": {lv: block([s for s in elig if s["level"] == lv]) for lv in LEVELS},
-                "mshs": block([s for s in elig if s["level"] in ("middle", "high")])}
+                "mshs": block([s for s in elig if s["level"] in ("middle", "high")]),
+                "mshs_nces": block([s for s in elig if s["nces_mshs"]])}
     coverage["out_of_scope"] = dict(collections.Counter(s["ineligible_reason"] for s in schools if not s["eligible"]))
     role_sch = collections.defaultdict(set)
     for r in responses:
@@ -677,6 +688,7 @@ def main():
         in_w = [s for s in firsts if week_start(s["_first"]) == w]
         weekly.append({"week_start": str(w), "partial": w == this_wk, "new": len(in_w),
                        "by_level": {lv: sum(1 for s in in_w if s["level"] == lv) for lv in LEVELS},
+                       "new_mshs_nces": sum(1 for s in in_w if s["nces_mshs"]),
                        "second_reports": sum(1 for s in twos if week_start(s["_second"]) == w),
                        "valid_responses": sum(1 for r in responses if r["valid"] and r["week"] == str(w))})
     daily = []
@@ -744,7 +756,8 @@ def main():
         return {"starts": len(rs), "completes": len(comp), "valid": len(val), "matched": sum(1 for r in val if r["ncessch"]),
                 "new_schools": new, "second_reports": sec, "redundant": red,
                 "conv_start_complete": pct(len(comp), len(rs)), "conv_complete_valid": pct(len(val), len(comp)), "conv_valid_new": pct(new, len(val)),
-                "by_level_new": {lv: sum(1 for r in val if r.get("coverage_rank") == 1 and r["ncessch"] and by_id[r["ncessch"]]["level"] == lv) for lv in LEVELS}}
+                "by_level_new": {lv: sum(1 for r in val if r.get("coverage_rank") == 1 and r["ncessch"] and by_id[r["ncessch"]]["level"] == lv) for lv in LEVELS},
+                "new_mshs_nces": sum(1 for r in val if r.get("coverage_rank") == 1 and r["ncessch"] and by_id[r["ncessch"]]["nces_mshs"])}
     in_cycle = [r for r in responses if not (r["recorded_at"] and r["recorded_at"] < cycle_start) and r["distribution_channel"] != "preview" and r["invalid_reason"] != "redirected"]
     channels = []
     for ch in sorted({r["channel"] for r in in_cycle}):
@@ -1117,7 +1130,7 @@ def main():
                     "visits_days": v_days, "window_days": win_days, "visits_starts": starts_in,
                     "starts": f["starts"], "completes": f["completes"], "valid": f["valid"], "matched": f["matched"],
                     "new_schools": f["new_schools"], "second_reports": f["second_reports"],
-                    "new_mshs": (f.get("by_level_new") or {}).get("middle", 0) + (f.get("by_level_new") or {}).get("high", 0),
+                    "new_mshs": (f.get("by_level_new") or {}).get("middle", 0) + (f.get("by_level_new") or {}).get("high", 0), "new_mshs_nces": f.get("new_mshs_nces", 0),
                     "conv_visit_start": pct(starts_in, vis_full) if vis_full else None, "conv_start_complete": f["conv_start_complete"],
                     "conv_complete_valid": f["conv_complete_valid"], "conv_valid_new": f["conv_valid_new"]}
         rows = [t for t in traffic if since is None or t[0] >= since]
@@ -1131,7 +1144,7 @@ def main():
                 "visits_days": v_days, "window_days": win_days, "visits_starts": starts_in,
                 "starts": f["starts"], "completes": f["completes"], "valid": f["valid"], "matched": f["matched"],
                 "new_schools": f["new_schools"], "second_reports": f["second_reports"],
-                "new_mshs": (f.get("by_level_new") or {}).get("middle", 0) + (f.get("by_level_new") or {}).get("high", 0),
+                "new_mshs": (f.get("by_level_new") or {}).get("middle", 0) + (f.get("by_level_new") or {}).get("high", 0), "new_mshs_nces": f.get("new_mshs_nces", 0),
                 "conv_visit_start": pct(starts_in, vis) if vis else None, "conv_start_complete": f["conv_start_complete"],
                 "conv_complete_valid": f["conv_complete_valid"], "conv_valid_new": f["conv_valid_new"]}
     funnel_data = {"cycle": funnel_block(in_cycle), "last_4w": funnel_block(recent, four_wk_start), "visits_loaded": bool(plaus or traffic),
