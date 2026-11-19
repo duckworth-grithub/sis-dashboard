@@ -722,7 +722,7 @@
   const fc = (d.funnel && d.funnel.cycle) || {};
   const visPartial = fn.visits != null && fn.visits_days < fn.window_days;
   const visLabel = (fn.visits_source === "plausible" ? "Site visitors" : "Homepage loads") + (visPartial ? "*" : "");
-  const stagesFull = [[visLabel, fn.visits, "#C3E5CB"], ["Survey starts", fn.starts, "#8FC49B"], ["Completions", fn.completes, "#5C9F6F"], ["Valid reports", fn.valid, "#2C7A4B"], ["New schools", fn.new_schools, "#1E4034"]].filter((x) => x[1] != null);
+  const stagesFull = [[visLabel, fn.visits, "#C3E5CB"], ["Survey starts", fn.starts, "#8FC49B"], ["Completions", fn.completes, "#5C9F6F"], ["NCES reports", fn.valid, "#2C7A4B"], ["New schools", fn.new_schools, "#1E4034"]].filter((x) => x[1] != null);
   const stages = stagesFull.filter((x) => x[0] !== visLabel);   // the home page strip starts at survey starts; the full funnel with site visitors lives on Data quality (Nov 17, 2026)
   const visCover = fn.visits == null ? "" : `${fn.visits_from === fn.visits_to ? mdy(fn.visits_from) : `${mdy(fn.visits_from)}–${mdy(fn.visits_to)}`} (${fn.visits_days} of ${fn.window_days} days)`;
   const visNote = !visPartial ? "" : fn.visits_source === "plausible"
@@ -1067,7 +1067,7 @@
 
   // ---- top sources, all surveys (utm_source on the link; the site passes tags through to the survey)
   if ($("#dqFunnel")) {
-    const convs = [["Visitors who start a survey", fn.conv_visit_start], ["Starts that complete", fn.conv_start_complete], ["Completions that are valid", fn.conv_complete_valid], ["Valid reports at a school never reported before", fn.conv_valid_new]].filter((x) => x[1] != null);
+    const convs = [["Visitors who start a survey", fn.conv_visit_start], ["Starts that complete", fn.conv_start_complete], ["Completions tied to an NCES school", fn.conv_complete_valid], ["NCES reports at a school never reported before", fn.conv_valid_new]].filter((x) => x[1] != null);
     const fmaxF = Math.max(1, ...stagesFull.map((x) => x[1]));
     $("#dqFunnel").innerHTML = P ? pendCard("Funnel") : `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><div class="card-title">Funnel</div><div class="sec-note">last 30 days, all three surveys</div></div>
       <div class="grid2eq" style="margin-top:12px;align-items:start">
