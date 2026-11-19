@@ -88,6 +88,9 @@
   .lvlsw { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
   .lvlsw .pill { cursor: pointer; }
   .lvlsw .pill[aria-pressed="true"] { background: var(--chalk); color: #FFFFFF; }
+  .band .bandsw { margin-top: 0; margin-bottom: 14px; gap: 6px; }
+  .band .bandsw .pill { background: rgba(255,255,255,0.14); color: #FFFFFF; font-size: 12px; padding: 6px 12px; }
+  .band .bandsw .pill[aria-pressed="true"] { background: #FFFFFF; color: var(--chalk); }
   .ranked .row.more { display: none; }
   .ranked.open .row.more { display: flex; }
   .wl .wldot.s1 { background: var(--chalk); } .wl .wldot.s1.hollow { background: #FFFFFF; border-color: var(--chalk); }
@@ -205,8 +208,6 @@
   .wl .wldot.hollow { background: #FFFFFF; border-color: var(--study); }
   .wl .wldot:hover { transform: scale(1.4); }
   .wl .wllab { position: absolute; font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: -8px; }
-  .spark .mark { stroke: var(--chalk); stroke-width: 1.5; stroke-dasharray: 2 3; opacity: 0.6; cursor: default; }
-  .spark .mark:hover { opacity: 1; stroke-width: 3; }
 
   .grid2.three { grid-template-columns: 1.3fr 1fr 1.35fr; }
   @media (max-width: 1180px) { .grid2.three { grid-template-columns: minmax(0, 1fr); } }
@@ -558,19 +559,32 @@
   }
   const fitBubbles = () => document.querySelectorAll(".stan .bubble").forEach(fitBubble);
   setTimeout(fitBubbles, 0); window.addEventListener("resize", fitBubbles);
+  // MS/HS definition toggle (Sadie, Nov 19, 2026): "grades" = the dashboard's level from the grade span (any school serving 6-12,
+  // K-8 included); "nces" = schools NCES itself files as Middle, High or Secondary. Per-viewer choice, remembered in this browser.
+  let mshsDef = "grades"; try { if (localStorage.getItem("mshsDef") === "nces") mshsDef = "nces"; } catch (e) {}
+  const hasNces = !!(c.mshs_nces && c.mshs_nces.eligible);
+  const renderBand = () => {
+  const HH = mshsDef === "nces" && hasNces ? c.mshs_nces : H;
+  const wkN = mshsDef === "nces" && hasNces ? (cur.new_mshs_nces || 0) : wkNewH;
+  const defNote = mshsDef === "nces" && hasNces ? "schools NCES classifies as middle, high or secondary have at least one report." : "MS/HS have at least one report.";
+  const sw = hasNces ? `<div class="lvlsw bandsw" role="group" aria-label="MS/HS definition">${[["grades", "Has grades 6-12", "Any school serving grades 6-12, K-8 included"], ["nces", "NCES classified as MS/HS", "Schools NCES files as Middle, High or Secondary"]].map(([k, l, t]) => `<button class="pill" data-def="${k}" aria-pressed="${mshsDef === k}" title="${t}">${l}</button>`).join("")}</div>` : "";
   $("#band").innerHTML = `
     <div>
       <div class="band-top"><span class="band-kicker">MS/HS with a report</span></div>
-      <div class="headrow"><div class="hero">${pct(H.pct)}</div>
-      <div class="ctx" style="margin-top:10px;max-width:none"><b>${fmt(H.covered)}</b> of ${fmt(H.eligible)} <span class="ctx-long">MS/HS have at least one report.</span></div></div>
-      <div class="cbar with-stan" aria-label="Coverage: ${pct(H.pct)} with at least one report, ${pct(H.depth_pct["2plus"])} with two or more"><i class="f1" style="width:${Math.max(H.pct || 0, 0.4)}%"></i><i class="f2" style="width:${Math.max(H.depth_pct["2plus"] || 0, 0.25)}%"></i>
+      ${sw}
+      <div class="headrow"><div class="hero">${pct(HH.pct)}</div>
+      <div class="ctx" style="margin-top:10px;max-width:none"><b>${fmt(HH.covered)}</b> of ${fmt(HH.eligible)} <span class="ctx-long">${defNote}</span></div></div>
+      <div class="cbar with-stan" aria-label="Coverage: ${pct(HH.pct)} with at least one report, ${pct(HH.depth_pct["2plus"])} with two or more"><i class="f1" style="width:${Math.max(HH.pct || 0, 0.4)}%"></i><i class="f2" style="width:${Math.max(HH.depth_pct["2plus"] || 0, 0.25)}%"></i>
         <div class="stan"><div class="bubble">${stanSays}</div><img src="${stanSrc}" data-mood="${stanMood}" alt="Stan, the Screens in Schools mascot"></div></div>
       <div class="legend"><span class="l">
-        <span class="li"><span class="k"><span class="dot" style="background:#FFFFFF"></span>2+ reports</span><span class="c"><b>${fmt(H.depth["2plus"])}</b></span><span class="p">${pct(H.depth_pct["2plus"])}</span></span>
-        <span class="li"><span class="k"><span class="dot" style="background:#8FC49B"></span>1 report</span><span class="c"><b>${fmt(H.depth["1"])}</b></span><span class="p">${pct(H.depth_pct["1"])}</span></span>
-        <span class="li"><span class="k"><span class="dot" style="background:rgba(255,255,255,0.3)"></span>none</span><span class="c"><b>${fmt(H.depth["0"])}</b></span><span class="p">${pct(H.depth_pct["0"])}</span></span></span>
-        <span class="wk">${P ? PEND : `<b>+${fmt(wkNewH)}</b> this week`}</span></div>
+        <span class="li"><span class="k"><span class="dot" style="background:#FFFFFF"></span>2+ reports</span><span class="c"><b>${fmt(HH.depth["2plus"])}</b></span><span class="p">${pct(HH.depth_pct["2plus"])}</span></span>
+        <span class="li"><span class="k"><span class="dot" style="background:#8FC49B"></span>1 report</span><span class="c"><b>${fmt(HH.depth["1"])}</b></span><span class="p">${pct(HH.depth_pct["1"])}</span></span>
+        <span class="li"><span class="k"><span class="dot" style="background:rgba(255,255,255,0.3)"></span>none</span><span class="c"><b>${fmt(HH.depth["0"])}</b></span><span class="p">${pct(HH.depth_pct["0"])}</span></span></span>
+        <span class="wk">${P ? PEND : `<b>+${fmt(wkN)}</b> this week`}</span></div>
     </div>`;
+  document.querySelectorAll("#band .bandsw .pill").forEach((b) => b.addEventListener("click", () => { mshsDef = b.dataset.def; try { localStorage.setItem("mshsDef", mshsDef); } catch (e) {} renderBand(); if (typeof renderStrip === "function") renderStrip(); setTimeout(fitBubbles, 0); }));
+  };
+  renderBand();
 
   // ---- callouts
   const CALL_LABEL = { avg_daily_responses: "valid reports per day, last 7 days", response_spike: "biggest state jump this week", pace_vs_needed: "new schools this week" };
@@ -591,7 +605,6 @@
       <line x1="${L}" y1="${(H - B).toFixed(1)}" x2="${W - R}" y2="${(H - B).toFixed(1)}" class="ax"/>
       <path d="${area}" class="area"/><path d="${line}" class="line"/>
       ${pts.map(([x, y], i) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9" class="hit" data-tip="<b>${mdy(days[i].date)}</b><br>${fmt(days[i].valid_responses)} valid reports · ${fmt(days[i].new)} new schools"/>`).join("")}
-      ${(d.outreach || []).filter((o) => days.some((x) => x.date === o.date)).map((o) => { const i = days.findIndex((x) => x.date === o.date); return `<line x1="${X(i).toFixed(1)}" y1="${T}" x2="${X(i).toFixed(1)}" y2="${(H - B).toFixed(1)}" class="mark" data-tip="<b>${mdy(o.date)} · outreach</b><br>${esc(o.label)}${o.state ? " · " + esc(o.state) : ""} · ${esc(o.audience)}"/>`; }).join("")}
       <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="3.5" class="dot"/>
       <text x="${(lx + 6).toFixed(1)}" y="${(ly + 4).toFixed(1)}" class="lab">${fmt(last.valid_responses)}</text>
       <text x="${L}" y="${H - 6}" class="xl">${mdy(days[0].date)}</text><text x="${X(mid).toFixed(1)}" y="${H - 6}" class="xl" text-anchor="middle">${mdy(days[mid].date)}</text><text x="${(W - R).toFixed(1)}" y="${H - 6}" class="xl" text-anchor="end">${mdy(last.date)}</text>
@@ -732,6 +745,7 @@
   const fmax = Math.max(1, ...stages.map((x) => x[1]));
   const bySv = dq.by_survey || {}, svOrder = [["student", "Students", "#C3E5CB"], ["educator", "Educators", "#5C9F6F"], ["librarian", "Librarians", "#1E4034"]].filter(([k]) => bySv[k]);
   const svTotal = Math.max(1, svOrder.reduce((a, [k]) => a + (bySv[k].valid || 0), 0));
+  function renderStrip() {
   $("#strip").innerHTML = P ? `<div><span style="font-size:13px;font-weight:700">Last 30 days</span><div class="sub12">${PEND}.</div></div><div class="review"><div><div style="font-size:13px;font-weight:700">${esc(d.cycle.name)}</div><div class="sub12">${PEND}.</div></div></div>`
     : `<div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;font-weight:700">Last 30 days</span></div>
       <div class="srcs" style="gap:6px">${stages.map(([l, n2, col]) => `<div style="align-items:center;gap:10px"><span style="color:var(--slate);width:124px;flex-shrink:0">${l}</span><span style="flex:1;height:8px;background:var(--track);border-radius:999px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(2, Math.round(100 * n2 / fmax))}%;background:${col};border-radius:999px"></i></span><b style="width:64px;text-align:right">${fmt(n2)}</b></div>`).join("")}</div></div>
@@ -739,11 +753,13 @@
       <div style="display:flex;gap:28px;margin-top:10px;flex-wrap:wrap">
         <div><div class="stat28">${fmt(fc.starts)}</div><div class="sub12">started</div></div>
         <div class="phone-hide"><div class="stat28">${fmt(fc.completes)}</div><div class="sub12">completed</div></div>
-        <div><div class="stat28">${fmt(fc.valid)}</div><div class="sub12">valid</div></div>
+        <div><div class="stat28">${fmt(fc.valid)}</div><div class="sub12">NCES matched</div></div>
         <div><div class="stat28">${fmt(fc.new_schools)}</div><div class="sub12">new schools</div></div>
-        <div class="phone-hide"><div class="stat28">${fmt(fc.new_mshs)}</div><div class="sub12">new MS/HS</div></div></div>
+        <div class="phone-hide"><div class="stat28">${fmt(mshsDef === "nces" && hasNces ? fc.new_mshs_nces : fc.new_mshs)}</div><div class="sub12">new MS/HS</div></div></div>
       <div style="display:flex;height:10px;gap:2px;border-radius:999px;overflow:hidden;margin-top:12px;background:var(--track)">${svOrder.map(([k, l, col]) => `<i style="display:block;height:100%;width:${(100 * (bySv[k].valid || 0) / svTotal).toFixed(1)}%;background:${col}" data-tip="<b>${l}</b><br>${fmt(bySv[k].valid)} valid reports"></i>`).join("")}</div>
       <div class="legend" style="color:var(--slate);margin-top:6px;font-size:12px"><span class="l">${svOrder.map(([k, l, col]) => `<span><span class="dot" style="background:${col}"></span>${l} <b style="color:var(--ink)">${fmt(bySv[k].valid)}</b></span>`).join("")}</span></div></div></div>`;
+  }
+  renderStrip();
   const OUT = (d.outreach || []).slice().sort((a, b) => b.date.localeCompare(a.date));
   function outreachTable(rows, audienceCol) {
     return rows.length ? `<div class="tablewrap"><table style="margin-top:10px"><thead><tr><th>Sent</th><th>What</th><th>State</th>${audienceCol ? "<th>Audience</th>" : ""}<th class="num">7 days after</th><th class="num">7 days before</th><th class="num tagcol">Tagged</th></tr></thead><tbody>${rows.map((o) => `<tr><td>${mdy(o.date)}</td><td>${esc(o.label)}</td><td>${esc(o.state || "national")}</td>${audienceCol ? `<td>${esc(o.audience)}</td>` : ""}<td class="num">${o.after_7d == null ? "—" : o.days_elapsed < 6 ? `${fmt(o.after_7d)} <small style="color:var(--muted)">(${o.days_elapsed + 1}d so far)</small>` : fmt(o.after_7d)}</td><td class="num">${o.before_7d == null ? "—" : fmt(o.before_7d)}</td><td class="num tagcol">${o.tagged_reports == null ? "<span style=\"color:var(--muted)\">no tag</span>" : fmt(o.tagged_reports)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="sec-note" style="margin-top:8px">No dated sends in the tracker${audienceCol ? "" : " for this audience"} yet.</div>`;
