@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-11-19T00:16:20Z",
- "as_of": "2026-11-19T00:15:20Z",
+ "generated_at": "2026-11-19T00:31:20Z",
+ "as_of": "2026-11-19T00:30:23Z",
  "synthetic": false,
  "test_mode": false,
  "pending_launch": false,
@@ -27,9 +27,9 @@
    "covered": 24804,
    "remaining": 81641,
    "pct": 23.3,
-   "covered_this_cycle": 1196,
+   "covered_this_cycle": 1197,
    "pct_this_cycle": 1.1,
-   "carried_only": 23608,
+   "carried_only": 23607,
    "stale": 4350,
    "past_uncounted": 4484,
    "depth": {
@@ -94,9 +94,9 @@
     "covered": 13633,
     "remaining": 13103,
     "pct": 51.0,
-    "covered_this_cycle": 519,
+    "covered_this_cycle": 520,
     "pct_this_cycle": 1.9,
-    "carried_only": 13114,
+    "carried_only": 13113,
     "stale": 0,
     "past_uncounted": 0,
     "depth": {
@@ -161,9 +161,9 @@
    "covered": 24412,
    "remaining": 34284,
    "pct": 41.6,
-   "covered_this_cycle": 855,
+   "covered_this_cycle": 856,
    "pct_this_cycle": 1.5,
-   "carried_only": 23557,
+   "carried_only": 23556,
    "stale": 0,
    "past_uncounted": 0,
    "depth": {
@@ -185,25 +185,25 @@
   },
   "by_role": {
    "student": {
-    "valid_reports": 300,
-    "schools": 241,
+    "valid_reports": 301,
+    "schools": 242,
     "by_level": {
      "elementary": 4,
      "middle": 50,
-     "high": 184,
+     "high": 185,
      "other": 0,
      "unknown": 3
     },
     "new_schools": 64,
-    "this_week": 85,
+    "this_week": 86,
     "last_week": 147,
     "by_survey": {
-     "student": 300
+     "student": 301
     },
     "top_states": [
      {
       "st": "CA",
-      "schools": 34
+      "schools": 35
      },
      {
       "st": "TX",
@@ -278,12 +278,12 @@
      "WI"
     ],
     "valid_by_level": {
-     "mshs": 293,
+     "mshs": 294,
      "elementary": 4,
      "other": 3
     },
     "schools_by_level": {
-     "mshs": 234,
+     "mshs": 235,
      "other": 3,
      "elementary": 4
     },
@@ -293,7 +293,7 @@
      "other": 3
     },
     "this_week_by_level": {
-     "mshs": 83,
+     "mshs": 84,
      "other": 1,
      "elementary": 1
     },
@@ -306,7 +306,7 @@
      "all": [
       {
        "st": "CA",
-       "schools": 34
+       "schools": 35
       },
       {
        "st": "TX",
@@ -345,11 +345,7 @@
        "schools": 8
       },
       {
-       "st": "AL",
-       "schools": 7
-      },
-      {
-       "st": "TN",
+       "st": "IL",
        "schools": 7
       },
       {
@@ -357,16 +353,16 @@
        "schools": 7
       },
       {
-       "st": "IL",
+       "st": "TN",
+       "schools": 7
+      },
+      {
+       "st": "AL",
        "schools": 7
       },
       {
        "st": "GA",
        "schools": 6
-      },
-      {
-       "st": "MI",
-       "schools": 4
       },
       {
        "st": "NC",
@@ -377,6 +373,18 @@
        "schools": 4
       },
       {
+       "st": "MI",
+       "schools": 4
+      },
+      {
+       "st": "CO",
+       "schools": 3
+      },
+      {
+       "st": "MO",
+       "schools": 3
+      },
+      {
        "st": "SC",
        "schools": 3
       },
@@ -385,43 +393,11 @@
        "schools": 3
       },
       {
-       "st": "CO",
-       "schools": 3
-      },
-      {
        "st": "IN",
        "schools": 3
       },
       {
-       "st": "MO",
-       "schools": 3
-      },
-      {
-       "st": "AR",
-       "schools": 2
-      },
-      {
        "st": "KS",
-       "schools": 2
-      },
-      {
-       "st": "NE",
-       "schools": 2
-      },
-      {
-       "st": "OK",
-       "schools": 2
-      },
-      {
-       "st": "ME",
-       "schools": 2
-      },
-      {
-       "st": "OH",
-       "schools": 2
-      },
-      {
-       "st": "OR",
        "schools": 2
       },
       {
@@ -433,7 +409,27 @@
        "schools": 2
       },
       {
+       "st": "ME",
+       "schools": 2
+      },
+      {
        "st": "AK",
+       "schools": 2
+      },
+      {
+       "st": "OK",
+       "schools": 2
+      },
+      {
+       "st": "AR",
+       "schools": 2
+      },
+      {
+       "st": "OR",
+       "schools": 2
+      },
+      {
+       "st": "OH",
        "schools": 2
       },
       {
@@ -441,19 +437,11 @@
        "schools": 2
       },
       {
-       "st": "NV",
-       "schools": 1
+       "st": "NE",
+       "schools": 2
       },
       {
        "st": "CT",
-       "schools": 1
-      },
-      {
-       "st": "HI",
-       "schools": 1
-      },
-      {
-       "st": "LA",
        "schools": 1
       },
       {
@@ -461,18 +449,30 @@
        "schools": 1
       },
       {
-       "st": "DC",
+       "st": "NV",
        "schools": 1
       },
       {
        "st": "DE",
+       "schools": 1
+      },
+      {
+       "st": "HI",
+       "schools": 1
+      },
+      {
+       "st": "DC",
+       "schools": 1
+      },
+      {
+       "st": "LA",
        "schools": 1
       }
      ],
      "mshs": [
       {
        "st": "CA",
-       "schools": 32
+       "schools": 33
       },
       {
        "st": "TX",
@@ -507,11 +507,7 @@
        "schools": 9
       },
       {
-       "st": "AL",
-       "schools": 7
-      },
-      {
-       "st": "TN",
+       "st": "IL",
        "schools": 7
       },
       {
@@ -519,20 +515,20 @@
        "schools": 7
       },
       {
-       "st": "IL",
+       "st": "MN",
        "schools": 7
       },
       {
-       "st": "MN",
+       "st": "TN",
+       "schools": 7
+      },
+      {
+       "st": "AL",
        "schools": 7
       },
       {
        "st": "GA",
        "schools": 6
-      },
-      {
-       "st": "MI",
-       "schools": 4
       },
       {
        "st": "NC",
@@ -543,11 +539,15 @@
        "schools": 4
       },
       {
-       "st": "NH",
-       "schools": 3
+       "st": "MI",
+       "schools": 4
       },
       {
        "st": "CO",
+       "schools": 3
+      },
+      {
+       "st": "NH",
        "schools": 3
       },
       {
@@ -555,39 +555,11 @@
        "schools": 3
       },
       {
-       "st": "AR",
-       "schools": 2
-      },
-      {
        "st": "KS",
        "schools": 2
       },
       {
-       "st": "SC",
-       "schools": 2
-      },
-      {
-       "st": "NE",
-       "schools": 2
-      },
-      {
-       "st": "OK",
-       "schools": 2
-      },
-      {
-       "st": "ME",
-       "schools": 2
-      },
-      {
-       "st": "OH",
-       "schools": 2
-      },
-      {
        "st": "MO",
-       "schools": 2
-      },
-      {
-       "st": "OR",
        "schools": 2
       },
       {
@@ -595,7 +567,15 @@
        "schools": 2
       },
       {
+       "st": "SC",
+       "schools": 2
+      },
+      {
        "st": "SD",
+       "schools": 2
+      },
+      {
+       "st": "ME",
        "schools": 2
       },
       {
@@ -603,23 +583,31 @@
        "schools": 2
       },
       {
+       "st": "OK",
+       "schools": 2
+      },
+      {
+       "st": "AR",
+       "schools": 2
+      },
+      {
+       "st": "OR",
+       "schools": 2
+      },
+      {
+       "st": "OH",
+       "schools": 2
+      },
+      {
        "st": "IA",
        "schools": 2
       },
       {
-       "st": "NV",
-       "schools": 1
+       "st": "NE",
+       "schools": 2
       },
       {
        "st": "CT",
-       "schools": 1
-      },
-      {
-       "st": "HI",
-       "schools": 1
-      },
-      {
-       "st": "LA",
        "schools": 1
       },
       {
@@ -627,19 +615,27 @@
        "schools": 1
       },
       {
-       "st": "DC",
+       "st": "NV",
        "schools": 1
       },
       {
        "st": "DE",
        "schools": 1
+      },
+      {
+       "st": "HI",
+       "schools": 1
+      },
+      {
+       "st": "DC",
+       "schools": 1
+      },
+      {
+       "st": "LA",
+       "schools": 1
       }
      ],
      "elementary": [
-      {
-       "st": "MO",
-       "schools": 1
-      },
       {
        "st": "SC",
        "schools": 1
@@ -650,6 +646,10 @@
       },
       {
        "st": "NY",
+       "schools": 1
+      },
+      {
+       "st": "MO",
        "schools": 1
       }
      ]
@@ -824,9 +824,9 @@
      {
       "week_start": "2026-11-16",
       "partial": true,
-      "reports": 85,
+      "reports": 86,
       "by_level": {
-       "mshs": 83,
+       "mshs": 84,
        "other": 1,
        "elementary": 1
       }
@@ -1194,17 +1194,17 @@
      },
      {
       "date": "2026-11-19",
-      "valid": 1,
+      "valid": 2,
       "new": 0,
       "new_by_level": {},
       "by_level": {
-       "mshs": 1
+       "mshs": 2
       }
      }
     ]
    },
    "educator": {
-    "valid_reports": 1939,
+    "valid_reports": 1941,
     "schools": 932,
     "by_level": {
      "elementary": 325,
@@ -1214,10 +1214,10 @@
      "unknown": 11
     },
     "new_schools": 474,
-    "this_week": 398,
+    "this_week": 400,
     "last_week": 333,
     "by_survey": {
-     "educator": 1939
+     "educator": 1941
     },
     "top_states": [
      {
@@ -1294,13 +1294,13 @@
      "WV"
     ],
     "valid_by_level": {
-     "elementary": 596,
-     "mshs": 1330,
+     "elementary": 597,
+     "mshs": 1331,
      "other": 13
     },
     "schools_by_level": {
-     "elementary": 325,
      "mshs": 596,
+     "elementary": 325,
      "other": 11
     },
     "new_by_level": {
@@ -1309,8 +1309,8 @@
      "other": 11
     },
     "this_week_by_level": {
-     "mshs": 258,
-     "elementary": 137,
+     "mshs": 259,
+     "elementary": 138,
      "other": 3
     },
     "last_week_by_level": {
@@ -1373,11 +1373,11 @@
        "schools": 7
       },
       {
-       "st": "OH",
+       "st": "MA",
        "schools": 7
       },
       {
-       "st": "MA",
+       "st": "OH",
        "schools": 7
       },
       {
@@ -1389,11 +1389,11 @@
        "schools": 4
       },
       {
-       "st": "WI",
+       "st": "MI",
        "schools": 4
       },
       {
-       "st": "MI",
+       "st": "WI",
        "schools": 4
       },
       {
@@ -1413,15 +1413,11 @@
        "schools": 2
       },
       {
-       "st": "MN",
-       "schools": 2
-      },
-      {
        "st": "WA",
        "schools": 2
       },
       {
-       "st": "OK",
+       "st": "MN",
        "schools": 2
       },
       {
@@ -1429,11 +1425,19 @@
        "schools": 2
       },
       {
-       "st": "NE",
+       "st": "OK",
+       "schools": 2
+      },
+      {
+       "st": "DC",
        "schools": 1
       },
       {
-       "st": "ID",
+       "st": "UT",
+       "schools": 1
+      },
+      {
+       "st": "MS",
        "schools": 1
       },
       {
@@ -1445,23 +1449,7 @@
        "schools": 1
       },
       {
-       "st": "RI",
-       "schools": 1
-      },
-      {
-       "st": "MS",
-       "schools": 1
-      },
-      {
-       "st": "DE",
-       "schools": 1
-      },
-      {
-       "st": "DC",
-       "schools": 1
-      },
-      {
-       "st": "CT",
+       "st": "ID",
        "schools": 1
       },
       {
@@ -1469,7 +1457,19 @@
        "schools": 1
       },
       {
-       "st": "UT",
+       "st": "RI",
+       "schools": 1
+      },
+      {
+       "st": "CT",
+       "schools": 1
+      },
+      {
+       "st": "DE",
+       "schools": 1
+      },
+      {
+       "st": "NE",
        "schools": 1
       }
      ],
@@ -1515,15 +1515,15 @@
        "schools": 8
       },
       {
+       "st": "NY",
+       "schools": 7
+      },
+      {
        "st": "IL",
        "schools": 7
       },
       {
        "st": "OH",
-       "schools": 7
-      },
-      {
-       "st": "NY",
        "schools": 7
       },
       {
@@ -1539,19 +1539,19 @@
        "schools": 3
       },
       {
-       "st": "AZ",
-       "schools": 3
-      },
-      {
        "st": "MI",
        "schools": 3
       },
       {
-       "st": "NV",
+       "st": "AZ",
+       "schools": 3
+      },
+      {
+       "st": "CO",
        "schools": 2
       },
       {
-       "st": "IN",
+       "st": "NV",
        "schools": 2
       },
       {
@@ -1563,23 +1563,19 @@
        "schools": 2
       },
       {
-       "st": "OK",
-       "schools": 2
-      },
-      {
-       "st": "CO",
-       "schools": 2
-      },
-      {
        "st": "AK",
        "schools": 2
       },
       {
-       "st": "NE",
-       "schools": 1
+       "st": "IN",
+       "schools": 2
       },
       {
-       "st": "ID",
+       "st": "OK",
+       "schools": 2
+      },
+      {
+       "st": "DC",
        "schools": 1
       },
       {
@@ -1587,11 +1583,15 @@
        "schools": 1
       },
       {
+       "st": "ID",
+       "schools": 1
+      },
+      {
        "st": "RI",
        "schools": 1
       },
       {
-       "st": "NC",
+       "st": "CT",
        "schools": 1
       },
       {
@@ -1599,15 +1599,15 @@
        "schools": 1
       },
       {
+       "st": "NC",
+       "schools": 1
+      },
+      {
        "st": "DE",
        "schools": 1
       },
       {
-       "st": "DC",
-       "schools": 1
-      },
-      {
-       "st": "CT",
+       "st": "NE",
        "schools": 1
       }
      ],
@@ -1657,6 +1657,14 @@
        "schools": 3
       },
       {
+       "st": "IN",
+       "schools": 2
+      },
+      {
+       "st": "TX",
+       "schools": 2
+      },
+      {
        "st": "WI",
        "schools": 2
       },
@@ -1665,23 +1673,7 @@
        "schools": 2
       },
       {
-       "st": "TX",
-       "schools": 2
-      },
-      {
-       "st": "IN",
-       "schools": 2
-      },
-      {
-       "st": "GU",
-       "schools": 1
-      },
-      {
-       "st": "CO",
-       "schools": 1
-      },
-      {
-       "st": "MS",
+       "st": "UT",
        "schools": 1
       },
       {
@@ -1693,15 +1685,23 @@
        "schools": 1
       },
       {
+       "st": "MS",
+       "schools": 1
+      },
+      {
+       "st": "GU",
+       "schools": 1
+      },
+      {
        "st": "WV",
        "schools": 1
       },
       {
-       "st": "UT",
+       "st": "MI",
        "schools": 1
       },
       {
-       "st": "MI",
+       "st": "CO",
        "schools": 1
       }
      ]
@@ -1891,10 +1891,10 @@
      {
       "week_start": "2026-11-16",
       "partial": true,
-      "reports": 398,
+      "reports": 400,
       "by_level": {
-       "mshs": 258,
-       "elementary": 137,
+       "mshs": 259,
+       "elementary": 138,
        "other": 3
       }
      }
@@ -2356,10 +2356,13 @@
      },
      {
       "date": "2026-11-19",
-      "valid": 0,
+      "valid": 2,
       "new": 0,
       "new_by_level": {},
-      "by_level": {}
+      "by_level": {
+       "mshs": 1,
+       "elementary": 1
+      }
      }
     ]
    },
@@ -2497,11 +2500,11 @@
        "schools": 3
       },
       {
-       "st": "MA",
+       "st": "AZ",
        "schools": 2
       },
       {
-       "st": "KY",
+       "st": "MA",
        "schools": 2
       },
       {
@@ -2509,15 +2512,7 @@
        "schools": 2
       },
       {
-       "st": "AZ",
-       "schools": 2
-      },
-      {
-       "st": "OH",
-       "schools": 2
-      },
-      {
-       "st": "MI",
+       "st": "MD",
        "schools": 2
       },
       {
@@ -2525,7 +2520,11 @@
        "schools": 2
       },
       {
-       "st": "MD",
+       "st": "KY",
+       "schools": 2
+      },
+      {
+       "st": "OH",
        "schools": 2
       },
       {
@@ -2533,36 +2532,8 @@
        "schools": 2
       },
       {
-       "st": "IA",
-       "schools": 1
-      },
-      {
-       "st": "NH",
-       "schools": 1
-      },
-      {
-       "st": "NM",
-       "schools": 1
-      },
-      {
-       "st": "KS",
-       "schools": 1
-      },
-      {
-       "st": "WA",
-       "schools": 1
-      },
-      {
-       "st": "NV",
-       "schools": 1
-      },
-      {
-       "st": "AK",
-       "schools": 1
-      },
-      {
-       "st": "NY",
-       "schools": 1
+       "st": "MI",
+       "schools": 2
       },
       {
        "st": "ME",
@@ -2570,6 +2541,38 @@
       },
       {
        "st": "CO",
+       "schools": 1
+      },
+      {
+       "st": "IA",
+       "schools": 1
+      },
+      {
+       "st": "NY",
+       "schools": 1
+      },
+      {
+       "st": "NV",
+       "schools": 1
+      },
+      {
+       "st": "WA",
+       "schools": 1
+      },
+      {
+       "st": "AK",
+       "schools": 1
+      },
+      {
+       "st": "NM",
+       "schools": 1
+      },
+      {
+       "st": "NH",
+       "schools": 1
+      },
+      {
+       "st": "KS",
        "schools": 1
       }
      ],
@@ -2579,20 +2582,16 @@
        "schools": 7
       },
       {
-       "st": "WI",
+       "st": "CA",
        "schools": 5
       },
       {
-       "st": "CA",
+       "st": "WI",
        "schools": 5
       },
       {
        "st": "TN",
        "schools": 4
-      },
-      {
-       "st": "SC",
-       "schools": 3
       },
       {
        "st": "CT",
@@ -2603,6 +2602,10 @@
        "schools": 3
       },
       {
+       "st": "SC",
+       "schools": 3
+      },
+      {
        "st": "MA",
        "schools": 2
       },
@@ -2611,7 +2614,7 @@
        "schools": 2
       },
       {
-       "st": "MI",
+       "st": "MD",
        "schools": 2
       },
       {
@@ -2619,52 +2622,12 @@
        "schools": 2
       },
       {
-       "st": "MD",
-       "schools": 2
-      },
-      {
        "st": "GA",
        "schools": 2
       },
       {
-       "st": "IA",
-       "schools": 1
-      },
-      {
-       "st": "NH",
-       "schools": 1
-      },
-      {
-       "st": "NM",
-       "schools": 1
-      },
-      {
-       "st": "AZ",
-       "schools": 1
-      },
-      {
-       "st": "AL",
-       "schools": 1
-      },
-      {
-       "st": "KS",
-       "schools": 1
-      },
-      {
-       "st": "OH",
-       "schools": 1
-      },
-      {
-       "st": "NV",
-       "schools": 1
-      },
-      {
-       "st": "AK",
-       "schools": 1
-      },
-      {
-       "st": "NY",
-       "schools": 1
+       "st": "MI",
+       "schools": 2
       },
       {
        "st": "ME",
@@ -2673,23 +2636,17 @@
       {
        "st": "CO",
        "schools": 1
-      }
-     ],
-     "elementary": [
-      {
-       "st": "KY",
-       "schools": 2
       },
       {
-       "st": "VA",
-       "schools": 2
+       "st": "IA",
+       "schools": 1
       },
       {
-       "st": "AL",
-       "schools": 2
+       "st": "NY",
+       "schools": 1
       },
       {
-       "st": "AZ",
+       "st": "NV",
        "schools": 1
       },
       {
@@ -2697,7 +2654,53 @@
        "schools": 1
       },
       {
+       "st": "AK",
+       "schools": 1
+      },
+      {
+       "st": "NM",
+       "schools": 1
+      },
+      {
+       "st": "AL",
+       "schools": 1
+      },
+      {
+       "st": "AZ",
+       "schools": 1
+      },
+      {
+       "st": "NH",
+       "schools": 1
+      },
+      {
+       "st": "KS",
+       "schools": 1
+      }
+     ],
+     "elementary": [
+      {
+       "st": "AL",
+       "schools": 2
+      },
+      {
+       "st": "VA",
+       "schools": 2
+      },
+      {
+       "st": "KY",
+       "schools": 2
+      },
+      {
+       "st": "AZ",
+       "schools": 1
+      },
+      {
        "st": "CA",
+       "schools": 1
+      },
+      {
+       "st": "WA",
        "schools": 1
       },
       {
@@ -2705,7 +2708,7 @@
        "schools": 1
       },
       {
-       "st": "WA",
+       "st": "OH",
        "schools": 1
       }
      ]
@@ -3388,7 +3391,7 @@
      "unknown": 3
     },
     "second_reports": 33,
-    "valid_responses": 494
+    "valid_responses": 497
    }
   ],
   "daily": [
@@ -3540,7 +3543,7 @@
    {
     "date": "2026-11-19",
     "new": 0,
-    "valid_responses": 1
+    "valid_responses": 4
    }
   ]
  },
@@ -6171,16 +6174,16 @@
  "channels": [
   {
    "channel": "website_organic",
-   "starts": 2879,
-   "completes": 1847,
-   "valid": 1779,
-   "matched": 1779,
+   "starts": 2881,
+   "completes": 1849,
+   "valid": 1781,
+   "matched": 1781,
    "new_schools": 439,
    "second_reports": 160,
-   "redundant": 1167,
+   "redundant": 1169,
    "conv_start_complete": 64.2,
    "conv_complete_valid": 96.3,
-   "conv_valid_new": 24.7,
+   "conv_valid_new": 24.6,
    "by_level_new": {
     "elementary": 308,
     "middle": 93,
@@ -6193,16 +6196,16 @@
   },
   {
    "channel": "paid",
-   "starts": 237,
-   "completes": 177,
-   "valid": 162,
-   "matched": 162,
+   "starts": 238,
+   "completes": 178,
+   "valid": 163,
+   "matched": 163,
    "new_schools": 38,
    "second_reports": 19,
-   "redundant": 105,
-   "conv_start_complete": 74.7,
-   "conv_complete_valid": 91.5,
-   "conv_valid_new": 23.5,
+   "redundant": 106,
+   "conv_start_complete": 74.8,
+   "conv_complete_valid": 91.6,
+   "conv_valid_new": 23.3,
    "by_level_new": {
     "elementary": 3,
     "middle": 7,
@@ -6349,15 +6352,15 @@
  "channels_4w": [
   {
    "channel": "website_organic",
-   "valid": 1564,
+   "valid": 1566,
    "new_schools": 366,
    "conv_valid_new": 23.4
   },
   {
    "channel": "paid",
-   "valid": 162,
+   "valid": 163,
    "new_schools": 38,
-   "conv_valid_new": 23.5
+   "conv_valid_new": 23.3
   },
   {
    "channel": "redirect_from_educator",
@@ -6400,14 +6403,14 @@
   "all": [
    {
     "source": "untagged",
-    "starts": 3527,
-    "completes": 2192,
-    "valid": 2100,
-    "matched": 2085,
+    "starts": 3529,
+    "completes": 2194,
+    "valid": 2102,
+    "matched": 2087,
     "new_schools": 481,
     "second_reports": 190,
-    "redundant": 1400,
-    "conv_start_complete": 62.1,
+    "redundant": 1402,
+    "conv_start_complete": 62.2,
     "conv_complete_valid": 95.8,
     "conv_valid_new": 22.9,
     "by_level_new": {
@@ -6419,7 +6422,7 @@
     },
     "by_survey": {
      "student": 119,
-     "educator": 1907,
+     "educator": 1909,
      "librarian": 74
     },
     "states": [
@@ -6466,23 +6469,23 @@
      "WI",
      "WV"
     ],
-    "this_week": 433,
+    "this_week": 435,
     "last_week": 371,
     "first_seen": "2026-10-19",
     "last_seen": "2026-11-19"
    },
    {
     "source": "instagram",
-    "starts": 237,
-    "completes": 177,
-    "valid": 162,
-    "matched": 162,
+    "starts": 238,
+    "completes": 178,
+    "valid": 163,
+    "matched": 163,
     "new_schools": 38,
     "second_reports": 19,
-    "redundant": 105,
-    "conv_start_complete": 74.7,
-    "conv_complete_valid": 91.5,
-    "conv_valid_new": 23.5,
+    "redundant": 106,
+    "conv_start_complete": 74.8,
+    "conv_complete_valid": 91.6,
+    "conv_valid_new": 23.3,
     "by_level_new": {
      "elementary": 3,
      "middle": 7,
@@ -6492,7 +6495,7 @@
     },
     "by_survey": {
      "librarian": 1,
-     "student": 160,
+     "student": 161,
      "educator": 1
     },
     "states": [
@@ -6534,10 +6537,10 @@
      "VA",
      "WI"
     ],
-    "this_week": 52,
+    "this_week": 53,
     "last_week": 105,
     "first_seen": "2026-11-07",
-    "last_seen": "2026-11-18"
+    "last_seen": "2026-11-19"
    },
    {
     "source": "sis",
@@ -6795,23 +6798,23 @@
     "last_seen": "2026-11-18"
    }
   ],
-  "tagged_share": 11.2,
+  "tagged_share": 11.3,
   "roles": {
    "student": {
-    "tagged_share": 55.2,
+    "tagged_share": 55.3,
     "by_source": [
      {
       "source": "instagram",
-      "starts": 212,
-      "completes": 175,
-      "valid": 160,
-      "matched": 160,
+      "starts": 213,
+      "completes": 176,
+      "valid": 161,
+      "matched": 161,
       "new_schools": 36,
       "second_reports": 19,
-      "redundant": 105,
-      "conv_start_complete": 82.5,
-      "conv_complete_valid": 91.4,
-      "conv_valid_new": 22.5,
+      "redundant": 106,
+      "conv_start_complete": 82.6,
+      "conv_complete_valid": 91.5,
+      "conv_valid_new": 22.4,
       "by_level_new": {
        "elementary": 1,
        "middle": 7,
@@ -6820,7 +6823,7 @@
        "unknown": 3
       },
       "by_survey": {
-       "student": 160
+       "student": 161
       },
       "states": [
        "AL",
@@ -6861,12 +6864,12 @@
        "VA",
        "WI"
       ],
-      "this_week": 52,
+      "this_week": 53,
       "last_week": 104,
       "first_seen": "2026-11-07",
-      "last_seen": "2026-11-18",
+      "last_seen": "2026-11-19",
       "valid_by_level": {
-       "mshs": 155,
+       "mshs": 156,
        "other": 3,
        "elementary": 2
       }
@@ -7036,16 +7039,16 @@
     "by_medium": [
      {
       "medium": "paid_social",
-      "starts": 212,
-      "completes": 175,
-      "valid": 160,
-      "matched": 160,
+      "starts": 213,
+      "completes": 176,
+      "valid": 161,
+      "matched": 161,
       "new_schools": 36,
       "second_reports": 19,
-      "redundant": 105,
-      "conv_start_complete": 82.5,
-      "conv_complete_valid": 91.4,
-      "conv_valid_new": 22.5,
+      "redundant": 106,
+      "conv_start_complete": 82.6,
+      "conv_complete_valid": 91.5,
+      "conv_valid_new": 22.4,
       "by_level_new": {
        "elementary": 1,
        "middle": 7,
@@ -7054,7 +7057,7 @@
        "unknown": 3
       },
       "by_survey": {
-       "student": 160
+       "student": 161
       },
       "states": [
        "AL",
@@ -7095,10 +7098,10 @@
        "VA",
        "WI"
       ],
-      "this_week": 52,
+      "this_week": 53,
       "last_week": 104,
       "first_seen": "2026-11-07",
-      "last_seen": "2026-11-18"
+      "last_seen": "2026-11-19"
      },
      {
       "medium": "none",
@@ -7376,16 +7379,16 @@
       "source": "instagram",
       "medium": "paid_social",
       "campaign": "teen_7st1314_study_a",
-      "starts": 65,
-      "completes": 54,
-      "valid": 51,
-      "matched": 51,
+      "starts": 66,
+      "completes": 55,
+      "valid": 52,
+      "matched": 52,
       "new_schools": 12,
       "second_reports": 7,
-      "redundant": 32,
-      "conv_start_complete": 83.1,
-      "conv_complete_valid": 94.4,
-      "conv_valid_new": 23.5,
+      "redundant": 33,
+      "conv_start_complete": 83.3,
+      "conv_complete_valid": 94.5,
+      "conv_valid_new": 23.1,
       "by_level_new": {
        "elementary": 0,
        "middle": 7,
@@ -7394,7 +7397,7 @@
        "unknown": 1
       },
       "by_survey": {
-       "student": 51
+       "student": 52
       },
       "states": [
        "AZ",
@@ -7408,10 +7411,10 @@
        "TX",
        "WI"
       ],
-      "this_week": 35,
+      "this_week": 36,
       "last_week": 16,
       "first_seen": "2026-11-12",
-      "last_seen": "2026-11-18"
+      "last_seen": "2026-11-19"
      },
      {
       "source": "instagram",
@@ -8091,7 +8094,7 @@
       "week_start": "2026-11-16",
       "partial": true,
       "by_source": {
-       "instagram": 52,
+       "instagram": 53,
        "untagged": 32,
        "angela": 1,
        "sis": 0,
@@ -8106,13 +8109,13 @@
     "by_source": [
      {
       "source": "untagged",
-      "starts": 3096,
-      "completes": 1979,
-      "valid": 1907,
-      "matched": 1907,
+      "starts": 3098,
+      "completes": 1981,
+      "valid": 1909,
+      "matched": 1909,
       "new_schools": 448,
       "second_reports": 167,
-      "redundant": 1279,
+      "redundant": 1281,
       "conv_start_complete": 63.9,
       "conv_complete_valid": 96.4,
       "conv_valid_new": 23.5,
@@ -8124,7 +8127,7 @@
        "unknown": 10
       },
       "by_survey": {
-       "educator": 1907
+       "educator": 1909
       },
       "states": [
        "AK",
@@ -8163,13 +8166,13 @@
        "WI",
        "WV"
       ],
-      "this_week": 391,
+      "this_week": 393,
       "last_week": 327,
       "first_seen": "2026-10-19",
-      "last_seen": "2026-11-18",
+      "last_seen": "2026-11-19",
       "valid_by_level": {
-       "elementary": 589,
-       "mshs": 1306,
+       "elementary": 590,
+       "mshs": 1307,
        "other": 12
       }
      },
@@ -8381,16 +8384,16 @@
     "by_medium": [
      {
       "medium": "none",
-      "starts": 3036,
-      "completes": 1962,
-      "valid": 1895,
-      "matched": 1895,
+      "starts": 3038,
+      "completes": 1964,
+      "valid": 1897,
+      "matched": 1897,
       "new_schools": 441,
       "second_reports": 166,
-      "redundant": 1276,
+      "redundant": 1278,
       "conv_start_complete": 64.6,
       "conv_complete_valid": 96.6,
-      "conv_valid_new": 23.3,
+      "conv_valid_new": 23.2,
       "by_level_new": {
        "elementary": 314,
        "middle": 92,
@@ -8399,7 +8402,7 @@
        "unknown": 10
       },
       "by_survey": {
-       "educator": 1895
+       "educator": 1897
       },
       "states": [
        "AK",
@@ -8436,10 +8439,10 @@
        "WI",
        "WV"
       ],
-      "this_week": 391,
+      "this_week": 393,
       "last_week": 325,
       "first_seen": "2026-10-19",
-      "last_seen": "2026-11-18"
+      "last_seen": "2026-11-19"
      },
      {
       "medium": "social",
@@ -8614,16 +8617,16 @@
       "source": "untagged",
       "medium": "",
       "campaign": "",
-      "starts": 3034,
-      "completes": 1962,
-      "valid": 1895,
-      "matched": 1895,
+      "starts": 3036,
+      "completes": 1964,
+      "valid": 1897,
+      "matched": 1897,
       "new_schools": 441,
       "second_reports": 166,
-      "redundant": 1276,
+      "redundant": 1278,
       "conv_start_complete": 64.7,
       "conv_complete_valid": 96.6,
-      "conv_valid_new": 23.3,
+      "conv_valid_new": 23.2,
       "by_level_new": {
        "elementary": 314,
        "middle": 92,
@@ -8632,7 +8635,7 @@
        "unknown": 10
       },
       "by_survey": {
-       "educator": 1895
+       "educator": 1897
       },
       "states": [
        "AK",
@@ -8669,10 +8672,10 @@
        "WI",
        "WV"
       ],
-      "this_week": 391,
+      "this_week": 393,
       "last_week": 325,
       "first_seen": "2026-10-19",
-      "last_seen": "2026-11-18"
+      "last_seen": "2026-11-19"
      },
      {
       "source": "untagged",
@@ -9598,7 +9601,7 @@
       "week_start": "2026-11-16",
       "partial": true,
       "by_source": {
-       "untagged": 391,
+       "untagged": 393,
        "sis": 4,
        "angela": 3,
        "ietc": 0,
@@ -10447,20 +10450,20 @@
    }
   },
   "student": {
-   "tagged_share": 55.2,
+   "tagged_share": 55.3,
    "by_source": [
     {
      "source": "instagram",
-     "starts": 212,
-     "completes": 175,
-     "valid": 160,
-     "matched": 160,
+     "starts": 213,
+     "completes": 176,
+     "valid": 161,
+     "matched": 161,
      "new_schools": 36,
      "second_reports": 19,
-     "redundant": 105,
-     "conv_start_complete": 82.5,
-     "conv_complete_valid": 91.4,
-     "conv_valid_new": 22.5,
+     "redundant": 106,
+     "conv_start_complete": 82.6,
+     "conv_complete_valid": 91.5,
+     "conv_valid_new": 22.4,
      "by_level_new": {
       "elementary": 1,
       "middle": 7,
@@ -10469,7 +10472,7 @@
       "unknown": 3
      },
      "by_survey": {
-      "student": 160
+      "student": 161
      },
      "states": [
       "AL",
@@ -10510,12 +10513,12 @@
       "VA",
       "WI"
      ],
-     "this_week": 52,
+     "this_week": 53,
      "last_week": 104,
      "first_seen": "2026-11-07",
-     "last_seen": "2026-11-18",
+     "last_seen": "2026-11-19",
      "valid_by_level": {
-      "mshs": 155,
+      "mshs": 156,
       "other": 3,
       "elementary": 2
      }
@@ -10685,16 +10688,16 @@
    "by_medium": [
     {
      "medium": "paid_social",
-     "starts": 212,
-     "completes": 175,
-     "valid": 160,
-     "matched": 160,
+     "starts": 213,
+     "completes": 176,
+     "valid": 161,
+     "matched": 161,
      "new_schools": 36,
      "second_reports": 19,
-     "redundant": 105,
-     "conv_start_complete": 82.5,
-     "conv_complete_valid": 91.4,
-     "conv_valid_new": 22.5,
+     "redundant": 106,
+     "conv_start_complete": 82.6,
+     "conv_complete_valid": 91.5,
+     "conv_valid_new": 22.4,
      "by_level_new": {
       "elementary": 1,
       "middle": 7,
@@ -10703,7 +10706,7 @@
       "unknown": 3
      },
      "by_survey": {
-      "student": 160
+      "student": 161
      },
      "states": [
       "AL",
@@ -10744,10 +10747,10 @@
       "VA",
       "WI"
      ],
-     "this_week": 52,
+     "this_week": 53,
      "last_week": 104,
      "first_seen": "2026-11-07",
-     "last_seen": "2026-11-18"
+     "last_seen": "2026-11-19"
     },
     {
      "medium": "none",
@@ -11025,16 +11028,16 @@
      "source": "instagram",
      "medium": "paid_social",
      "campaign": "teen_7st1314_study_a",
-     "starts": 65,
-     "completes": 54,
-     "valid": 51,
-     "matched": 51,
+     "starts": 66,
+     "completes": 55,
+     "valid": 52,
+     "matched": 52,
      "new_schools": 12,
      "second_reports": 7,
-     "redundant": 32,
-     "conv_start_complete": 83.1,
-     "conv_complete_valid": 94.4,
-     "conv_valid_new": 23.5,
+     "redundant": 33,
+     "conv_start_complete": 83.3,
+     "conv_complete_valid": 94.5,
+     "conv_valid_new": 23.1,
      "by_level_new": {
       "elementary": 0,
       "middle": 7,
@@ -11043,7 +11046,7 @@
       "unknown": 1
      },
      "by_survey": {
-      "student": 51
+      "student": 52
      },
      "states": [
       "AZ",
@@ -11057,10 +11060,10 @@
       "TX",
       "WI"
      ],
-     "this_week": 35,
+     "this_week": 36,
      "last_week": 16,
      "first_seen": "2026-11-12",
-     "last_seen": "2026-11-18"
+     "last_seen": "2026-11-19"
     },
     {
      "source": "instagram",
@@ -11740,7 +11743,7 @@
      "week_start": "2026-11-16",
      "partial": true,
      "by_source": {
-      "instagram": 52,
+      "instagram": 53,
       "untagged": 32,
       "angela": 1,
       "sis": 0,
@@ -11753,18 +11756,18 @@
  },
  "funnel": {
   "cycle": {
-   "visits": 9158,
+   "visits": 9171,
    "visits_source": "plausible",
-   "visits_pageviews": 9970,
+   "visits_pageviews": 9983,
    "visits_from": "2026-11-05",
    "visits_to": "2026-11-19",
    "visits_days": 15,
    "window_days": 38,
-   "visits_starts": 2122,
-   "starts": 3974,
-   "completes": 2443,
-   "valid": 2320,
-   "matched": 2305,
+   "visits_starts": 2125,
+   "starts": 3977,
+   "completes": 2446,
+   "valid": 2323,
+   "matched": 2308,
    "new_schools": 546,
    "second_reports": 215,
    "new_mshs": 206,
@@ -11774,25 +11777,25 @@
    "conv_valid_new": 23.5
   },
   "last_4w": {
-   "visits": 9158,
+   "visits": 9171,
    "visits_source": "plausible",
-   "visits_pageviews": 9970,
+   "visits_pageviews": 9983,
    "visits_from": "2026-11-05",
    "visits_to": "2026-11-19",
    "visits_days": 15,
    "window_days": 30,
-   "visits_starts": 2122,
-   "starts": 3734,
-   "completes": 2210,
-   "valid": 2095,
-   "matched": 2080,
+   "visits_starts": 2125,
+   "starts": 3737,
+   "completes": 2213,
+   "valid": 2098,
+   "matched": 2083,
    "new_schools": 471,
    "second_reports": 199,
    "new_mshs": 200,
    "conv_visit_start": 23.2,
    "conv_start_complete": 59.2,
    "conv_complete_valid": 94.8,
-   "conv_valid_new": 22.5
+   "conv_valid_new": 22.4
   },
   "visits_loaded": true,
   "traffic": {
@@ -11866,8 +11869,8 @@
     },
     {
      "date": "2026-11-18",
-     "visitors": 625,
-     "pageviews": 761
+     "visitors": 638,
+     "pageviews": 774
     }
    ]
   }
@@ -11876,9 +11879,9 @@
   {
    "rule": "avg_daily_responses",
    "at_stake": 0,
-   "stat": "93",
+   "stat": "94",
    "title": "valid reports per day, last 7 days.",
-   "body": "652 valid reports in the last 7 days, up 45% on the 7 days before.",
+   "body": "655 valid reports in the last 7 days, up 46% on the 7 days before.",
    "action": "Data quality",
    "target": "quality"
   },
@@ -11907,19 +11910,19 @@
  ],
  "partners": [],
  "dq": {
-  "submissions": 3974,
-  "completes": 2443,
-  "valid": 2320,
+  "submissions": 3977,
+  "completes": 2446,
+  "valid": 2323,
   "by_survey": {
    "student": {
-    "submissions": 496,
-    "completes": 338,
-    "valid": 300
+    "submissions": 497,
+    "completes": 339,
+    "valid": 301
    },
    "educator": {
-    "submissions": 3245,
-    "completes": 2019,
-    "valid": 1939
+    "submissions": 3247,
+    "completes": 2021,
+    "valid": 1941
    },
    "librarian": {
     "submissions": 233,
@@ -11955,9 +11958,9 @@
      "valid": 2
     },
     "California": {
-     "started": 57,
-     "completed": 41,
-     "valid": 34
+     "started": 58,
+     "completed": 42,
+     "valid": 35
     },
     "Colorado": {
      "started": 8,
@@ -12257,9 +12260,9 @@
      "valid": 0
     },
     "Maryland": {
-     "started": 156,
-     "completed": 114,
-     "valid": 112
+     "started": 158,
+     "completed": 116,
+     "valid": 114
     },
     "Massachusetts": {
      "started": 8,
@@ -12635,8 +12638,8 @@
   "test_list": {
    "listed": 17,
    "matched": 17,
-   "rows_with_id": 4369,
-   "rows": 4871,
+   "rows_with_id": 4372,
+   "rows": 4874,
    "api_keys": {
     "top": [
      "displayedFields",
@@ -12659,7 +12662,7 @@
    }
   },
   "district_reports": 15,
-  "respondent_level_mismatch": 427,
+  "respondent_level_mismatch": 428,
   "codebook_misses": 0,
   "manual_matches_applied": 54,
   "fuzzy": {
@@ -12978,7 +12981,7 @@
    "audience": "all",
    "label": "State email",
    "campaign": "",
-   "after_7d": 494,
+   "after_7d": 497,
    "before_7d": 491,
    "tagged_reports": null,
    "days_elapsed": 3
