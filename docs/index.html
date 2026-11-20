@@ -88,9 +88,10 @@
   .lvlsw { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
   .lvlsw .pill { cursor: pointer; }
   .lvlsw .pill[aria-pressed="true"] { background: var(--chalk); color: #FFFFFF; }
-  .band .bandsw { margin-top: 0; margin-bottom: 14px; gap: 6px; }
-  .band .bandsw .pill { background: rgba(255,255,255,0.14); color: #FFFFFF; font-size: 12px; padding: 6px 12px; }
-  .band .bandsw .pill[aria-pressed="true"] { background: #FFFFFF; color: var(--chalk); }
+  .band .ctx .defsel { font: inherit; font-weight: 700; color: #FFFFFF; background: rgba(255,255,255,0.12); border: 0; border-radius: 8px; padding: 2px 26px 2px 8px; margin: 0 2px; cursor: pointer; appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23C3E5CB' stroke-width='2'/></svg>"); background-repeat: no-repeat; background-position: right 9px center; }
+  .band .ctx .defsel:hover { background-color: rgba(255,255,255,0.2); }
+  .band .ctx .defsel option { color: var(--ink); background: #FFFFFF; font-weight: 400; }
   .ranked .row.more { display: none; }
   .ranked.open .row.more { display: flex; }
   .wl .wldot.s1 { background: var(--chalk); } .wl .wldot.s1.hollow { background: #FFFFFF; border-color: var(--chalk); }
@@ -566,14 +567,13 @@
   const renderBand = () => {
   const HH = mshsDef === "nces" && hasNces ? c.mshs_nces : H;
   const wkN = mshsDef === "nces" && hasNces ? (cur.new_mshs_nces || 0) : wkNewH;
-  const defNote = mshsDef === "nces" && hasNces ? "schools NCES classifies as middle, high or secondary have at least one report." : "MS/HS have at least one report.";
-  const sw = hasNces ? `<div class="lvlsw bandsw" role="group" aria-label="MS/HS definition">${[["grades", "Has grades 6-12", "Any school serving grades 6-12, K-8 included"], ["nces", "NCES classified as MS/HS", "Schools NCES files as Middle, High or Secondary"]].map(([k, l, t]) => `<button class="pill" data-def="${k}" aria-pressed="${mshsDef === k}" title="${t}">${l}</button>`).join("")}</div>` : "";
+  const DEFS = [["grades", "schools with grades 6-12", "Any school serving grades 6-12, K-8 included"], ["nces", "NCES-classified MS/HS", "Schools NCES files as Middle, High or Secondary"]];
+  const defSel = hasNces ? `<select class="defsel" aria-label="Which schools count as MS/HS" title="${DEFS.find((x) => x[0] === mshsDef)[2]}">${DEFS.map(([k, l, t]) => `<option value="${k}" title="${t}"${mshsDef === k ? " selected" : ""}>${l}</option>`).join("")}</select>` : "MS/HS";
   $("#band").innerHTML = `
     <div>
       <div class="band-top"><span class="band-kicker">MS/HS with a report</span></div>
-      ${sw}
       <div class="headrow"><div class="hero">${pct(HH.pct)}</div>
-      <div class="ctx" style="margin-top:10px;max-width:none"><b>${fmt(HH.covered)}</b> of ${fmt(HH.eligible)} <span class="ctx-long">${defNote}</span></div></div>
+      <div class="ctx" style="margin-top:10px;max-width:none"><b>${fmt(HH.covered)}</b> of ${fmt(HH.eligible)} ${defSel} <span class="ctx-long">have at least one report.</span></div></div>
       <div class="cbar with-stan" aria-label="Coverage: ${pct(HH.pct)} with at least one report, ${pct(HH.depth_pct["2plus"])} with two or more"><i class="f1" style="width:${Math.max(HH.pct || 0, 0.4)}%"></i><i class="f2" style="width:${Math.max(HH.depth_pct["2plus"] || 0, 0.25)}%"></i>
         <div class="stan"><div class="bubble">${stanSays}</div><img src="${stanSrc}" data-mood="${stanMood}" alt="Stan, the Screens in Schools mascot"></div></div>
       <div class="legend"><span class="l">
@@ -582,7 +582,8 @@
         <span class="li"><span class="k"><span class="dot" style="background:rgba(255,255,255,0.3)"></span>none</span><span class="c"><b>${fmt(HH.depth["0"])}</b></span><span class="p">${pct(HH.depth_pct["0"])}</span></span></span>
         <span class="wk">${P ? PEND : `<b>+${fmt(wkN)}</b> this week`}</span></div>
     </div>`;
-  document.querySelectorAll("#band .bandsw .pill").forEach((b) => b.addEventListener("click", () => { mshsDef = b.dataset.def; try { localStorage.setItem("mshsDef", mshsDef); } catch (e) {} renderBand(); if (typeof renderStrip === "function") renderStrip(); setTimeout(fitBubbles, 0); }));
+  const dsel = document.querySelector("#band .defsel");
+  if (dsel) dsel.addEventListener("change", () => { mshsDef = dsel.value; try { localStorage.setItem("mshsDef", mshsDef); } catch (e) {} renderBand(); if (typeof renderStrip === "function") renderStrip(); setTimeout(fitBubbles, 0); });
   };
   renderBand();
 
